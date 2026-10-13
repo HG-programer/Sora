@@ -33,21 +33,19 @@ class HaruEmochiAPI {
   getBaseUrl() {
     const saved = (localStorage.getItem(STORAGE_KEYS.SERVER_URL) || "").trim();
     if (saved) return saved.replace(/\/+$/, "");
-    if (window.location.protocol === "capacitor:" || (window.location.hostname === "localhost" && window.location.port === "")) {
-      return "http://10.0.2.2:5050";
-    }
     return "";
   }
 
   resolveAssetUrl(url) {
     if (!url) return "/assets/icon.svg";
     if (url.startsWith("data:")) return url;
-    if (url.includes("nekos.best")) {
-      const base = this.getBaseUrl();
-      const prefix = base ? `${base}` : "";
-      return `${prefix}/api/v1/image-proxy?url=${encodeURIComponent(url)}`;
-    }
     if (url.startsWith("http://") || url.startsWith("https://")) {
+      if (url.includes("nekos.best")) {
+        const base = this.getBaseUrl();
+        if (base && !base.includes("10.0.2.2")) {
+          return `${base}/api/v1/image-proxy?url=${encodeURIComponent(url)}`;
+        }
+      }
       return url;
     }
     const base = this.getBaseUrl();
@@ -158,25 +156,36 @@ class HaruEmochiAPI {
       headers["Authorization"] = `Bearer ${token}`;
     }
 
-    const resp = await fetch(url, {
-      ...options,
-      headers,
-    });
+    const controller = new AbortController();
+    const timeout = options.timeout || 3500;
+    const timeoutId = setTimeout(() => controller.abort(), timeout);
 
-    if (!resp.ok) {
-      let errDetail = `HTTP ${resp.status}`;
-      try {
-        const errJson = await resp.json();
-        errDetail = errJson.detail || errJson.error || errDetail;
-      } catch {}
-      throw new Error(errDetail);
+    try {
+      const resp = await fetch(url, {
+        ...options,
+        headers,
+        signal: controller.signal,
+      });
+      clearTimeout(timeoutId);
+
+      if (!resp.ok) {
+        let errDetail = `HTTP ${resp.status}`;
+        try {
+          const errJson = await resp.json();
+          errDetail = errJson.detail || errJson.error || errDetail;
+        } catch {}
+        throw new Error(errDetail);
+      }
+      return resp.json();
+    } catch (err) {
+      clearTimeout(timeoutId);
+      throw err;
     }
-    return resp.json();
   }
 
   async streamMessage(sessionId, payload, { onMeta, onToken, onDone, onError }) {
     const model = payload.model || "haru-core";
-    const freeSpec = HARU_FREE_MODELS[model];
+    const freeSpec = HARU_FREE_MODELS[model] || HARU_FREE_MODELS["haru-core"];
     const byok = this.getByokKeys();
 
     // Use distributed client-side inference for standard Haru free-tier models
@@ -186,21 +195,39 @@ class HaruEmochiAPI {
       (model === "haru-pulse" && (byok.groq || byok.gemini));
 
     if (freeSpec && !hasCustomOverride) {
+      let messages = null;
+      let userMsgId = null;
+
       try {
         const prep = await this.request(`/api/v1/sessions/${sessionId}/prepare`, {
           method: "POST",
           body: JSON.stringify(payload),
+          timeout: 2500,
         });
-        if (onMeta) onMeta({ type: "meta", user_message_id: prep.user_message_id, model: freeSpec.label });
-
-        const messages = [...(prep.llm_messages || [])];
-        if (freeSpec.hint && messages.length > 0 && messages[0].role === "system") {
-          messages[0] = {
+        userMsgId = prep.user_message_id;
+        messages = [...(prep.llm_messages || [])];
+      } catch {
+        // Fallback for standalone/offline APK: assemble prompt locally
+        userMsgId = `user_${Date.now()}`;
+        messages = payload.local_messages || [
+          {
             role: "system",
-            content: `${messages[0].content}\n${freeSpec.hint}`,
-          };
-        }
+            content: `You are ${payload.character_name || "a character"} in an interactive creative fiction roleplay. Stay strictly in character. Write expressive, sensory, descriptive prose. ${payload.personality ? "Personality: " + payload.personality : ""} ${payload.scenario ? "Scenario: " + payload.scenario : ""}`
+          },
+          { role: "user", content: payload.content || "" }
+        ];
+      }
 
+      if (onMeta) onMeta({ type: "meta", user_message_id: userMsgId, model: freeSpec.label });
+
+      if (freeSpec.hint && messages.length > 0 && messages[0].role === "system") {
+        messages[0] = {
+          role: "system",
+          content: `${messages[0].content}\n${freeSpec.hint}`,
+        };
+      }
+
+      try {
         const llmResp = await fetch(DISTRIBUTED_GATEWAY, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -221,16 +248,22 @@ class HaruEmochiAPI {
               if (onToken) onToken(chunk);
               await new Promise((r) => setTimeout(r, 12));
             }
-            const saved = await this.request(`/api/v1/sessions/${sessionId}/save_assistant`, {
-              method: "POST",
-              body: JSON.stringify({ content, model: freeSpec.label }),
-            });
-            if (onDone) onDone({ type: "done", message_id: saved.message_id, model: freeSpec.label, content });
-            return;
+            try {
+              const saved = await this.request(`/api/v1/sessions/${sessionId}/save_assistant`, {
+                method: "POST",
+                body: JSON.stringify({ content, model: freeSpec.label }),
+                timeout: 2500,
+              });
+              if (onDone) onDone({ type: "done", message_id: saved.message_id, model: freeSpec.label, content });
+              return;
+            } catch {
+              if (onDone) onDone({ type: "done", message_id: `asst_${Date.now()}`, model: freeSpec.label, content });
+              return;
+            }
           }
         }
-      } catch {
-        // Fall through to backend SSE stream if client-side fetch failed
+      } catch (err) {
+        console.warn("Distributed client-side gateway failed:", err);
       }
     }
 

@@ -154,28 +154,138 @@ function getFallbackAvatar(name = "Character", gender = "Female") {
   const clean = (name || "").replace(/[^a-zA-Z0-9\s]/g, "").trim();
   const initials = (clean.split(/\s+/).slice(0, 2).map((w) => w[0]).join("") || "S").toUpperCase();
   const isMale = (gender || "").toLowerCase() === "male";
-  const c1 = isMale ? "#2b231c" : "#331c26";
-  const c2 = isMale ? "#d97757" : "#e07a90";
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
+  const hash = (name || "").split("").reduce((acc, c) => acc + c.charCodeAt(0), 0);
+  const palettes = [
+    ["#2b231c", "#d97757", "#f7f2eb"],
+    ["#331c26", "#e07a90", "#fff0f3"],
+    ["#1c2826", "#58b09c", "#eefaf6"],
+    ["#2a1f33", "#b085f5", "#f7f0ff"],
+    ["#33281c", "#e0a458", "#fff8f0"],
+    ["#1c2633", "#64b5f6", "#f0f8ff"],
+  ];
+  const [c1, c2, cText] = palettes[hash % palettes.length];
+  const safeId = `g_${clean.replace(/\s+/g, "_") || "init"}_${hash}`;
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120">
     <defs>
-      <linearGradient id="g_${initials}" x1="0" y1="0" x2="1" y2="1">
+      <linearGradient id="${safeId}" x1="0" y1="0" x2="1" y2="1">
         <stop offset="0%" stop-color="${c1}"/>
-        <stop offset="100%" stop-color="#140f0c"/>
+        <stop offset="100%" stop-color="#120e0c"/>
       </linearGradient>
     </defs>
-    <rect width="100" height="100" rx="18" fill="url(#g_${initials})"/>
-    <rect x="3" y="3" width="94" height="94" rx="15" fill="none" stroke="${c2}" stroke-width="1.5" stroke-opacity="0.45"/>
-    <text x="50" y="55" font-family="'Newsreader', Georgia, serif" font-size="38" font-weight="600" fill="#f7f2eb" text-anchor="middle" dominant-baseline="central">${initials}</text>
+    <rect width="120" height="120" rx="22" fill="url(#${safeId})"/>
+    <circle cx="60" cy="60" r="46" fill="none" stroke="${c2}" stroke-width="1.8" stroke-dasharray="2 3" opacity="0.4"/>
+    <rect x="4" y="4" width="112" height="112" rx="18" fill="none" stroke="${c2}" stroke-width="1.5" stroke-opacity="0.5"/>
+    <text x="60" y="66" font-family="'Newsreader', Georgia, serif" font-size="44" font-weight="600" fill="${cText}" text-anchor="middle" dominant-baseline="central">${initials}</text>
   </svg>`;
   return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
+}
+
+// Offline Storage & State Helpers
+function getLocalSessions() {
+  try {
+    return JSON.parse(localStorage.getItem("sora_local_sessions") || "[]");
+  } catch {
+    return [];
+  }
+}
+
+function saveLocalSessions(sessions) {
+  try {
+    localStorage.setItem("sora_local_sessions", JSON.stringify(sessions || []));
+  } catch {}
+}
+
+function getLocalMyCharacters() {
+  try {
+    return JSON.parse(localStorage.getItem("sora_my_characters") || "[]");
+  } catch {
+    return [];
+  }
+}
+
+function saveLocalMyCharacters(chars) {
+  try {
+    localStorage.setItem("sora_my_characters", JSON.stringify(chars || []));
+  } catch {}
+}
+
+function getLocalLikedIds() {
+  try {
+    return new Set(JSON.parse(localStorage.getItem("sora_liked_ids") || "[]"));
+  } catch {
+    return new Set();
+  }
+}
+
+function toggleLocalLikedId(id, isLiked) {
+  try {
+    const set = getLocalLikedIds();
+    if (isLiked) set.add(id);
+    else set.delete(id);
+    localStorage.setItem("sora_liked_ids", JSON.stringify(Array.from(set)));
+  } catch {}
+}
+
+function filterLocalCharacters() {
+  let list = [...(window.SORA_DEFAULT_CATALOG || [])];
+  const localMy = getLocalMyCharacters();
+  list = [...localMy, ...list];
+
+  const likedIds = getLocalLikedIds();
+  list.forEach((c) => {
+    c.liked_by_me = likedIds.has(c.id);
+  });
+
+  if (state.activeCategory === "Mine") {
+    list = list.filter((c) => c.creator_name === state.user?.username || localMy.some((m) => m.id === c.id));
+  } else if (state.activeCategory === "Favorites") {
+    list = list.filter((c) => likedIds.has(c.id));
+  } else if (state.activeCategory && state.activeCategory !== "All") {
+    list = list.filter((c) => c.category === state.activeCategory || (c.tags && c.tags.includes(state.activeCategory)));
+  }
+
+  if (state.activeGender && state.activeGender !== "All") {
+    list = list.filter((c) => (c.gender || "").toLowerCase() === state.activeGender.toLowerCase());
+  }
+
+  if (state.searchQuery && state.searchQuery.trim()) {
+    const q = state.searchQuery.trim().toLowerCase();
+    list = list.filter((c) =>
+      c.name.toLowerCase().includes(q) ||
+      (c.tagline && c.tagline.toLowerCase().includes(q)) ||
+      (c.category && c.category.toLowerCase().includes(q)) ||
+      (c.tags && c.tags.some((t) => t.toLowerCase().includes(q)))
+    );
+  }
+
+  if (state.sortBy === "likes") {
+    list.sort((a, b) => (b.like_count || 0) - (a.like_count || 0));
+  } else if (state.sortBy === "recent") {
+    // Preserve order
+  } else {
+    list.sort((a, b) => (b.chat_count || 0) - (a.chat_count || 0));
+  }
+
+  state.characters = list;
+  renderCharacterGrid();
 }
 
 document.addEventListener("DOMContentLoaded", async () => {
   registerServiceWorker();
   bindUIEvents();
   loadSavedByokForm();
+
+  // Instant pre-population from bundled catalog: zero blank-screen latency
+  if (window.SORA_DEFAULT_CATALOG && window.SORA_DEFAULT_CATALOG.length) {
+    state.characters = [...window.SORA_DEFAULT_CATALOG];
+    state.templates = [...window.SORA_DEFAULT_CATALOG];
+    filterLocalCharacters();
+    renderTemplateDropdown("All");
+  }
+
   await ensureAuthenticatedUser();
-  await Promise.all([
+
+  await Promise.allSettled([
     loadAdapters(),
     loadPlatformStats(),
     loadCharacters(),
@@ -201,7 +311,8 @@ async function ensureAuthenticatedUser() {
   const existingToken = window.api.getToken();
   if (existingToken) {
     try {
-      state.user = await window.api.request("/api/v1/auth/me");
+      state.user = await window.api.request("/api/v1/auth/me", { timeout: 2500 });
+      localStorage.setItem("sora_cached_user", JSON.stringify(state.user));
       renderUserHeader();
       renderPersonasList();
       return;
@@ -209,9 +320,48 @@ async function ensureAuthenticatedUser() {
       window.api.setToken("");
     }
   }
-  const res = await window.api.request("/api/v1/auth/guest", { method: "POST" });
-  window.api.setToken(res.access_token);
-  state.user = res.user;
+
+  try {
+    const res = await window.api.request("/api/v1/auth/guest", { method: "POST", timeout: 2500 });
+    window.api.setToken(res.access_token);
+    state.user = res.user;
+    localStorage.setItem("sora_cached_user", JSON.stringify(state.user));
+    renderUserHeader();
+    renderPersonasList();
+    return;
+  } catch (err) {
+    console.warn("Backend auth offline, using local guest session:", err);
+  }
+
+  // Standalone offline guest profile fallback
+  let localUser = null;
+  try {
+    localUser = JSON.parse(localStorage.getItem("sora_cached_user") || "null");
+  } catch {}
+
+  if (!localUser) {
+    localUser = {
+      id: "guest_" + Math.random().toString(36).substring(2, 9),
+      username: "guest",
+      display_name: "Guest Storyteller",
+      email: "",
+      bio: "Living characters, unfiltered stories.",
+      is_guest: true,
+      tier: "free",
+      personas: [
+        {
+          id: "persona_default",
+          name: "Default Persona",
+          description: "Curious storyteller wandering the world.",
+          avatar_url: "/assets/icon.svg",
+          is_default: true,
+        },
+      ],
+    };
+    localStorage.setItem("sora_cached_user", JSON.stringify(localUser));
+  }
+
+  state.user = localUser;
   renderUserHeader();
   renderPersonasList();
 }
@@ -349,48 +499,57 @@ function isModelUnlocked(adapter) {
 
 async function loadAdapters() {
   try {
-    const data = await window.api.request("/api/v1/adapters");
+    const data = await window.api.request("/api/v1/adapters", { timeout: 2500 });
     state.adapters = data.adapters || [];
-
-    const freeModels = state.adapters.filter((m) => m.tier === "free");
-    const premiumModels = state.adapters.filter((m) => m.tier === "premium");
-
-    document.querySelectorAll(".model-dropdown-populate").forEach((selectEl) => {
-      const currentVal = selectEl.value;
-      selectEl.innerHTML = "";
-
-      const freeGroup = document.createElement("optgroup");
-      freeGroup.label = "Sora Standard Models (Included Free)";
-      freeModels.forEach((m) => {
-        const opt = document.createElement("option");
-        opt.value = m.id;
-        opt.textContent = `${m.name} (${m.badge.replace("Included · ", "")})`;
-        freeGroup.appendChild(opt);
-      });
-      selectEl.appendChild(freeGroup);
-
-      const premGroup = document.createElement("optgroup");
-      premGroup.label = "Verified Flagship Models (Premium)";
-      premiumModels.forEach((m) => {
-        const unlocked = isModelUnlocked(m);
-        const opt = document.createElement("option");
-        opt.value = m.id;
-        opt.textContent = `${m.name} — ${unlocked ? "Unlocked" : "🔒 Pro/Ultra Required"}`;
-        premGroup.appendChild(opt);
-      });
-      selectEl.appendChild(premGroup);
-
-      if (currentVal && currentVal !== "haru-rp-v1") {
-        selectEl.value = currentVal;
-      } else {
-        selectEl.value = "haru-core";
-      }
-    });
-
-    renderAdaptersTable();
   } catch (err) {
-    console.error("Failed loading adapters:", err);
+    state.adapters = [
+      { id: "haru-core", name: "Sora Core v2", tier: "free", badge: "Included · Primary", description: "Standard expressive creative roleplay engine.", provider: "Sora In-House" },
+      { id: "haru-velvet", name: "Sora Velvet", tier: "free", badge: "Included · Emotional", description: "Nuanced, high-chemistry emotional dialogue.", provider: "Sora In-House" },
+      { id: "haru-noir", name: "Sora Noir", tier: "free", badge: "Included · Atmospheric", description: "Rich sensory descriptions and grounded pacing.", provider: "Sora In-House" },
+      { id: "haru-pulse", name: "Sora Pulse", tier: "free", badge: "Included · Fast Dialogue", description: "Snappy, fast-paced conversational banter.", provider: "Sora In-House" },
+      { id: "grok-beta", name: "Grok 2 (xAI)", tier: "premium", badge: "Flagship · 128k", description: "Direct unthrottled xAI flagship routing.", provider: "xAI" },
+      { id: "openrouter-hermes-3", name: "Hermes 3 Llama-3.1 70B", tier: "premium", badge: "Flagship · 128k", description: "Unfiltered deep character roleplay flagship.", provider: "NousResearch" },
+      { id: "openai-gpt-4o", name: "GPT-4o (OpenAI)", tier: "premium", badge: "Flagship · 128k", description: "High-reasoning flagship intelligence.", provider: "OpenAI" },
+      { id: "gemini-1.5-pro", name: "Gemini 1.5 Pro", tier: "premium", badge: "Flagship · 1M", description: "Massive 1M token context memory.", provider: "Google" }
+    ];
   }
+
+  const freeModels = state.adapters.filter((m) => m.tier === "free");
+  const premiumModels = state.adapters.filter((m) => m.tier === "premium");
+
+  document.querySelectorAll(".model-dropdown-populate").forEach((selectEl) => {
+    const currentVal = selectEl.value;
+    selectEl.innerHTML = "";
+
+    const freeGroup = document.createElement("optgroup");
+    freeGroup.label = "Sora Standard Models (Included Free)";
+    freeModels.forEach((m) => {
+      const opt = document.createElement("option");
+      opt.value = m.id;
+      opt.textContent = `${m.name} (${m.badge.replace("Included · ", "")})`;
+      freeGroup.appendChild(opt);
+    });
+    selectEl.appendChild(freeGroup);
+
+    const premGroup = document.createElement("optgroup");
+    premGroup.label = "Verified Flagship Models (Premium)";
+    premiumModels.forEach((m) => {
+      const unlocked = isModelUnlocked(m);
+      const opt = document.createElement("option");
+      opt.value = m.id;
+      opt.textContent = `${m.name} — ${unlocked ? "Unlocked" : "🔒 Pro/Ultra Required"}`;
+      premGroup.appendChild(opt);
+    });
+    selectEl.appendChild(premGroup);
+
+    if (currentVal && currentVal !== "haru-rp-v1") {
+      selectEl.value = currentVal;
+    } else {
+      selectEl.value = "haru-core";
+    }
+  });
+
+  renderAdaptersTable();
 }
 
 function renderAdaptersTable() {
@@ -512,18 +671,22 @@ async function loadCharacters() {
     favorites_only: isFav ? "true" : "false",
   });
   try {
-    state.characters = await window.api.request(`/api/v1/characters?${qs.toString()}`);
+    state.characters = await window.api.request(`/api/v1/characters?${qs.toString()}`, { timeout: 2500 });
     renderCharacterGrid();
   } catch (err) {
-    showToast(`Failed loading directory: ${err.message}`);
+    // Offline / standalone APK fallback: filter bundled catalog
+    filterLocalCharacters();
   }
 }
 
 async function loadTemplates() {
   try {
-    state.templates = await window.api.request("/api/v1/templates");
+    state.templates = await window.api.request("/api/v1/templates", { timeout: 2500 });
     renderTemplateDropdown("All");
-  } catch {}
+  } catch {
+    state.templates = [...(window.SORA_DEFAULT_CATALOG || [])];
+    renderTemplateDropdown("All");
+  }
 }
 
 function renderTemplateDropdown(genderFilter = "All") {
@@ -672,16 +835,18 @@ function renderCharacterGrid() {
 // --- Active Sessions List ---
 async function loadSessions() {
   try {
-    state.sessions = await window.api.request("/api/v1/sessions");
-    const badge = document.getElementById("chats-count-badge");
-    if (state.sessions.length > 0) {
-      badge.textContent = state.sessions.length;
-      badge.classList.remove("hidden");
-    } else {
-      badge.classList.add("hidden");
-    }
-    renderSessionsList();
-  } catch {}
+    state.sessions = await window.api.request("/api/v1/sessions", { timeout: 2500 });
+  } catch {
+    state.sessions = getLocalSessions();
+  }
+  const badge = document.getElementById("chats-count-badge");
+  if (state.sessions && state.sessions.length > 0) {
+    badge.textContent = state.sessions.length;
+    badge.classList.remove("hidden");
+  } else {
+    badge.classList.add("hidden");
+  }
+  renderSessionsList();
 }
 
 function renderSessionsList() {
@@ -689,7 +854,7 @@ function renderSessionsList() {
   if (!listEl) return;
   listEl.innerHTML = "";
 
-  if (!state.sessions.length) {
+  if (!state.sessions || !state.sessions.length) {
     listEl.innerHTML = `
       <div class="glass-card" style="grid-column: 1 / -1; text-align:center; padding: 2rem;">
         <h3>No active sessions</h3>
@@ -726,7 +891,11 @@ function renderSessionsList() {
 
     item.querySelector(`[data-del-session="${s.id}"]`).addEventListener("click", async (e) => {
       e.stopPropagation();
-      await window.api.request(`/api/v1/sessions/${s.id}`, { method: "DELETE" });
+      try {
+        await window.api.request(`/api/v1/sessions/${s.id}`, { method: "DELETE", timeout: 2500 });
+      } catch {}
+      const local = getLocalSessions().filter((ls) => ls.id !== s.id);
+      saveLocalSessions(local);
       showToast("Session removed");
       await loadSessions();
     });
@@ -737,9 +906,11 @@ function renderSessionsList() {
 
 async function loadMyCharacters() {
   try {
-    state.myCharacters = await window.api.request("/api/v1/characters?mine_only=true");
-    renderMyCharactersList();
-  } catch {}
+    state.myCharacters = await window.api.request("/api/v1/characters?mine_only=true", { timeout: 2500 });
+  } catch {
+    state.myCharacters = getLocalMyCharacters();
+  }
+  renderMyCharactersList();
 }
 
 function renderMyCharactersList() {
@@ -902,20 +1073,67 @@ async function openCharacterChat(characterId, forceNew = false) {
         character_id: characterId,
         force_new: forceNew,
       }),
+      timeout: 2500,
     });
     mountChatDrawer(sessionData);
     loadSessions();
     loadPlatformStats();
+    return;
   } catch (err) {
-    showToast(`Error starting session: ${err.message}`);
+    console.warn("Backend session request failed, initiating local session:", err);
   }
+
+  // Standalone offline session
+  const char = (state.characters || []).find((c) => c.id === characterId) ||
+               (window.SORA_DEFAULT_CATALOG || []).find((c) => c.id === characterId);
+  if (!char) {
+    showToast("Character not found");
+    return;
+  }
+
+  const localSessions = getLocalSessions();
+  let existing = !forceNew ? localSessions.find((s) => s.character_id === characterId) : null;
+
+  if (!existing) {
+    existing = {
+      id: `local_sess_${Date.now()}_${char.id}`,
+      character_id: char.id,
+      character_name: char.name,
+      character_avatar: char.avatar_url,
+      character: char,
+      user_id: state.user?.id || "guest",
+      selected_model: char.default_model || "haru-core",
+      memory_notes: "",
+      last_message: (char.greeting || "").slice(0, 80),
+      messages: [
+        {
+          id: `msg_init_${Date.now()}`,
+          role: "assistant",
+          content: char.greeting || `*Smiles warmly as you approach.* "Welcome. I'm ${char.name}. Tell me what's on your mind."`,
+          model: getPublicModelName(char.default_model),
+          created_at: new Date().toISOString(),
+        },
+      ],
+    };
+    localSessions.unshift(existing);
+    saveLocalSessions(localSessions);
+  }
+
+  mountChatDrawer(existing);
+  renderSessionsList();
 }
 
 async function openExistingSession(sessionId) {
   try {
-    const sessionData = await window.api.request(`/api/v1/sessions/${sessionId}`);
+    const sessionData = await window.api.request(`/api/v1/sessions/${sessionId}`, { timeout: 2500 });
     mountChatDrawer(sessionData);
+    return;
   } catch (err) {
+    const local = getLocalSessions().find((s) => s.id === sessionId);
+    if (local) {
+      mountChatDrawer(local);
+      return;
+    }
     showToast(`Could not load session: ${err.message}`);
   }
 }
@@ -2004,6 +2222,13 @@ function bindUIEvents() {
         content,
         model: selectedModel,
         persona_id: selectedPersona || null,
+        character_name: state.activeSession.character?.name,
+        personality: state.activeSession.character?.personality,
+        scenario: state.activeSession.character?.scenario,
+        local_messages: (state.activeSession.messages || []).map((m) => ({
+          role: m.role,
+          content: m.content,
+        })).concat([{ role: "user", content }]),
       },
       {
         onMeta: (meta) => {
@@ -2033,6 +2258,13 @@ function bindUIEvents() {
             { id: userRow.dataset.msgId, role: "user", content, model_used: "user" },
             { id: doneEvt.message_id, role: "assistant", content: finalContent, model_used: finalLabel }
           );
+          state.activeSession.last_message = finalContent.slice(0, 80);
+          const sessions = getLocalSessions();
+          const idx = sessions.findIndex((s) => s.id === state.activeSession.id);
+          if (idx >= 0) sessions[idx] = state.activeSession;
+          else sessions.unshift(state.activeSession);
+          saveLocalSessions(sessions);
+
           loadPlatformStats();
 
           // Auto-play voice narration if user enabled TTS toggle
