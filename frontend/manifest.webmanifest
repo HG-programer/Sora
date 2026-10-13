@@ -1,0 +1,19 @@
+{
+  "name": "Haru — Character & Story Lounge",
+  "short_name": "Haru",
+  "description": "Interactive fiction and character sessions.",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#151210",
+  "theme_color": "#151210",
+  "categories": ["entertainment", "books", "games"],
+  "icons": [
+    {
+      "src": "/assets/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

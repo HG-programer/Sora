@@ -1,0 +1,15 @@
+{
+  "appId": "com.haru.emochi",
+  "appName": "Haru-Emochi",
+  "webDir": "frontend",
+  "bundledWebRuntime": false,
+  "server": {
+    "androidScheme": "http",
+    "cleartext": true,
+    "allowNavigation": ["*"]
+  },
+  "android": {
+    "allowMixedContent": true,
+    "backgroundColor": "#090b12"
+  }
+}

@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <rect width="512" height="512" rx="108" fill="#1d1815"/>
+  <rect x="24" y="24" width="464" height="464" rx="88" fill="none" stroke="#3d322a" stroke-width="8"/>
+  <rect x="44" y="44" width="424" height="424" rx="72" fill="#261f1b" stroke="#d97757" stroke-width="3" stroke-opacity="0.45"/>
+  <text x="256" y="272" font-family="Georgia, 'Times New Roman', serif" font-size="250" font-weight="600" fill="#f5efe6" text-anchor="middle" dominant-baseline="central">H</text>
+  <circle cx="364" cy="348" r="16" fill="#d97757"/>
+</svg>

@@ -1,0 +1,282 @@
+// frontend/js/api.js
+const STORAGE_KEYS = {
+  TOKEN: "haru_emochi_jwt_token",
+  SERVER_URL: "haru_emochi_server_url",
+  BYOK: "haru_emochi_byok_keys",
+  PREMIUM_PASS: "haru_emochi_premium_pass",
+  CHAT_BGS: "haru_emochi_chat_bgs",
+};
+
+const DISTRIBUTED_GATEWAY = "https://text.pollinations.ai/openai";
+
+const HARU_FREE_MODELS = {
+  "haru-core": { label: "Haru Core v2", temp: 0.82, hint: "" },
+  "haru-velvet": {
+    label: "Haru Velvet",
+    temp: 0.92,
+    hint: "(Style directive: Expressive, emotionally nuanced, unfiltered creative fiction and character chemistry.)",
+  },
+  "haru-noir": {
+    label: "Haru Noir",
+    temp: 0.88,
+    hint: "(Style directive: Atmospheric, grounded narrative detail, strong environmental sensory pacing.)",
+  },
+  "haru-pulse": {
+    label: "Haru Pulse",
+    temp: 0.74,
+    hint: "(Style directive: Crisp, natural, fast-paced conversational dialogue.)",
+  },
+  "haru-rp-v1": { label: "Haru Core v2", temp: 0.82, hint: "" },
+};
+
+class HaruEmochiAPI {
+  getBaseUrl() {
+    const saved = (localStorage.getItem(STORAGE_KEYS.SERVER_URL) || "").trim();
+    if (saved) return saved.replace(/\/+$/, "");
+    if (window.location.protocol === "capacitor:" || (window.location.hostname === "localhost" && window.location.port === "")) {
+      return "http://10.0.2.2:5050";
+    }
+    return "";
+  }
+
+  resolveAssetUrl(url) {
+    if (!url) return "/assets/icon.svg";
+    if (url.startsWith("http://") || url.startsWith("https://") || url.startsWith("data:")) {
+      return url;
+    }
+    const base = this.getBaseUrl();
+    return base ? `${base}${url.startsWith("/") ? "" : "/"}${url}` : url;
+  }
+
+  getToken() {
+    return localStorage.getItem(STORAGE_KEYS.TOKEN) || "";
+  }
+
+  setToken(token) {
+    if (token) localStorage.setItem(STORAGE_KEYS.TOKEN, token);
+    else localStorage.removeItem(STORAGE_KEYS.TOKEN);
+  }
+
+  getByokKeys() {
+    try {
+      return JSON.parse(localStorage.getItem(STORAGE_KEYS.BYOK) || "{}");
+    } catch {
+      return {};
+    }
+  }
+
+  setByokKeys(keysObj) {
+    localStorage.setItem(STORAGE_KEYS.BYOK, JSON.stringify(keysObj || {}));
+  }
+
+  hasPremiumPass() {
+    return localStorage.getItem(STORAGE_KEYS.PREMIUM_PASS) === "active";
+  }
+
+  setPremiumPass(active) {
+    if (active) localStorage.setItem(STORAGE_KEYS.PREMIUM_PASS, "active");
+    else localStorage.removeItem(STORAGE_KEYS.PREMIUM_PASS);
+  }
+
+  getChatBgConfig(sessionId, characterId, defaultBanner = "") {
+    try {
+      const store = JSON.parse(localStorage.getItem(STORAGE_KEYS.CHAT_BGS) || "{}");
+      const entry = store[`session_${sessionId}`] || store[`char_${characterId}`] || null;
+      if (entry) {
+        return {
+          url: entry.url ?? defaultBanner,
+          dim: typeof entry.dim === "number" ? entry.dim : 68,
+        };
+      }
+    } catch {}
+    return { url: defaultBanner || "", dim: 68 };
+  }
+
+  setChatBgConfig(sessionId, characterId, { url, dim }) {
+    try {
+      const store = JSON.parse(localStorage.getItem(STORAGE_KEYS.CHAT_BGS) || "{}");
+      const cfg = { url: url || "", dim: typeof dim === "number" ? dim : 68 };
+      if (sessionId) store[`session_${sessionId}`] = cfg;
+      if (characterId) store[`char_${characterId}`] = cfg;
+      localStorage.setItem(STORAGE_KEYS.CHAT_BGS, JSON.stringify(store));
+    } catch {}
+  }
+
+  async uploadImageFile(file, kind = "image") {
+    const maxDim = kind === "avatar" ? 512 : 1600;
+    const dataUrl = await new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onerror = () => reject(new Error("Could not read image file"));
+      reader.onload = () => {
+        const img = new Image();
+        img.onerror = () => resolve(reader.result);
+        img.onload = () => {
+          let w = img.width;
+          let h = img.height;
+          if (w > maxDim || h > maxDim) {
+            if (w > h) {
+              h = Math.round((h * maxDim) / w);
+              w = maxDim;
+            } else {
+              w = Math.round((w * maxDim) / h);
+              h = maxDim;
+            }
+          }
+          const canvas = document.createElement("canvas");
+          canvas.width = w;
+          canvas.height = h;
+          const ctx = canvas.getContext("2d");
+          ctx.drawImage(img, 0, 0, w, h);
+          resolve(canvas.toDataURL("image/jpeg", 0.88));
+        };
+        img.src = reader.result;
+      };
+      reader.readAsDataURL(file);
+    });
+
+    const res = await this.request("/api/v1/upload", {
+      method: "POST",
+      body: JSON.stringify({ data_url: dataUrl, kind }),
+    });
+    return res.url;
+  }
+
+  async request(path, options = {}) {
+    const url = `${this.getBaseUrl()}${path}`;
+    const headers = {
+      "Content-Type": "application/json",
+      ...(options.headers || {}),
+    };
+    const token = this.getToken();
+    if (token) {
+      headers["Authorization"] = `Bearer ${token}`;
+    }
+
+    const resp = await fetch(url, {
+      ...options,
+      headers,
+    });
+
+    if (!resp.ok) {
+      let errDetail = `HTTP ${resp.status}`;
+      try {
+        const errJson = await resp.json();
+        errDetail = errJson.detail || errJson.error || errDetail;
+      } catch {}
+      throw new Error(errDetail);
+    }
+    return resp.json();
+  }
+
+  async streamMessage(sessionId, payload, { onMeta, onToken, onDone, onError }) {
+    const model = payload.model || "haru-core";
+    const freeSpec = HARU_FREE_MODELS[model];
+    const byok = this.getByokKeys();
+
+    // Use distributed client-side inference for standard Haru free-tier models
+    // unless the developer/user explicitly configured an upstream key override
+    const hasCustomOverride =
+      (model in { "haru-velvet": 1, "haru-noir": 1 } && byok.openrouter) ||
+      (model === "haru-pulse" && (byok.groq || byok.gemini));
+
+    if (freeSpec && !hasCustomOverride) {
+      try {
+        const prep = await this.request(`/api/v1/sessions/${sessionId}/prepare`, {
+          method: "POST",
+          body: JSON.stringify(payload),
+        });
+        if (onMeta) onMeta({ type: "meta", user_message_id: prep.user_message_id, model: freeSpec.label });
+
+        const messages = [...(prep.llm_messages || [])];
+        if (freeSpec.hint && messages.length > 0 && messages[0].role === "system") {
+          messages[0] = {
+            role: "system",
+            content: `${messages[0].content}\n${freeSpec.hint}`,
+          };
+        }
+
+        const llmResp = await fetch(DISTRIBUTED_GATEWAY, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            model: "openai-fast",
+            messages,
+            temperature: freeSpec.temp,
+          }),
+        });
+
+        if (llmResp.ok) {
+          const llmData = await llmResp.json();
+          const content = (llmData.choices?.[0]?.message?.content || "").trim();
+          if (content) {
+            const words = content.split(" ");
+            for (let i = 0; i < words.length; i++) {
+              const chunk = words[i] + (i < words.length - 1 ? " " : "");
+              if (onToken) onToken(chunk);
+              await new Promise((r) => setTimeout(r, 12));
+            }
+            const saved = await this.request(`/api/v1/sessions/${sessionId}/save_assistant`, {
+              method: "POST",
+              body: JSON.stringify({ content, model: freeSpec.label }),
+            });
+            if (onDone) onDone({ type: "done", message_id: saved.message_id, model: freeSpec.label, content });
+            return;
+          }
+        }
+      } catch {
+        // Fall through to backend SSE stream if client-side fetch failed
+      }
+    }
+
+    const url = `${this.getBaseUrl()}/api/v1/sessions/${sessionId}/stream`;
+    const headers = {
+      "Content-Type": "application/json",
+    };
+    const token = this.getToken();
+    if (token) headers["Authorization"] = `Bearer ${token}`;
+
+    try {
+      const resp = await fetch(url, {
+        method: "POST",
+        headers,
+        body: JSON.stringify({
+          ...payload,
+          api_keys: this.getByokKeys(),
+        }),
+      });
+
+      if (!resp.ok) {
+        const errData = await resp.json().catch(() => ({}));
+        throw new Error(errData.detail || `Stream error (${resp.status})`);
+      }
+
+      const reader = resp.body.getReader();
+      const decoder = new TextDecoder("utf-8");
+      let buffer = "";
+
+      while (true) {
+        const { value, done } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+
+        const parts = buffer.split("\n\n");
+        buffer = parts.pop() || "";
+
+        for (const block of parts) {
+          const line = block.trim();
+          if (!line.startsWith("data: ")) continue;
+          try {
+            const event = JSON.parse(line.slice(6));
+            if (event.type === "meta" && onMeta) onMeta(event);
+            else if (event.type === "token" && onToken) onToken(event.content);
+            else if (event.type === "done" && onDone) onDone(event);
+          } catch {}
+        }
+      }
+    } catch (err) {
+      if (onError) onError(err);
+    }
+  }
+}
+
+window.api = new HaruEmochiAPI();

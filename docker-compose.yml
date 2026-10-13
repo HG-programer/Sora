@@ -1,0 +1,29 @@
+version: "3.9"
+
+services:
+  db:
+    image: postgres:16-alpine
+    restart: always
+    environment:
+      POSTGRES_USER: haru
+      POSTGRES_PASSWORD: haru_password
+      POSTGRES_DB: haru_emochi
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  api:
+    build: .
+    restart: always
+    ports:
+      - "5050:5050"
+    environment:
+      DATABASE_URL: postgresql+asyncpg://haru:haru_password@db:5432/haru_emochi
+      MAX_CONCURRENT_LLM_REQUESTS: 300
+      RATE_LIMIT_REQUESTS_PER_MINUTE: 120
+    depends_on:
+      - db
+
+volumes:
+  pgdata:

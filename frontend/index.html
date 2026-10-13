@@ -1,0 +1,673 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <meta name="theme-color" content="#151210" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <title>Haru — Character &amp; Story Lounge</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..600;1,6..72,400..500&amp;family=Plus+Jakarta+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet" />
+  <link rel="manifest" href="/manifest.webmanifest" />
+  <link rel="icon" type="image/svg+xml" href="/assets/icon.svg" />
+  <link rel="stylesheet" href="/css/style.css" />
+</head>
+<body>
+  <div id="app-shell">
+    <!-- Sidebar (Desktop) / Bottom Bar (Android & Mobile) -->
+    <nav id="main-nav" aria-label="Primary Navigation">
+      <div class="brand-logo" id="nav-logo-btn">
+        <img src="/assets/icon.svg" alt="Haru" class="brand-icon" />
+        <div class="brand-text">
+          <span class="brand-title">Haru</span>
+          <span class="brand-sub">Story &amp; Character Lounge</span>
+        </div>
+      </div>
+
+      <div class="nav-section-label">Library</div>
+      <div class="nav-links">
+        <button class="nav-item active" data-tab="discover">
+          <svg class="nav-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></svg>
+          <span class="nav-label">Directory</span>
+        </button>
+        <button class="nav-item" data-tab="chats">
+          <svg class="nav-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+          <span class="nav-label">Sessions</span>
+          <span id="chats-count-badge" class="nav-badge hidden">0</span>
+        </button>
+        <button class="nav-item" data-tab="create">
+          <svg class="nav-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          <span class="nav-label">Create</span>
+        </button>
+        <button class="nav-item" data-tab="personas">
+          <svg class="nav-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          <span class="nav-label">Profiles</span>
+        </button>
+        <button class="nav-item" data-tab="settings">
+          <svg class="nav-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+          <span class="nav-label">Configuration</span>
+        </button>
+      </div>
+
+      <div class="nav-footer">
+        <div id="user-pill" class="user-pill" title="Manage account">
+          <img id="nav-user-avatar" src="/assets/icon.svg" alt="User" class="user-avatar-sm" />
+          <div class="user-pill-info">
+            <span id="nav-user-name" class="user-name-sm">Loading...</span>
+            <span id="nav-user-status" class="user-status-sm">Guest</span>
+          </div>
+        </div>
+      </div>
+    </nav>
+
+    <!-- Main Content Viewport -->
+    <main id="viewport">
+      <!-- Top Bar -->
+      <header class="top-bar">
+        <div class="top-bar-left">
+          <img src="/assets/icon.svg" alt="Logo" class="mobile-only-logo" />
+          <div class="breadcrumb-row">
+            <span class="breadcrumb-root">Haru</span>
+            <span class="breadcrumb-sep">/</span>
+            <h1 id="view-title" class="view-title">Character Directory</h1>
+          </div>
+        </div>
+
+        <div class="top-bar-right">
+          <div id="platform-live-pill" class="live-metrics-pill">
+            <span class="pulse-dot"></span>
+            <span id="metrics-text">Online</span>
+          </div>
+          <button id="open-premium-btn" class="btn-glass btn-sm" title="View Verified Flagship Models">
+            Flagship Models
+          </button>
+          <button id="install-pwa-btn" class="btn-glass btn-sm hidden" title="Install Android Application">
+            Install App
+          </button>
+          <button id="open-auth-btn" class="btn-glass btn-sm">
+            <span id="top-auth-label">Account</span>
+          </button>
+        </div>
+      </header>
+
+      <!-- TAB 1: CHARACTER DIRECTORY -->
+      <section id="tab-discover" class="tab-panel active">
+        <div class="discover-hero">
+          <div class="discover-hero-copy">
+            <span class="editorial-eyebrow">Curated Interactive Fiction</span>
+            <h2 class="discover-headline">Choose a character to begin your story.</h2>
+            <p class="discover-subline">Grounded personalities, persistent session memory, and expressive dialogue across every genre.</p>
+          </div>
+          <div class="discover-hero-actions">
+            <button type="button" class="btn-primary" onclick="switchTab('create')">Create Character</button>
+          </div>
+        </div>
+
+        <div class="discover-toolbar">
+          <div class="search-row">
+            <div class="search-input-wrap">
+              <svg class="search-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+              <input type="search" id="char-search-input" placeholder="Search by name, trope, or keyword (e.g. Romance, Betrayal, School)..." autocomplete="off" />
+            </div>
+            <select id="char-gender-select" class="select-pill" aria-label="Filter by gender">
+              <option value="All">Gender: All</option>
+              <option value="Female">Gender: Female</option>
+              <option value="Male">Gender: Male</option>
+              <option value="Non-Binary">Gender: Non-Binary</option>
+            </select>
+            <select id="char-sort-select" class="select-pill" aria-label="Sort order">
+              <option value="trending">Sort: Most Active</option>
+              <option value="likes">Sort: Highest Rated</option>
+              <option value="newest">Sort: Recently Added</option>
+            </select>
+            <span id="directory-count-badge" class="badge-mini badge-warm" style="display:inline-flex;align-items:center;padding:0.35rem 0.65rem;font-size:0.75rem;">210 Characters</span>
+          </div>
+
+          <div class="category-strip" id="category-strip">
+            <button class="cat-chip active" data-category="All">All</button>
+            <button class="cat-chip" data-category="Uncensored 18+">18+ Uncensored</button>
+            <button class="cat-chip" data-category="Romance">Romance</button>
+            <button class="cat-chip" data-category="School">School &amp; Academy</button>
+            <button class="cat-chip" data-category="Betrayal">Betrayal</button>
+            <button class="cat-chip" data-category="Enemies to Lovers">Enemies to Lovers</button>
+            <button class="cat-chip" data-category="Slow Burn">Slow Burn</button>
+            <button class="cat-chip" data-category="Dark Romance">Dark Romance</button>
+            <button class="cat-chip" data-category="Mafia">Mafia &amp; Syndicate</button>
+            <button class="cat-chip" data-category="Fantasy">Fantasy</button>
+            <button class="cat-chip" data-category="Royalty">Royalty</button>
+            <button class="cat-chip" data-category="Angst">Angst</button>
+            <button class="cat-chip" data-category="Slice of Life">Slice of Life</button>
+            <button class="cat-chip" data-category="Anime">Anime</button>
+            <button class="cat-chip" data-category="Sci-Fi">Sci-Fi</button>
+            <button class="cat-chip" data-category="Mystery">Mystery &amp; Noir</button>
+            <button class="cat-chip" data-category="Drama">Drama</button>
+            <button class="cat-chip" data-category="RPG">Tabletop RPG</button>
+            <button class="cat-chip" data-category="Mine">Created by Me</button>
+          </div>
+        </div>
+
+        <div id="character-grid" class="character-grid"></div>
+      </section>
+
+      <!-- TAB 2: ACTIVE SESSIONS -->
+      <section id="tab-chats" class="tab-panel">
+        <div class="page-Intro">
+          <h2>Active Sessions</h2>
+          <p class="muted-text">Persistent conversation threads associated with your account.</p>
+        </div>
+        <div id="sessions-list" class="sessions-list"></div>
+      </section>
+
+      <!-- TAB 3: CREATE CHARACTER -->
+      <section id="tab-create" class="tab-panel">
+        <div class="studio-layout">
+          <form id="create-char-form" class="studio-form glass-card">
+            <div class="studio-form-header">
+              <h2>Character Studio</h2>
+              <p class="muted-text">Design your own character from scratch or load from 210+ ready-made Male &amp; Female templates across all genres (including 18+ Uncensored).</p>
+            </div>
+
+            <!-- 200+ Character Template Preset Loader -->
+            <div class="account-profile-box" style="margin-top:0;">
+              <div style="display:flex;justify-content:space-between;align-items:center;gap:0.5rem;flex-wrap:wrap;margin-bottom:0.45rem;">
+                <strong style="font-size:0.82rem;color:var(--text-main);">Quick-Load Character Template (210+ Presets · Male &amp; Female)</strong>
+                <span class="badge-mini badge-warm">All Genres + Uncensored 18+</span>
+              </div>
+              <div class="upload-input-row">
+                <select id="studio-template-gender" class="select-pill" aria-label="Filter templates by gender">
+                  <option value="All">Template Gender: All</option>
+                  <option value="Female">Female Templates (105)</option>
+                  <option value="Male">Male Templates (103)</option>
+                </select>
+                <select id="studio-template-select" class="select-pill" style="flex:1;min-width:220px;" aria-label="Select a character template">
+                  <option value="">-- Select a Character Template to Pre-Fill Form --</option>
+                </select>
+                <button type="button" id="apply-template-btn" class="btn-glass btn-sm">Load into Studio</button>
+              </div>
+            </div>
+
+            <div class="form-row-3">
+              <div class="form-group">
+                <label for="cc-name">Character Name *</label>
+                <input type="text" id="cc-name" required maxlength="100" placeholder="e.g., Kazuha Shinomiya" />
+              </div>
+              <div class="form-group">
+                <label for="cc-gender">Character Gender *</label>
+                <select id="cc-gender">
+                  <option value="Female">Female</option>
+                  <option value="Male">Male</option>
+                  <option value="Non-Binary">Non-Binary / Other</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="cc-category">Primary Category *</label>
+                <select id="cc-category">
+                  <option value="Romance">Romance</option>
+                  <option value="Uncensored 18+">18+ Uncensored</option>
+                  <option value="School">School &amp; Academy</option>
+                  <option value="Betrayal">Betrayal</option>
+                  <option value="Enemies to Lovers">Enemies to Lovers</option>
+                  <option value="Slow Burn">Slow Burn</option>
+                  <option value="Dark Romance">Dark Romance</option>
+                  <option value="Mafia">Mafia &amp; Syndicate</option>
+                  <option value="Fantasy">Fantasy</option>
+                  <option value="Royalty">Royalty</option>
+                  <option value="Angst">Angst</option>
+                  <option value="Slice of Life">Slice of Life</option>
+                  <option value="Anime">Anime</option>
+                  <option value="Sci-Fi">Sci-Fi</option>
+                  <option value="Mystery">Mystery &amp; Noir</option>
+                  <option value="Drama">Drama</option>
+                  <option value="RPG">Tabletop RPG</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="cc-tagline">Summary / Tagline *</label>
+              <input type="text" id="cc-tagline" required maxlength="240" placeholder="Concise one-line description displayed in the directory" />
+            </div>
+
+            <div class="form-row-2">
+              <div class="form-group">
+                <label for="cc-tags">Trope &amp; Genre Tags (comma-separated or tap below)</label>
+                <input type="text" id="cc-tags" placeholder="Romance, School, Enemies to Lovers, Slow Burn" />
+                <div class="quick-tags-bar" id="cc-quick-tags">
+                  <button type="button" class="quick-tag-chip" data-quick-tag="Uncensored 18+">+ 18+ Uncensored</button>
+                  <button type="button" class="quick-tag-chip" data-quick-tag="Romance">+ Romance</button>
+                  <button type="button" class="quick-tag-chip" data-quick-tag="School">+ School</button>
+                  <button type="button" class="quick-tag-chip" data-quick-tag="Betrayal">+ Betrayal</button>
+                  <button type="button" class="quick-tag-chip" data-quick-tag="Enemies to Lovers">+ Enemies to Lovers</button>
+                  <button type="button" class="quick-tag-chip" data-quick-tag="Slow Burn">+ Slow Burn</button>
+                  <button type="button" class="quick-tag-chip" data-quick-tag="Dark Romance">+ Dark Romance</button>
+                  <button type="button" class="quick-tag-chip" data-quick-tag="Mafia">+ Mafia</button>
+                  <button type="button" class="quick-tag-chip" data-quick-tag="Childhood Friend">+ Childhood Friend</button>
+                  <button type="button" class="quick-tag-chip" data-quick-tag="Arranged Marriage">+ Arranged Marriage</button>
+                  <button type="button" class="quick-tag-chip" data-quick-tag="Possessive">+ Possessive</button>
+                  <button type="button" class="quick-tag-chip" data-quick-tag="Royalty">+ Royalty</button>
+                  <button type="button" class="quick-tag-chip" data-quick-tag="Angst">+ Angst</button>
+                </div>
+              </div>
+              <div class="form-group">
+                <label for="cc-model">Default Model Engine</label>
+                <select id="cc-model" class="model-dropdown-populate"></select>
+              </div>
+            </div>
+
+            <!-- Portrait & Default Chat Scene Background Upload Row -->
+            <div class="form-row-2">
+              <div class="form-group">
+                <label for="cc-avatar">Character Portrait (AI Art, Upload, or URL)</label>
+                <div class="upload-input-row">
+                  <img id="cc-avatar-preview" src="/assets/icon.svg" alt="Preview" class="upload-thumb-preview" />
+                  <input type="text" id="cc-avatar" placeholder="Paste image URL or pick AI art..." style="flex:1;" />
+                  <button type="button" id="cc-random-ai-btn" class="btn-primary btn-sm" title="Generate/Assign AI Portrait">Pick AI Art</button>
+                  <label class="btn-glass btn-sm file-label-btn">
+                    Upload
+                    <input type="file" id="cc-avatar-file" accept="image/*" hidden />
+                  </label>
+                </div>
+                <input type="hidden" id="cc-accent" value="#d97757" />
+              </div>
+
+              <div class="form-group">
+                <label for="cc-banner">Default Chat Background Image (Defaults to Portrait Image)</label>
+                <div class="upload-input-row">
+                  <input type="text" id="cc-banner" placeholder="Leave blank to use Character Portrait as default background..." style="flex:1;" />
+                  <label class="btn-glass btn-sm file-label-btn">
+                    Upload BG
+                    <input type="file" id="cc-banner-file" accept="image/*" hidden />
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="cc-personality">Character Instructions &amp; Persona *</label>
+              <textarea id="cc-personality" rows="3" required placeholder="Define demeanor, speaking style, temperament, and behavioral constraints..."></textarea>
+            </div>
+
+            <div class="form-row-2">
+              <div class="form-group">
+                <label for="cc-backstory">Background Context</label>
+                <textarea id="cc-backstory" rows="3" placeholder="Relevant history, role, and relationship to the user..."></textarea>
+              </div>
+              <div class="form-group">
+                <label for="cc-scenario">Current Setting</label>
+                <textarea id="cc-scenario" rows="3" placeholder="Immediate location and situation at the start of the session..."></textarea>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="cc-greeting">Opening Message * <span class="hint-inline">(Wrap physical actions in *asterisks*)</span></label>
+              <textarea id="cc-greeting" rows="4" required placeholder="*Looks up from the file folder on the desk.* &quot;Glad you made it. Take a look at this report.&quot;"></textarea>
+            </div>
+
+            <div class="form-group">
+              <label for="cc-example">Reference Dialogue (optional)</label>
+              <textarea id="cc-example" rows="2" placeholder="Sample lines to calibrate tone and sentence length..."></textarea>
+            </div>
+
+            <div class="form-footer-row">
+              <label class="checkbox-label">
+                <input type="checkbox" id="cc-public" checked />
+                <span>List in public directory</span>
+              </label>
+              <button type="submit" class="btn-primary">Create &amp; Start Chatting</button>
+            </div>
+          </form>
+
+          <div class="glass-card" style="margin-top: 1.25rem;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.75rem;">
+              <div>
+                <h3>Characters Created by You</h3>
+                <p class="muted-text">Click any character to start a conversation or manage your creations.</p>
+              </div>
+            </div>
+            <div id="my-characters-list" class="sessions-list"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 4: USER PROFILES / PERSONAS -->
+      <section id="tab-personas" class="tab-panel">
+        <div class="studio-layout">
+          <div class="glass-card">
+            <h2>User Roleplay Profiles</h2>
+            <p class="muted-text" style="margin-bottom: 1rem;">Configure the identity and background passed to characters during your conversations.</p>
+
+            <form id="create-persona-form" class="studio-form">
+              <div class="form-row-2">
+                <div class="form-group">
+                  <label for="up-name">Profile Name *</label>
+                  <input type="text" id="up-name" required maxlength="80" placeholder="e.g., Alex Mercer" />
+                </div>
+                <div class="form-group">
+                  <label for="up-desc">Background / Role</label>
+                  <input type="text" id="up-desc" maxlength="400" placeholder="Context about your character or role..." />
+                </div>
+              </div>
+              <div>
+                <button type="submit" class="btn-primary btn-sm">Create Profile</button>
+              </div>
+            </form>
+
+            <div id="personas-list" class="personas-grid"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 5: CONFIGURATION & MODEL ADAPTERS -->
+      <section id="tab-settings" class="tab-panel">
+        <div class="studio-layout">
+          <div class="glass-card">
+            <div style="margin-bottom: 1rem;">
+              <h2>Haru In-House Models (Included Free)</h2>
+              <p class="muted-text">Proprietary Haru character engines included for all users with zero subscription or API key required.</p>
+            </div>
+            <div class="table-wrap">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Model Name</th>
+                    <th>Classification</th>
+                    <th>Tuning Profile</th>
+                    <th>Availability</th>
+                  </tr>
+                </thead>
+                <tbody id="free-adapters-table-body"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="glass-card" style="margin-top: 1rem;">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:1rem;flex-wrap:wrap;margin-bottom: 1rem;">
+              <div>
+                <h2>Verified Flagship Models — Purchase Transparency</h2>
+                <p class="muted-text">Premium tier routes directly to verified official flagship models with full provider disclosure and zero model substitution.</p>
+              </div>
+              <span id="premium-plan-badge" class="badge-mini">Standard Tier</span>
+            </div>
+            <div id="premium-transparency-grid" class="premium-specs-grid"></div>
+          </div>
+
+          <div class="glass-card" style="margin-top: 1rem;">
+            <h3>Developer &amp; Direct Provider Configuration</h3>
+            <p class="muted-text">Optional local device configuration for Android APK remote endpoints or direct flagship provider keys.</p>
+            <form id="byok-form" class="studio-form" style="margin-top: 1rem;">
+              <div class="form-row-2">
+                <div class="form-group">
+                  <label for="cfg-server-url">API Server Endpoint (Android / Remote Host)</label>
+                  <input type="text" id="cfg-server-url" placeholder="Default: current origin (e.g. http://192.168.1.10:5050)" />
+                </div>
+                <div class="form-group">
+                  <label for="cfg-xai-key">xAI Grok-2 API Key</label>
+                  <input type="password" id="cfg-xai-key" placeholder="xai-..." />
+                </div>
+              </div>
+              <div class="form-row-2">
+                <div class="form-group">
+                  <label for="cfg-openrouter-key">Nous Hermes 3 405B Key (OpenRouter)</label>
+                  <input type="password" id="cfg-openrouter-key" placeholder="sk-or-v1-..." />
+                </div>
+                <div class="form-group">
+                  <label for="cfg-openai-key">OpenAI GPT-4o API Key</label>
+                  <input type="password" id="cfg-openai-key" placeholder="sk-..." />
+                </div>
+              </div>
+              <div class="form-row-2">
+                <div class="form-group">
+                  <label for="cfg-gemini-key">Google Gemini 2.0 API Key</label>
+                  <input type="password" id="cfg-gemini-key" placeholder="AIza..." />
+                </div>
+                <div class="form-group">
+                  <label for="cfg-groq-key">High-Speed Compute Key (Optional)</label>
+                  <input type="password" id="cfg-groq-key" placeholder="gsk_..." />
+                </div>
+              </div>
+              <input type="hidden" id="cfg-hf-key" value="" />
+              <input type="hidden" id="cfg-ollama-url" value="" />
+              <div>
+                <button type="submit" class="btn-primary btn-sm">Save Configuration</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- ==========================================================
+         CONVERSATION VIEW DRAWER (WITH CUSTOM BACKGROUND SUPPORT)
+         ========================================================== -->
+    <aside id="chat-drawer" class="chat-drawer hidden" aria-hidden="true">
+      <!-- Custom Chat Window Background Layer & Adjustable Warm Scrim -->
+      <div id="chat-bg-layer" class="chat-bg-layer"></div>
+      <div id="chat-bg-scrim" class="chat-bg-scrim"></div>
+
+      <!-- Chat Top Header -->
+      <header class="chat-header">
+        <div class="chat-header-left">
+          <button id="close-chat-btn" class="icon-btn" title="Return to directory">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+          </button>
+          <img id="chat-char-avatar" src="/assets/icon.svg" alt="Character" class="chat-avatar-header" />
+          <div class="chat-char-meta">
+            <div class="chat-char-title-row">
+              <h2 id="chat-char-name">Character</h2>
+              <span id="chat-char-category" class="badge-mini badge-warm">Category</span>
+            </div>
+            <p id="chat-char-tagline" class="chat-char-tagline"></p>
+          </div>
+        </div>
+
+        <div class="chat-header-controls">
+          <select id="chat-model-select" class="select-pill select-sm model-dropdown-populate" title="Active Model"></select>
+          <select id="chat-persona-select" class="select-pill select-sm" title="Active User Profile"></select>
+          <button id="toggle-bg-btn" class="icon-btn" title="Customize Chat Background Image">Background</button>
+          <button id="toggle-lore-btn" class="icon-btn" title="Context &amp; Notes">Context</button>
+          <button id="new-branch-btn" class="icon-btn" title="New Session">New Session</button>
+        </div>
+      </header>
+
+      <!-- Collapsible Custom Background Image Customizer Panel -->
+      <div id="chat-bg-panel" class="chat-lore-panel hidden">
+        <div class="bg-customizer-wrap">
+          <div class="bg-customizer-col">
+            <h4>Custom Chat Window Background</h4>
+            <p class="muted-text" style="margin-bottom:0.5rem;">Upload your own image or paste a URL for this conversation's background.</p>
+            <div class="upload-input-row">
+              <label class="btn-primary btn-sm file-label-btn">
+                Upload Image
+                <input type="file" id="chat-bg-file-input" accept="image/*" hidden />
+              </label>
+              <input type="text" id="chat-bg-url-input" placeholder="Or paste image URL (https://...)" style="flex:1;" />
+              <button type="button" id="apply-bg-url-btn" class="btn-glass btn-sm">Apply URL</button>
+              <button type="button" id="clear-bg-btn" class="btn-glass btn-sm">Reset</button>
+            </div>
+          </div>
+
+          <div class="bg-customizer-col">
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+              <h4>Scene Presets &amp; Dimming</h4>
+              <span id="bg-dim-label" class="muted-text">Dimming: 68%</span>
+            </div>
+            <div class="scene-presets-row">
+              <button type="button" id="use-char-art-bg-btn" class="chip-action" style="border-color:var(--accent-border);color:#f3b199;">Character AI Art (Default)</button>
+              <button type="button" class="chip-action" data-scene-url="">Solid Espresso</button>
+              <button type="button" class="chip-action" data-scene-url="/api/v1/scene/rainy-cafe">Late-Night Cafe</button>
+              <button type="button" class="chip-action" data-scene-url="/api/v1/scene/candlelit-study">Candlelit Study</button>
+              <button type="button" class="chip-action" data-scene-url="/api/v1/scene/mountain-lodge">Mountain Lodge</button>
+              <button type="button" class="chip-action" data-scene-url="/api/v1/scene/twilight-terrace">Twilight Terrace</button>
+              <button type="button" class="chip-action" data-scene-url="/api/v1/scene/noir-harbor">Noir Harbor</button>
+            </div>
+            <div class="dim-slider-row">
+              <span class="muted-text" style="font-size:0.72rem;">Brighter Image</span>
+              <input type="range" id="chat-bg-dim-slider" min="20" max="92" value="68" />
+              <span class="muted-text" style="font-size:0.72rem;">Darker Contrast</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Collapsible Context & Notes Panel -->
+      <div id="chat-lore-panel" class="chat-lore-panel hidden">
+        <div class="lore-cols">
+          <div>
+            <h4>Character Definition</h4>
+            <p id="chat-lore-personality" class="muted-text"></p>
+            <p id="chat-lore-scenario" class="muted-text" style="margin-top:0.35rem;"></p>
+          </div>
+          <div>
+            <h4>Session Context Notes</h4>
+            <textarea id="chat-memory-input" rows="3" placeholder="Persistent notes included in the system prompt for this session..."></textarea>
+            <button id="save-memory-btn" class="btn-glass btn-sm" style="margin-top:0.4rem;">Update Notes</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Messages Stream Container -->
+      <div id="chat-messages" class="chat-messages"></div>
+
+      <!-- Composer Dock -->
+      <footer class="chat-input-dock">
+        <div class="rp-quick-toolbar">
+          <button type="button" id="insert-action-btn" class="chip-action" title="Insert *action* formatting">
+            Format Action (*...*)
+          </button>
+          <button type="button" id="regenerate-btn" class="chip-action" title="Regenerate last response">
+            Regenerate Response
+          </button>
+          <span id="stream-status-indicator" class="stream-status"></span>
+        </div>
+
+        <form id="chat-send-form" class="chat-send-row">
+          <textarea
+            id="chat-input"
+            rows="1"
+            placeholder="Write a message..."
+            required
+          ></textarea>
+          <button type="submit" id="chat-send-btn" class="btn-send">
+            Send
+          </button>
+        </form>
+      </footer>
+    </aside>
+
+    <!-- ==========================================================
+         ACCOUNT & PROFILE CENTER MODAL
+         ========================================================== -->
+    <div id="auth-modal" class="modal-backdrop hidden">
+      <div class="modal-card glass-card modal-card-wide" style="max-width:480px;">
+        <div class="modal-header">
+          <div>
+            <h3>Account &amp; Profile</h3>
+            <p id="acct-status-subtitle" class="muted-text">Manage your identity, created characters, and cross-device login.</p>
+          </div>
+          <button id="close-auth-modal" class="icon-btn">Close</button>
+        </div>
+
+        <!-- Active Profile Editor -->
+        <div id="account-profile-box" class="account-profile-box">
+          <div class="account-avatar-row">
+            <img id="acct-avatar-preview" src="/assets/icon.svg" alt="Avatar" class="char-avatar-lg" />
+            <div style="flex:1;min-width:0;">
+              <div style="display:flex;align-items:center;gap:0.45rem;flex-wrap:wrap;">
+                <strong id="acct-current-name" style="font-size:0.95rem;">User</strong>
+                <span id="acct-tier-pill" class="badge-mini badge-warm">Guest Session</span>
+              </div>
+              <div id="acct-current-handle" class="muted-text" style="font-size:0.75rem;">@guest</div>
+            </div>
+            <label class="btn-glass btn-sm file-label-btn">
+              Change Avatar
+              <input type="file" id="acct-avatar-file" accept="image/*" hidden />
+            </label>
+          </div>
+
+          <form id="account-profile-form" style="margin-top:0.75rem;display:flex;flex-direction:column;gap:0.55rem;">
+            <div class="form-row-2" style="grid-template-columns: 1fr 1fr;gap:0.55rem;">
+              <div class="form-group">
+                <label for="acct-edit-display">Display Name</label>
+                <input type="text" id="acct-edit-display" maxlength="80" placeholder="Your display name" />
+              </div>
+              <div class="form-group">
+                <label for="acct-edit-bio">Short Bio / Signature</label>
+                <input type="text" id="acct-edit-bio" maxlength="200" placeholder="Writer, RPG fan..." />
+              </div>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:center;gap:0.5rem;">
+              <button type="submit" class="btn-glass btn-sm">Update Profile</button>
+              <button type="button" id="logout-account-btn" class="btn-glass btn-sm hidden">Sign Out</button>
+            </div>
+          </form>
+        </div>
+
+        <!-- Sign In / Register Permanent Account -->
+        <div id="auth-switch-section" style="margin-top:0.95rem;padding-top:0.85rem;border-top:1px solid var(--border-subtle);">
+          <div class="auth-tabs">
+            <button type="button" class="auth-tab active" data-auth-mode="register">Create Permanent Account</button>
+            <button type="button" class="auth-tab" data-auth-mode="login">Sign In to Existing</button>
+          </div>
+
+          <form id="auth-form" style="margin-top:0.8rem;">
+            <div class="form-group">
+              <label for="auth-username">Username</label>
+              <input type="text" id="auth-username" required minlength="3" placeholder="choose_a_username" />
+            </div>
+            <div class="form-group" id="auth-display-group" style="display:flex;margin-top:0.6rem;">
+              <label for="auth-display">Display Name</label>
+              <input type="text" id="auth-display" placeholder="How characters &amp; users see you" />
+            </div>
+            <div class="form-group" style="margin-top:0.6rem;">
+              <label for="auth-password">Password</label>
+              <input type="password" id="auth-password" required minlength="4" placeholder="••••••••" />
+            </div>
+            <p id="auth-error-msg" class="error-text hidden"></p>
+            <button type="submit" id="auth-submit-btn" class="btn-primary" style="width:100%;margin-top:0.8rem;">Save Permanent Account</button>
+          </form>
+
+          <div class="auth-divider"><span>or</span></div>
+          <button type="button" id="new-guest-btn" class="btn-glass btn-sm" style="width:100%;">
+            Switch to Fresh Guest Session
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==========================================================
+         VERIFIED FLAGSHIP MODELS (PURCHASE TRANSPARENCY MODAL)
+         ========================================================== -->
+    <div id="premium-modal" class="modal-backdrop hidden">
+      <div class="modal-card glass-card modal-card-wide">
+        <div class="modal-header">
+          <div>
+            <h3>Verified Flagship Models</h3>
+            <p class="muted-text" style="margin-top:0.15rem;">Full model transparency before you upgrade—every flagship model is explicitly disclosed by provider, parameter count, and context window.</p>
+          </div>
+          <button id="close-premium-modal" class="icon-btn">Close</button>
+        </div>
+
+        <div id="modal-premium-list" class="premium-specs-grid" style="margin-top:0.25rem;"></div>
+
+        <div class="transparency-notice">
+          <strong>Transparency Commitment:</strong> Standard tier users have unlimited access to our in-house <strong>Haru Core v2</strong>, <strong>Haru Velvet</strong>, <strong>Haru Noir</strong>, and <strong>Haru Pulse</strong> engines at no cost. Upgrading to Flagship Access unlocks direct, unthrottled routing to the verified models listed above.
+        </div>
+
+        <div class="modal-actions-row">
+          <button id="close-premium-continue-free" class="btn-glass">Continue with Included Haru Models</button>
+          <button id="activate-premium-btn" class="btn-primary">Unlock Flagship Access ($9/mo)</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Toast Notification Container -->
+    <div id="toast-container" class="toast-container"></div>
+  </div>
+
+  <script src="/js/api.js"></script>
+  <script src="/js/app.js"></script>
+</body>
+</html>
