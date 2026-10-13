@@ -144,3 +144,7 @@ class SendMessageRequest(BaseModel):
 class RegenerateMessageRequest(BaseModel):
     model: Optional[str] = None
     api_keys: Optional[dict[str, str]] = None
+
+class MessageUpdateRequest(BaseModel):
+    content: str = Field(..., min_length=1, max_length=10000)
+

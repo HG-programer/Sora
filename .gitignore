@@ -44,3 +44,4 @@ htmlcov/
 android/.gradle/
 android/app/build/
 android/build/
+scratch/

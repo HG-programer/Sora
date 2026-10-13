@@ -136,6 +136,7 @@
 
           <div class="category-strip" id="category-strip">
             <button class="cat-chip active" data-category="All">All</button>
+            <button class="cat-chip" data-category="Favorites">❤️ Favorites</button>
             <button class="cat-chip" data-category="Uncensored 18+">18+ Uncensored</button>
             <button class="cat-chip" data-category="Romance">Romance</button>
             <button class="cat-chip" data-category="School">School &amp; Academy</button>
@@ -469,6 +470,7 @@
             <div class="chat-char-title-row">
               <h2 id="chat-char-name">Character</h2>
               <span id="chat-char-category" class="badge-mini badge-warm">Category</span>
+              <button type="button" id="chat-favorite-btn" class="icon-btn-round" title="Save to Favorites" style="width:26px;height:26px;border-radius:50%;font-size:0.8rem;display:inline-flex;align-items:center;justify-content:center;padding:0;background:rgba(255,255,255,0.06);border:1px solid var(--border-subtle);cursor:pointer;">🤍</button>
             </div>
             <p id="chat-char-tagline" class="chat-char-tagline"></p>
           </div>
@@ -477,12 +479,16 @@
         <div class="chat-header-controls desktop-controls">
           <select id="chat-model-select" class="select-pill select-sm model-dropdown-populate" title="Active Model"></select>
           <select id="chat-persona-select" class="select-pill select-sm" title="Active User Profile"></select>
-          <button id="toggle-bg-btn" class="icon-btn" title="Customize Chat Background Image">Background</button>
-          <button id="toggle-lore-btn" class="icon-btn" title="Context &amp; Notes">Context</button>
-          <button id="new-branch-btn" class="icon-btn" title="New Session">New Session</button>
+          <button id="chat-tts-toggle-btn" class="icon-btn" title="Toggle Voice Narration">🔊 Voice Off</button>
+          <button id="chat-new-branch-btn" class="icon-btn" title="Start fresh conversation with this character">➕ New Chat</button>
+          <button id="chat-export-btn" class="icon-btn" title="Export roleplay conversation as Markdown">📥 Export</button>
+          <button id="toggle-bg-btn" class="icon-btn" title="Customize Chat Background Image">Atmosphere</button>
+          <button id="toggle-lore-btn" class="icon-btn" title="Context &amp; Memory Notes">Memory</button>
         </div>
 
         <div class="chat-header-mobile-controls">
+          <button type="button" id="chat-mobile-fav-btn" class="icon-btn" style="padding:0.35rem 0.45rem;font-size:0.85rem;" title="Favorite">🤍</button>
+          <button type="button" id="chat-mobile-tts-btn" class="icon-btn" style="padding:0.35rem 0.45rem;font-size:0.85rem;" title="Voice Narration">🔊</button>
           <button type="button" id="chat-mobile-model-btn" class="mobile-chip-pill" title="Active Engine">
             <span class="mobile-bolt-icon">⚡</span>
             <span id="chat-mobile-model-label">Sora Core v2</span>
@@ -659,8 +665,9 @@
             </div>
             <div class="sheet-group" style="padding-top:0.5rem;border-top:1px solid var(--border-subtle);">
               <label class="sheet-label">Session Controls</label>
-              <div class="sheet-actions-row">
-                <button type="button" id="sheet-new-session-btn" class="btn-glass btn-sm">↺ Restart Session</button>
+              <div class="sheet-actions-row" style="display:flex;gap:0.5rem;flex-wrap:wrap;">
+                <button type="button" id="sheet-new-session-btn" class="btn-glass btn-sm">➕ New Chat</button>
+                <button type="button" id="sheet-export-chat-btn" class="btn-glass btn-sm">📥 Export Story (.md)</button>
               </div>
             </div>
           </div>
@@ -677,6 +684,10 @@
           <button type="button" id="regenerate-btn" class="chip-action rp-toolbar-chip" title="Reroll last character response">
             <span class="chip-symbol">↺</span>
             <span>Reroll</span>
+          </button>
+          <button type="button" id="quick-tts-btn" class="chip-action rp-toolbar-chip" title="Toggle Voice Narration">
+            <span class="chip-symbol">🔊</span>
+            <span id="quick-tts-label">Voice: Off</span>
           </button>
           <button type="button" id="mobile-quick-scene-btn" class="chip-action rp-toolbar-chip" title="Scene &amp; Atmosphere">
             <span class="chip-symbol">🎨</span>

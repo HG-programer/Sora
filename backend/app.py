@@ -47,6 +47,7 @@ from schemas import (
     ChatMessageResponse,
     SendMessageRequest,
     RegenerateMessageRequest,
+    MessageUpdateRequest,
 )
 from auth import (
     hash_password,
@@ -681,20 +682,25 @@ async def list_characters(
     search: str = Query(default=""),
     sort: str = Query(default="trending"),
     mine_only: bool = Query(default=False),
+    favorites_only: bool = Query(default=False),
     limit: int = Query(default=250, ge=1, le=500),
     offset: int = Query(default=0, ge=0),
     user: User | None = Depends(get_optional_user),
     db: AsyncSession = Depends(get_db),
 ):
     stmt = select(Character)
-    if mine_only and user:
+    is_favorites = favorites_only or (category and category.strip().lower() in ("favorites", "favourite", "saved"))
+
+    if is_favorites and user:
+        stmt = stmt.join(CharacterLike, CharacterLike.character_id == Character.id).where(CharacterLike.user_id == user.id)
+    elif mine_only and user:
         stmt = stmt.where(Character.creator_id == user.id)
     elif user:
         stmt = stmt.where(or_(Character.is_public == True, Character.creator_id == user.id))
     else:
         stmt = stmt.where(Character.is_public == True)
 
-    if category and category.strip() and category.strip().lower() != "all":
+    if not is_favorites and category and category.strip() and category.strip().lower() != "all":
         cat_clean = category.strip()
         stmt = stmt.where(
             or_(
@@ -973,6 +979,13 @@ async def get_session_detail(
     if not session or not session.character:
         raise HTTPException(status_code=404, detail="Chat session not found")
 
+    liked_stmt = select(CharacterLike.character_id).where(
+        CharacterLike.user_id == user.id,
+        CharacterLike.character_id == session.character.id,
+    )
+    is_liked = bool((await db.execute(liked_stmt)).scalars().first())
+    char_liked_set = {session.character.id} if is_liked else set()
+
     norm_sel = "haru-core" if session.selected_model in ("haru-rp-v1", "", None) else session.selected_model
     return {
         "id": session.id,
@@ -980,7 +993,7 @@ async def get_session_detail(
         "selected_model": norm_sel,
         "persona_id": session.persona_id,
         "memory_notes": session.memory_notes or "",
-        "character": serialize_character(session.character),
+        "character": serialize_character(session.character, liked_ids=char_liked_set),
         "messages": [
             ChatMessageResponse(
                 id=m.id,
@@ -1033,6 +1046,100 @@ async def delete_session(
     await db.delete(session)
     await db.commit()
     return {"ok": True}
+
+
+@app.patch("/api/v1/sessions/{session_id}/messages/{message_id}")
+async def update_message(
+    session_id: str,
+    message_id: str,
+    req: MessageUpdateRequest,
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    stmt = select(ChatSession).where(ChatSession.id == session_id, ChatSession.user_id == user.id)
+    session = (await db.execute(stmt)).scalar_one_or_none()
+    if not session:
+        raise HTTPException(status_code=404, detail="Session not found")
+
+    stmt2 = select(ChatMessage).where(ChatMessage.id == message_id, ChatMessage.session_id == session_id)
+    msg = (await db.execute(stmt2)).scalar_one_or_none()
+    if not msg:
+        raise HTTPException(status_code=404, detail="Message not found")
+
+    msg.content = req.content.strip()
+    session.updated_at = datetime.now(timezone.utc)
+    await db.commit()
+    await db.refresh(msg)
+    return {
+        "id": msg.id,
+        "role": msg.role,
+        "content": msg.content,
+        "model_used": msg.model_used,
+        "created_at": msg.created_at.isoformat() if msg.created_at else "",
+    }
+
+
+@app.delete("/api/v1/sessions/{session_id}/messages/{message_id}")
+async def delete_message(
+    session_id: str,
+    message_id: str,
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    stmt = select(ChatSession).where(ChatSession.id == session_id, ChatSession.user_id == user.id)
+    session = (await db.execute(stmt)).scalar_one_or_none()
+    if not session:
+        raise HTTPException(status_code=404, detail="Session not found")
+
+    stmt2 = select(ChatMessage).where(ChatMessage.id == message_id, ChatMessage.session_id == session_id)
+    msg = (await db.execute(stmt2)).scalar_one_or_none()
+    if not msg:
+        raise HTTPException(status_code=404, detail="Message not found")
+
+    await db.delete(msg)
+    session.updated_at = datetime.now(timezone.utc)
+    await db.commit()
+    return {"ok": True}
+
+
+@app.post("/api/v1/sessions/{session_id}/new_chat")
+async def start_new_chat(
+    session_id: str,
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Creates a fresh conversation branch with the same character while keeping past chats in history."""
+    stmt = select(ChatSession).where(ChatSession.id == session_id, ChatSession.user_id == user.id)
+    old_session = (await db.execute(stmt)).scalar_one_or_none()
+    if not old_session:
+        raise HTTPException(status_code=404, detail="Session not found")
+
+    stmt_char = select(Character).where(Character.id == old_session.character_id)
+    char = (await db.execute(stmt_char)).scalar_one_or_none()
+    if not char:
+        raise HTTPException(status_code=404, detail="Character not found")
+
+    new_session = ChatSession(
+        user_id=user.id,
+        character_id=char.id,
+        persona_id=old_session.persona_id,
+        title=f"Chat with {char.name}",
+        selected_model=old_session.selected_model or "haru-core",
+    )
+    db.add(new_session)
+    await db.flush()
+
+    greeting_msg = ChatMessage(
+        session_id=new_session.id,
+        role="assistant",
+        content=char.greeting,
+        model_used=get_public_model_label(new_session.selected_model),
+    )
+    db.add(greeting_msg)
+    char.chat_count = (char.chat_count or 0) + 1
+    await db.commit()
+    return {"id": new_session.id, "session_id": new_session.id}
+
 
 
 async def _prepare_llm_context(

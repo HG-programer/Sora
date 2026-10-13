@@ -1,132 +1,108 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
   <defs>
-    <!-- Background Gradient: Deep Warm Obsidian to Roasted Espresso -->
-    <linearGradient id="soraBg" x1="0%" y1="0%" x2="0%" y2="100%">
-      <stop offset="0%" stop-color="#241c17"/>
-      <stop offset="50%" stop-color="#1a1411"/>
-      <stop offset="100%" stop-color="#120f0d"/>
+    <!-- Deep obsidian velvet radial canvas -->
+    <radialGradient id="bgGlow" cx="50%" cy="42%" r="65%">
+      <stop offset="0%" stop-color="#241b2e"/>
+      <stop offset="55%" stop-color="#140f1c"/>
+      <stop offset="100%" stop-color="#0a080e"/>
+    </radialGradient>
+
+    <!-- Luxury perimeter bevel -->
+    <linearGradient id="bevelGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fcd34d" stop-opacity="0.5"/>
+      <stop offset="40%" stop-color="#fb7185" stop-opacity="0.25"/>
+      <stop offset="100%" stop-color="#e11d48" stop-opacity="0.1"/>
     </linearGradient>
 
-    <!-- Hairline Outer Rim Gradient -->
-    <linearGradient id="soraRim" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#e07a5f" stop-opacity="0.32"/>
-      <stop offset="100%" stop-color="#e07a5f" stop-opacity="0.08"/>
+    <!-- Upper Flowing Ribbon: Sunset Coral to Golden Peach -->
+    <linearGradient id="upperWing" x1="10%" y1="0%" x2="90%" y2="100%">
+      <stop offset="0%" stop-color="#fef08a"/>
+      <stop offset="35%" stop-color="#f97316"/>
+      <stop offset="100%" stop-color="#e11d48"/>
     </linearGradient>
 
-    <!-- Primary Bubble Gradient: Warm Terracotta Coral -->
-    <linearGradient id="primaryBubble" x1="15%" y1="10%" x2="85%" y2="90%">
-      <stop offset="0%" stop-color="#ea876b"/>
-      <stop offset="60%" stop-color="#d96e4e"/>
-      <stop offset="100%" stop-color="#c65a3b"/>
+    <!-- Lower Flowing Ribbon: Nectar Rose to Amber Bronze -->
+    <linearGradient id="lowerWing" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fb7185"/>
+      <stop offset="60%" stop-color="#ea580c"/>
+      <stop offset="100%" stop-color="#b45309"/>
     </linearGradient>
 
-    <!-- Secondary Companion Bubble: Warm Linen Cream -->
-    <linearGradient id="secondaryBubble" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#fffdfa"/>
-      <stop offset="100%" stop-color="#f5ede3"/>
-    </linearGradient>
+    <!-- Radiant Story Spark Glow -->
+    <radialGradient id="sparkGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="30%" stop-color="#fef08a"/>
+      <stop offset="70%" stop-color="#f59e0b"/>
+      <stop offset="100%" stop-color="#d97706" stop-opacity="0"/>
+    </radialGradient>
 
-    <!-- Drop Shadows for depth -->
-    <filter id="bubbleShadow" x="-15%" y="-15%" width="130%" height="130%">
-      <feDropShadow dx="0" dy="12" stdDeviation="16" flood-color="#0a0807" flood-opacity="0.55"/>
-    </filter>
-
-    <filter id="subShadow" x="-25%" y="-25%" width="150%" height="150%">
-      <feDropShadow dx="0" dy="6" stdDeviation="10" flood-color="#0a0807" flood-opacity="0.45"/>
+    <!-- Soft Drop Shadows -->
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="16" stdDeviation="20" flood-color="#000000" flood-opacity="0.65"/>
     </filter>
   </defs>
 
-  <!-- 1. Base App Squircle Canvas (iOS & Android Standard) -->
-  <rect width="512" height="512" rx="116" fill="url(#soraBg)"/>
+  <!-- 1. Base App Squircle Canvas (iOS & Android Standard Mask) -->
+  <rect width="512" height="512" rx="118" fill="url(#bgGlow)"/>
 
-  <!-- 2. Subtle Precision Hairline Bevel -->
-  <rect x="14" y="14" width="484" height="484" rx="102" fill="none" stroke="url(#soraRim)" stroke-width="2.5"/>
+  <!-- 2. Precision Chamfered Bevel Rim -->
+  <rect x="12" y="12" width="488" height="488" rx="106" fill="none" stroke="url(#bevelGrad)" stroke-width="2.5"/>
 
-  <!-- 3. Soft Ambient Warm Highlight -->
-  <ellipse cx="256" cy="46" rx="160" ry="60" fill="#ea876b" opacity="0.07"/>
+  <!-- 3. Ambient Crown Aura -->
+  <circle cx="256" cy="245" r="140" fill="#f97316" opacity="0.08" filter="blur(30px)"/>
 
-  <!-- 4. Main Character Dialogue Bubble -->
-  <g filter="url(#bubbleShadow)">
-    <!-- Path: Rounded friendly speech bubble with conversational tail -->
-    <path d="M 170 120 
-             H 342 
-             C 392 120, 424 152, 424 202 
-             V 236 
-             C 424 286, 392 318, 342 318 
-             H 232 
-             L 164 366 
-             C 152 374, 138 368, 140 352 
-             L 144 318 
-             C 106 318, 88 286, 88 236 
-             V 202 
-             C 88 152, 120 120, 170 120 Z" 
-          fill="url(#primaryBubble)"/>
+  <!-- 4. Sculpted Sora Emblem ('S' Harmony of Twin Dialogue Wings & Story Spark) -->
+  <g filter="url(#shadow)">
+    <!-- Upper Flowing Ribbon: Sweeping character silhouette / dialogue horizon -->
+    <path d="M 370 126
+             C 275 110, 150 148, 142 228
+             C 136 288, 198 304, 256 312
+             C 214 300, 182 284, 184 246
+             C 188 194, 280 162, 360 178
+             C 382 182, 396 172, 392 152
+             C 388 136, 380 128, 370 126 Z"
+          fill="url(#upperWing)"/>
 
-    <!-- Subtle inner specular curve along top edge -->
-    <path d="M 172 128 H 340 C 382 128, 412 156, 414 198" 
-          fill="none" 
-          stroke="#ffffff" 
-          stroke-width="3" 
-          stroke-linecap="round" 
-          opacity="0.25"/>
+    <!-- Specular highlight on upper crown curve -->
+    <path d="M 348 138 C 280 126, 178 156, 160 216"
+          fill="none" stroke="#ffffff" stroke-width="3" stroke-linecap="round" opacity="0.45"/>
 
-    <!-- 5. Minimalist Character Facial Expression (Human-crafted & Warm) -->
-    <!-- Left Eye: Curious, gentle expressive oval with sparkle -->
-    <ellipse cx="204" cy="204" rx="10" ry="18" fill="#fffdfa"/>
-    <circle cx="201" cy="198" r="4" fill="#d96e4e"/>
+    <!-- Lower Flowing Ribbon: Counter-flowing companion response -->
+    <path d="M 142 386
+             C 237 402, 362 364, 370 284
+             C 376 224, 314 208, 256 200
+             C 298 212, 330 228, 328 266
+             C 324 318, 232 350, 152 334
+             C 130 330, 116 340, 120 360
+             C 124 376, 132 384, 142 386 Z"
+          fill="url(#lowerWing)"/>
 
-    <!-- Right Eye: Playful smiling wink curve -->
-    <path d="M 304 206 C 314 194, 332 194, 342 206" 
-          fill="none" 
-          stroke="#fffdfa" 
-          stroke-width="7" 
-          stroke-linecap="round" 
-          stroke-linejoin="round"/>
+    <!-- Specular highlight on lower base curve -->
+    <path d="M 164 374 C 232 386, 334 356, 352 296"
+          fill="none" stroke="#ffffff" stroke-width="2.5" stroke-linecap="round" opacity="0.3"/>
 
-    <!-- Cheeks: Soft warm peach blush -->
-    <ellipse cx="178" cy="226" rx="14" ry="7" fill="#ffa287" opacity="0.45"/>
-    <ellipse cx="366" cy="226" rx="14" ry="7" fill="#ffa287" opacity="0.45"/>
+    <!-- Central Floating Diamond Story Spark ✦ (The Soul of Sora) -->
+    <!-- Core Spark Glow Halo -->
+    <circle cx="256" cy="256" r="32" fill="url(#sparkGlow)" opacity="0.55"/>
 
-    <!-- Mouth: Subtle friendly smile -->
-    <path d="M 260 228 Q 273 242 286 228" 
-          fill="none" 
-          stroke="#fffdfa" 
-          stroke-width="6" 
-          stroke-linecap="round"/>
+    <!-- 4-Pointed Star Glyph -->
+    <path d="M 256 208
+             Q 256 256 208 256
+             Q 256 256 256 304
+             Q 256 256 304 256
+             Q 256 256 256 208 Z"
+          fill="#ffffff"/>
+
+    <path d="M 256 218
+             Q 256 256 218 256
+             Q 256 256 256 294
+             Q 256 256 294 256
+             Q 256 256 256 218 Z"
+          fill="#fef08a"/>
+
+    <!-- Tiny orbiting story sparks -->
+    <circle cx="360" cy="230" r="3" fill="#fef08a" opacity="0.75"/>
+    <circle cx="152" cy="282" r="2.5" fill="#fcd34d" opacity="0.6"/>
+    <path d="M 378 110 Q 378 118 370 118 Q 378 118 378 126 Q 378 118 386 118 Q 378 118 378 110 Z" fill="#fcd34d" opacity="0.8"/>
   </g>
-
-  <!-- 6. Overlapping Story Companion Bubble (Bottom-Right, creating the 'S' diagonal rhythm) -->
-  <g filter="url(#subShadow)">
-    <!-- Small companion speech bubble -->
-    <path d="M 334 300 
-             H 408 
-             C 434 300, 448 314, 448 340 
-             V 348 
-             C 448 374, 434 388, 408 388 
-             H 384 
-             L 362 408 
-             C 356 413, 350 410, 351 402 
-             L 352 388 
-             C 336 388, 320 374, 320 348 
-             V 340 
-             C 320 314, 334 300, 334 300 Z" 
-          fill="url(#secondaryBubble)"/>
-
-    <!-- 7. Sora 4-Pointed Literary Story Spark Emblem inside Companion Bubble -->
-    <path d="M 384 326 
-             Q 384 344 370 344 
-             Q 384 344 384 362 
-             Q 384 344 398 344 
-             Q 384 344 384 326 Z" 
-          fill="#d96e4e"/>
-  </g>
-
-  <!-- 8. Tiny ambient spark at top-left for storytelling finish -->
-  <path d="M 112 100 
-           Q 112 110 104 110 
-           Q 112 110 112 120 
-           Q 112 110 120 110 
-           Q 112 110 112 100 Z" 
-        fill="#ea876b" 
-        opacity="0.6"/>
 </svg>

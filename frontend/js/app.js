@@ -13,6 +13,8 @@ const state = {
   activeSession: null,
   authMode: "register",
   deferredPwaPrompt: null,
+  ttsAutoPlay: false,
+  isSpeaking: false,
 };
 
 function triggerHaptic(ms = 12) {
@@ -51,6 +53,100 @@ function showToast(message) {
   el.textContent = message;
   container.appendChild(el);
   setTimeout(() => el.remove(), 2800);
+}
+
+let currentSpeakingUtterance = null;
+let currentSpeakingBtn = null;
+
+function stopSpeech() {
+  if (typeof window !== "undefined" && "speechSynthesis" in window) {
+    try { window.speechSynthesis.cancel(); } catch (_) {}
+  }
+  if (currentSpeakingBtn) {
+    currentSpeakingBtn.classList.remove("speaking");
+    currentSpeakingBtn.textContent = "🔊";
+    currentSpeakingBtn = null;
+  }
+  state.isSpeaking = false;
+}
+
+function speakText(rawText, gender = "Female", triggerBtn = null) {
+  if (typeof window === "undefined" || !("speechSynthesis" in window)) {
+    showToast("Voice narration not supported in this browser.");
+    return;
+  }
+
+  if (state.isSpeaking && triggerBtn && triggerBtn === currentSpeakingBtn) {
+    stopSpeech();
+    return;
+  }
+
+  stopSpeech();
+
+  let cleanText = (rawText || "")
+    .replace(/\*([^*]+)\*/g, " ")
+    .replace(/\[[^\]]+\]/g, " ")
+    .replace(/[#*_~`]/g, "")
+    .trim();
+
+  if (!cleanText || cleanText.length < 3) {
+    cleanText = (rawText || "").replace(/[#*_~`]/g, "").trim();
+  }
+  if (!cleanText) return;
+
+  const utterance = new SpeechSynthesisUtterance(cleanText);
+  const voices = window.speechSynthesis.getVoices() || [];
+  const isFemale = (gender || "").toLowerCase() === "female";
+
+  if (voices.length > 0) {
+    let matchedVoice = null;
+    if (isFemale) {
+      matchedVoice = voices.find((v) =>
+        /female|zira|samantha|victoria|karen|susan|moira|fiona|natural.*female/i.test(v.name)
+      );
+    } else {
+      matchedVoice = voices.find((v) =>
+        /male|david|george|alex|daniel|oliver|natural.*male/i.test(v.name)
+      );
+    }
+    if (!matchedVoice) {
+      matchedVoice = voices.find((v) => v.lang.startsWith("en")) || voices[0];
+    }
+    if (matchedVoice) utterance.voice = matchedVoice;
+  }
+
+  utterance.rate = 1.0;
+  utterance.pitch = isFemale ? 1.14 : 0.92;
+
+  if (triggerBtn) {
+    currentSpeakingBtn = triggerBtn;
+    triggerBtn.classList.add("speaking");
+    triggerBtn.textContent = "⏹️";
+  }
+  state.isSpeaking = true;
+
+  utterance.onend = () => {
+    stopSpeech();
+  };
+  utterance.onerror = () => {
+    stopSpeech();
+  };
+
+  window.speechSynthesis.speak(utterance);
+}
+
+function copyFallback(text) {
+  const ta = document.createElement("textarea");
+  ta.value = text;
+  document.body.appendChild(ta);
+  ta.select();
+  try {
+    document.execCommand("copy");
+    showToast("Copied to clipboard 📋");
+  } catch {
+    showToast("Copy failed");
+  }
+  ta.remove();
 }
 
 document.addEventListener("DOMContentLoaded", async () => {
@@ -384,13 +480,15 @@ window.resetDirectoryFilters = resetDirectoryFilters;
 
 async function loadCharacters() {
   const isMine = state.activeCategory === "Mine";
-  const categoryParam = isMine ? "All" : state.activeCategory;
+  const isFav = state.activeCategory === "Favorites";
+  const categoryParam = (isMine || isFav) ? "All" : state.activeCategory;
   const qs = new URLSearchParams({
     category: categoryParam,
     gender: state.activeGender || "All",
     search: state.searchQuery,
     sort: state.sortBy,
     mine_only: isMine ? "true" : "false",
+    favorites_only: isFav ? "true" : "false",
   });
   try {
     state.characters = await window.api.request(`/api/v1/characters?${qs.toString()}`);
@@ -818,6 +916,9 @@ function mountChatDrawer(sessionData) {
     sheetPersonaSelect.value = sessionData.persona_id;
   }
 
+  updateChatFavoriteButtonUI(Boolean(c.liked_by_me));
+  updateTtsButtonsUI(state.ttsAutoPlay);
+
   renderMessagesList();
 }
 
@@ -858,27 +959,268 @@ function renderMessagesList() {
   const userAvatar = window.api.resolveAssetUrl(state.user?.avatar_url);
 
   state.activeSession.messages.forEach((m) => {
-    container.appendChild(createMessageDom(m.role, m.content, m.model_used, charAvatar, userAvatar));
+    container.appendChild(createMessageDom(m, m.content, m.model_used, charAvatar, userAvatar, m.id));
   });
   container.scrollTop = container.scrollHeight;
 }
 
-function createMessageDom(role, content, modelUsed, charAvatar, userAvatar) {
+function createMessageDom(msgOrRole, content, modelUsed, charAvatar, userAvatar, msgId = null) {
+  const role = typeof msgOrRole === "object" ? msgOrRole.role : msgOrRole;
+  let text = typeof msgOrRole === "object" ? msgOrRole.content : content;
+  const model = typeof msgOrRole === "object" ? msgOrRole.model_used : modelUsed;
+  const id = typeof msgOrRole === "object" ? (msgOrRole.id || "") : (msgId || "");
+
   const row = document.createElement("div");
   row.className = `msg-row ${role}`;
+  if (id) row.dataset.msgId = id;
+  row.dataset.rawText = text;
   const avatar = role === "user" ? userAvatar : charAvatar;
+
+  const authorName = role === "user"
+    ? (state.user?.display_name || "You")
+    : (state.activeSession?.character?.name || "Character");
 
   row.innerHTML = `
     <img src="${avatar}" alt="${role}" class="msg-avatar" />
     <div style="min-width:0;flex:1;">
-      <div class="msg-bubble">${formatRoleplayHTML(content)}</div>
-      <div class="msg-meta">
-        <span>${role === "user" ? state.user?.display_name || "You" : state.activeSession.character.name}</span>
-        ${role === "assistant" && modelUsed ? `<span>· ${modelUsed}</span>` : ""}
+      <div class="msg-bubble">${formatRoleplayHTML(text)}</div>
+      <div class="msg-edit-box hidden">
+        <textarea class="msg-inline-edit-input" placeholder="Edit message text..."></textarea>
+        <div class="msg-edit-controls">
+          <button type="button" class="btn-xs btn-outline btn-cancel-edit">Cancel</button>
+          <button type="button" class="btn-xs btn-primary btn-save-edit">Save</button>
+        </div>
+      </div>
+      <div class="msg-meta-row">
+        <div class="msg-meta-info">
+          <span>${authorName}</span>
+          ${role === "assistant" && model ? `<span>· ${model}</span>` : ""}
+        </div>
+        <div class="msg-action-btns">
+          <button type="button" class="msg-act-btn btn-copy-msg" title="Copy message">📋</button>
+          <button type="button" class="msg-act-btn btn-tts-msg" title="Voice narration">🔊</button>
+          <button type="button" class="msg-act-btn btn-edit-msg" title="Edit turn">✏️</button>
+          <button type="button" class="msg-act-btn btn-del-msg" title="Delete turn">🗑️</button>
+        </div>
       </div>
     </div>
   `;
+
+  const bubbleEl = row.querySelector(".msg-bubble");
+  const editBoxEl = row.querySelector(".msg-edit-box");
+  const editInput = row.querySelector(".msg-inline-edit-input");
+
+  // Copy button
+  const copyBtn = row.querySelector(".btn-copy-msg");
+  copyBtn.addEventListener("click", () => {
+    triggerHaptic(8);
+    const toCopy = row.dataset.rawText || text;
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(toCopy)
+        .then(() => showToast("Copied to clipboard 📋"))
+        .catch(() => copyFallback(toCopy));
+    } else {
+      copyFallback(toCopy);
+    }
+  });
+
+  // TTS Voice button
+  const ttsBtn = row.querySelector(".btn-tts-msg");
+  ttsBtn.addEventListener("click", () => {
+    triggerHaptic(10);
+    const toSpeak = row.dataset.rawText || text;
+    const gender = role === "assistant" ? (state.activeSession?.character?.gender || "Female") : "Female";
+    speakText(toSpeak, gender, ttsBtn);
+  });
+
+  // Edit button
+  const editBtn = row.querySelector(".btn-edit-msg");
+  editBtn.addEventListener("click", () => {
+    triggerHaptic(8);
+    const cur = row.dataset.rawText || text;
+    editInput.value = cur;
+    bubbleEl.classList.add("hidden");
+    editBoxEl.classList.remove("hidden");
+    editInput.focus();
+    editInput.style.height = "auto";
+    editInput.style.height = `${Math.max(70, editInput.scrollHeight)}px`;
+  });
+
+  // Cancel edit button
+  const cancelBtn = row.querySelector(".btn-cancel-edit");
+  cancelBtn.addEventListener("click", () => {
+    editBoxEl.classList.add("hidden");
+    bubbleEl.classList.remove("hidden");
+  });
+
+  // Save edit button
+  const saveBtn = row.querySelector(".btn-save-edit");
+  saveBtn.addEventListener("click", async () => {
+    const updated = editInput.value.trim();
+    if (!updated) return;
+    const curId = row.dataset.msgId;
+    if (!curId || !state.activeSession) {
+      row.dataset.rawText = updated;
+      text = updated;
+      bubbleEl.innerHTML = formatRoleplayHTML(updated);
+      editBoxEl.classList.add("hidden");
+      bubbleEl.classList.remove("hidden");
+      return;
+    }
+    try {
+      saveBtn.disabled = true;
+      saveBtn.textContent = "...";
+      await window.api.request(`/api/v1/sessions/${state.activeSession.id}/messages/${curId}`, {
+        method: "PATCH",
+        body: JSON.stringify({ content: updated }),
+      });
+      const localMsg = state.activeSession.messages.find((m) => m.id === curId);
+      if (localMsg) localMsg.content = updated;
+      row.dataset.rawText = updated;
+      text = updated;
+      bubbleEl.innerHTML = formatRoleplayHTML(updated);
+      editBoxEl.classList.add("hidden");
+      bubbleEl.classList.remove("hidden");
+      showToast("Message updated ✏️");
+    } catch (err) {
+      showToast(`Edit failed: ${err.message}`);
+    } finally {
+      saveBtn.disabled = false;
+      saveBtn.textContent = "Save";
+    }
+  });
+
+  // Delete turn button
+  const delBtn = row.querySelector(".btn-del-msg");
+  delBtn.addEventListener("click", async () => {
+    triggerHaptic(12);
+    if (!confirm("Delete this turn from the conversation?")) return;
+    const curId = row.dataset.msgId;
+    if (curId && state.activeSession) {
+      try {
+        await window.api.request(`/api/v1/sessions/${state.activeSession.id}/messages/${curId}`, {
+          method: "DELETE",
+        });
+        state.activeSession.messages = state.activeSession.messages.filter((m) => m.id !== curId);
+      } catch (err) {
+        showToast(`Delete failed: ${err.message}`);
+        return;
+      }
+    }
+    row.remove();
+    showToast("Turn deleted 🗑️");
+  });
+
   return row;
+}
+
+async function toggleActiveCharacterFavorite() {
+  if (!state.activeSession || !state.activeSession.character) return;
+  triggerHaptic(14);
+  const char = state.activeSession.character;
+  try {
+    const res = await window.api.request(`/api/v1/characters/${char.id}/like`, { method: "POST" });
+    char.liked_by_me = res.liked;
+    char.like_count = res.like_count;
+    updateChatFavoriteButtonUI(res.liked);
+    showToast(res.liked ? `Saved ${char.name} to Favorites ❤️` : `Removed ${char.name} from Favorites`);
+    const dChar = state.characters.find((c) => c.id === char.id);
+    if (dChar) {
+      dChar.liked_by_me = res.liked;
+      dChar.like_count = res.like_count;
+    }
+  } catch (err) {
+    showToast(`Favorite failed: ${err.message}`);
+  }
+}
+
+function updateChatFavoriteButtonUI(isLiked) {
+  const desktopBtn = document.getElementById("chat-favorite-btn");
+  const mobileBtn = document.getElementById("chat-mobile-fav-btn");
+  [desktopBtn, mobileBtn].forEach((btn) => {
+    if (!btn) return;
+    if (isLiked) {
+      btn.classList.add("favorited");
+      btn.textContent = "❤️";
+      btn.title = "Saved to Favorites";
+    } else {
+      btn.classList.remove("favorited");
+      btn.textContent = "🤍";
+      btn.title = "Save to Favorites";
+    }
+  });
+}
+
+function toggleTtsNarration() {
+  triggerHaptic(12);
+  state.ttsAutoPlay = !state.ttsAutoPlay;
+  updateTtsButtonsUI(state.ttsAutoPlay);
+  if (!state.ttsAutoPlay) {
+    stopSpeech();
+    showToast("Voice Narration: Muted 🔇");
+  } else {
+    showToast("Voice Narration: Active 🔊");
+    if (state.activeSession && state.activeSession.messages.length > 0) {
+      const lastMsg = state.activeSession.messages[state.activeSession.messages.length - 1];
+      if (lastMsg && lastMsg.role === "assistant") {
+        speakText(lastMsg.content, state.activeSession.character.gender);
+      }
+    }
+  }
+}
+
+function updateTtsButtonsUI(isActive) {
+  const ttsBtn = document.getElementById("chat-tts-toggle-btn");
+  const mobileTtsBtn = document.getElementById("chat-mobile-tts-btn");
+  const quickTtsBtn = document.getElementById("quick-tts-btn");
+
+  if (ttsBtn) {
+    ttsBtn.classList.toggle("active-voice", isActive);
+    ttsBtn.textContent = isActive ? "🔊 Voice On" : "🔇 Voice Off";
+  }
+  if (mobileTtsBtn) {
+    mobileTtsBtn.classList.toggle("active-voice", isActive);
+    mobileTtsBtn.textContent = isActive ? "🔊" : "🔇";
+  }
+  if (quickTtsBtn) {
+    quickTtsBtn.classList.toggle("active-voice", isActive);
+    const chipText = quickTtsBtn.querySelector(".chip-text");
+    if (chipText) chipText.textContent = isActive ? "Voice: On" : "Voice: Off";
+  }
+}
+
+function exportCurrentStoryTranscript() {
+  if (!state.activeSession || !state.activeSession.character) return;
+  triggerHaptic(12);
+  const c = state.activeSession.character;
+  const msgs = state.activeSession.messages || [];
+  const userName = state.user?.display_name || "You";
+  const dateStr = new Date().toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" });
+
+  let md = `# Sora Roleplay: ${c.name}\n\n`;
+  md += `> **Character:** ${c.name} (${c.gender || "Female"} · ${c.category || "Roleplay"})\n`;
+  if (c.tagline) md += `> **Tagline:** ${c.tagline}\n`;
+  if (c.scenario) md += `> **Setting:** ${c.scenario}\n`;
+  md += `> **Date:** ${dateStr}\n\n`;
+  md += `---\n\n`;
+
+  msgs.forEach((m) => {
+    const speaker = m.role === "user" ? userName : c.name;
+    const modelTag = m.role === "assistant" && m.model_used ? ` *(${m.model_used})*` : "";
+    md += `### **${speaker}**${modelTag}\n\n${m.content}\n\n---\n\n`;
+  });
+
+  const blob = new Blob([md], { type: "text/markdown;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  const safeName = c.name.toLowerCase().replace(/[^a-z0-9]+/g, "_");
+  a.href = url;
+  a.download = `${safeName}_story_transcript.md`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+  showToast(`Story transcript exported (.md) 📖`);
 }
 
 // --- Profiles Manager ---
@@ -1515,12 +1857,13 @@ function bindUIEvents() {
     const charAvatar = window.api.resolveAssetUrl(state.activeSession.character.avatar_url);
     const userAvatar = window.api.resolveAssetUrl(state.user?.avatar_url);
 
-    container.appendChild(createMessageDom("user", content, "", charAvatar, userAvatar));
+    const userRow = createMessageDom("user", content, "", charAvatar, userAvatar);
+    container.appendChild(userRow);
 
     const displayModelLabel = getPublicModelName(selectedModel);
     const aiRow = createMessageDom("assistant", "...", displayModelLabel, charAvatar, userAvatar);
     const bubbleEl = aiRow.querySelector(".msg-bubble");
-    const metaEl = aiRow.querySelector(".msg-meta");
+    const metaInfoEl = aiRow.querySelector(".msg-meta-info");
     container.appendChild(aiRow);
     container.scrollTop = container.scrollHeight;
 
@@ -1536,23 +1879,40 @@ function bindUIEvents() {
         persona_id: selectedPersona || null,
       },
       {
+        onMeta: (meta) => {
+          if (meta && meta.user_message_id) {
+            userRow.dataset.msgId = meta.user_message_id;
+          }
+        },
         onToken: (token) => {
           accumulated += token;
+          aiRow.dataset.rawText = accumulated;
           bubbleEl.innerHTML = formatRoleplayHTML(accumulated);
           container.scrollTop = container.scrollHeight;
         },
         onDone: (doneEvt) => {
           const finalLabel = doneEvt.model || displayModelLabel;
-          bubbleEl.innerHTML = formatRoleplayHTML(doneEvt.content || accumulated);
-          if (metaEl && state.activeSession) {
-            metaEl.innerHTML = `<span>${state.activeSession.character.name}</span><span>· ${finalLabel}</span>`;
+          const finalContent = doneEvt.content || accumulated;
+          aiRow.dataset.rawText = finalContent;
+          if (doneEvt.message_id) {
+            aiRow.dataset.msgId = doneEvt.message_id;
+          }
+          bubbleEl.innerHTML = formatRoleplayHTML(finalContent);
+          if (metaInfoEl && state.activeSession) {
+            metaInfoEl.innerHTML = `<span>${state.activeSession.character.name}</span><span>· ${finalLabel}</span>`;
           }
           statusEl.textContent = "";
           state.activeSession.messages.push(
-            { role: "user", content, model_used: "user" },
-            { role: "assistant", content: doneEvt.content || accumulated, model_used: finalLabel }
+            { id: userRow.dataset.msgId, role: "user", content, model_used: "user" },
+            { id: doneEvt.message_id, role: "assistant", content: finalContent, model_used: finalLabel }
           );
           loadPlatformStats();
+
+          // Auto-play voice narration if user enabled TTS toggle
+          if (state.ttsAutoPlay) {
+            const ttsBtn = aiRow.querySelector(".btn-tts-msg");
+            speakText(finalContent, state.activeSession.character.gender, ttsBtn);
+          }
         },
         onError: (err) => {
           bubbleEl.innerHTML = `<span style="color:#f87171;">Error: ${err.message}</span>`;
@@ -1561,6 +1921,42 @@ function bindUIEvents() {
       }
     );
   });
+
+  // --- Chat Toolbar & Header Action Listeners ---
+  const chatFavBtn = document.getElementById("chat-favorite-btn");
+  if (chatFavBtn) chatFavBtn.addEventListener("click", toggleActiveCharacterFavorite);
+  const mobileFavBtn = document.getElementById("chat-mobile-fav-btn");
+  if (mobileFavBtn) mobileFavBtn.addEventListener("click", toggleActiveCharacterFavorite);
+
+  const ttsToggleBtn = document.getElementById("chat-tts-toggle-btn");
+  if (ttsToggleBtn) ttsToggleBtn.addEventListener("click", toggleTtsNarration);
+  const mobileTtsBtn = document.getElementById("chat-mobile-tts-btn");
+  if (mobileTtsBtn) mobileTtsBtn.addEventListener("click", toggleTtsNarration);
+  const quickTtsBtn = document.getElementById("quick-tts-btn");
+  if (quickTtsBtn) quickTtsBtn.addEventListener("click", toggleTtsNarration);
+
+  const chatNewBranchBtn = document.getElementById("chat-new-branch-btn");
+  if (chatNewBranchBtn) {
+    chatNewBranchBtn.addEventListener("click", async () => {
+      if (!state.activeSession) return;
+      triggerHaptic(14);
+      if (!confirm(`Start a fresh conversation branch with ${state.activeSession.character.name}? Your previous story remains safely archived in your chats.`)) return;
+      try {
+        const res = await window.api.request(`/api/v1/sessions/${state.activeSession.id}/new_chat`, { method: "POST" });
+        await loadSessions();
+        const nextId = res.id || res.session_id;
+        await openExistingSession(nextId);
+        showToast(`Started new story branch with ${state.activeSession.character.name} 🌿`);
+      } catch (err) {
+        showToast(`Branching failed: ${err.message}`);
+      }
+    });
+  }
+
+  const chatExportBtn = document.getElementById("chat-export-btn");
+  if (chatExportBtn) chatExportBtn.addEventListener("click", exportCurrentStoryTranscript);
+  const sheetExportBtn = document.getElementById("sheet-export-chat-btn");
+  if (sheetExportBtn) sheetExportBtn.addEventListener("click", exportCurrentStoryTranscript);
 
   document.getElementById("chat-model-select").addEventListener("change", (e) => {
     const chosenId = e.target.value;
