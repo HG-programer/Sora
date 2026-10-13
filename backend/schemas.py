@@ -6,11 +6,12 @@ from typing import Optional
 class AuthRegisterRequest(BaseModel):
     username: str = Field(..., min_length=3, max_length=50)
     password: str = Field(..., min_length=4, max_length=128)
+    email: Optional[str] = Field(default=None, max_length=255)
     display_name: Optional[str] = None
     avatar_url: Optional[str] = None
 
 class AuthLoginRequest(BaseModel):
-    username: str
+    username: str  # Can be username or email address
     password: str
 
 class UserPersonaSchema(BaseModel):
@@ -30,6 +31,10 @@ class UserResponse(BaseModel):
     id: str
     username: str
     display_name: str
+    email: Optional[str] = None
+    tier: str = "free"
+    is_super_admin: bool = False
+    simulated_tier: Optional[str] = None
     avatar_url: str
     bio: str
     is_guest: bool
@@ -39,6 +44,10 @@ class UserUpdateRequest(BaseModel):
     display_name: Optional[str] = Field(default=None, max_length=100)
     bio: Optional[str] = Field(default=None, max_length=500)
     avatar_url: Optional[str] = Field(default=None, max_length=600)
+    email: Optional[str] = Field(default=None, max_length=255)
+
+class TierSimulateRequest(BaseModel):
+    tier: str = Field(..., description="Target tier: super_admin, ultra, pro, or free")
 
 class ImageUploadRequest(BaseModel):
     data_url: str = Field(..., min_length=20)

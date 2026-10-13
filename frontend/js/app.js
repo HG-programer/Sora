@@ -104,9 +104,37 @@ function renderUserHeader() {
   const avatarUrl = window.api.resolveAssetUrl(state.user.avatar_url);
   document.getElementById("nav-user-avatar").src = avatarUrl;
   document.getElementById("nav-user-name").textContent = state.user.display_name;
-  document.getElementById("nav-user-status").textContent = state.user.is_guest
+
+  const isSuper = Boolean(
+    state.user.is_super_admin ||
+    (state.user.email && state.user.email.toLowerCase() === "harshitg933@gmail.com") ||
+    state.user.username === "harshitg933"
+  );
+
+  const userTier = state.user.tier || "free";
+  let tierLabel = "Standard Free Member";
+  let tierClass = "badge-mini badge-warm";
+
+  if (userTier === "super_admin") {
+    tierLabel = "👑 Super Access (Founder)";
+    tierClass = "badge-mini badge-gold";
+  } else if (userTier === "ultra") {
+    tierLabel = "🌟 Ultra Member ($19/mo)";
+    tierClass = "badge-mini badge-ultra";
+  } else if (userTier === "pro") {
+    tierLabel = "💎 Flagship Pro ($9/mo)";
+    tierClass = "badge-mini badge-pro";
+  } else if (state.user.is_guest) {
+    tierLabel = "Temporary Guest";
+    tierClass = "badge-mini badge-warm";
+  }
+
+  document.getElementById("nav-user-status").textContent = isSuper
+    ? `👑 @${state.user.username}`
+    : state.user.is_guest
     ? "Guest Session"
     : `@${state.user.username}`;
+
   document.getElementById("top-auth-label").textContent = state.user.is_guest
     ? `Account (${state.user.display_name})`
     : state.user.display_name;
@@ -118,17 +146,46 @@ function renderUserHeader() {
   if (acctName) acctName.textContent = state.user.display_name;
   const acctHandle = document.getElementById("acct-current-handle");
   if (acctHandle) acctHandle.textContent = `@${state.user.username}`;
+
+  const acctEmail = document.getElementById("acct-current-email");
+  if (acctEmail) {
+    acctEmail.textContent = state.user.email ? `✉ ${state.user.email}` : "No email linked";
+    acctEmail.style.color = state.user.email ? "var(--accent-warm)" : "var(--text-subtle)";
+  }
+
   const acctTier = document.getElementById("acct-tier-pill");
   if (acctTier) {
-    acctTier.textContent = state.user.is_guest ? "Temporary Guest" : "Registered Member";
+    acctTier.textContent = tierLabel;
+    acctTier.className = tierClass;
   }
+
   const editDisplay = document.getElementById("acct-edit-display");
   if (editDisplay) editDisplay.value = state.user.display_name || "";
   const editBio = document.getElementById("acct-edit-bio");
   if (editBio) editBio.value = state.user.bio || "";
+  const editEmail = document.getElementById("acct-edit-email");
+  if (editEmail) editEmail.value = state.user.email || "";
+
   const logoutBtn = document.getElementById("logout-account-btn");
   if (logoutBtn) {
     logoutBtn.classList.toggle("hidden", Boolean(state.user.is_guest));
+  }
+
+  // Founder & Super Admin Panel Visibility
+  const superPanel = document.getElementById("super-admin-panel");
+  if (superPanel) {
+    superPanel.classList.toggle("hidden", !isSuper);
+    if (isSuper) {
+      const activeTag = document.getElementById("super-admin-active-tier-tag");
+      if (activeTag) {
+        activeTag.textContent = userTier === "super_admin"
+          ? "All Unlocked (Owner)"
+          : `Simulating ${userTier.toUpperCase()}`;
+      }
+      document.querySelectorAll(".btn-tier-sim").forEach((btn) => {
+        btn.classList.toggle("active", btn.dataset.sim === userTier);
+      });
+    }
   }
 
   const personaSelect = document.getElementById("chat-persona-select");
@@ -159,7 +216,12 @@ function getPublicModelName(modelId) {
 function isModelUnlocked(adapter) {
   if (!adapter) return true;
   if (adapter.tier === "free") return true;
-  if (adapter.ready || window.api.hasPremiumPass()) return true;
+
+  const activeTier = state.user?.tier || "free";
+  if (activeTier === "super_admin" || activeTier === "ultra" || activeTier === "pro") {
+    return true;
+  }
+
   const keys = window.api.getByokKeys();
   if (adapter.id.startsWith("xai-") && keys.xai) return true;
   if (adapter.id === "openrouter-hermes-3" && keys.openrouter) return true;
@@ -196,7 +258,7 @@ async function loadAdapters() {
         const unlocked = isModelUnlocked(m);
         const opt = document.createElement("option");
         opt.value = m.id;
-        opt.textContent = `${m.name} — ${unlocked ? "Unlocked" : "Flagship Tier"}`;
+        opt.textContent = `${m.name} — ${unlocked ? "Unlocked" : "🔒 Pro/Ultra Required"}`;
         premGroup.appendChild(opt);
       });
       selectEl.appendChild(premGroup);
@@ -221,12 +283,41 @@ function renderAdaptersTable() {
   const planBadge = document.getElementById("premium-plan-badge");
   const activateBtn = document.getElementById("activate-premium-btn");
 
-  const hasPass = window.api.hasPremiumPass();
+  const userTier = state.user?.tier || "free";
+  const isSuper = Boolean(
+    state.user?.is_super_admin ||
+    (state.user?.email && state.user.email.toLowerCase() === "harshitg933@gmail.com") ||
+    state.user?.username === "harshitg933"
+  );
+  const hasPass = isSuper || userTier === "super_admin" || userTier === "ultra" || userTier === "pro";
+
   if (planBadge) {
-    planBadge.textContent = hasPass ? "Flagship Tier Active" : "Standard Tier";
+    if (userTier === "super_admin") {
+      planBadge.textContent = "👑 Super Access (Founder)";
+      planBadge.className = "badge-mini badge-gold";
+    } else if (userTier === "ultra") {
+      planBadge.textContent = "🌟 Ultra Member ($19/mo)";
+      planBadge.className = "badge-mini badge-ultra";
+    } else if (userTier === "pro") {
+      planBadge.textContent = "💎 Flagship Pro ($9/mo)";
+      planBadge.className = "badge-mini badge-pro";
+    } else {
+      planBadge.textContent = "Standard Free Tier";
+      planBadge.className = "badge-mini";
+    }
   }
+
   if (activateBtn) {
-    activateBtn.textContent = hasPass ? "Flagship Access Active (Click to Reset)" : "Unlock Flagship Access ($9/mo)";
+    if (isSuper) {
+      activateBtn.textContent = "👑 Super Access Active (Founder)";
+      activateBtn.disabled = true;
+    } else if (hasPass) {
+      activateBtn.textContent = "Plan Active";
+      activateBtn.disabled = true;
+    } else {
+      activateBtn.textContent = "Unlock Flagship Access ($9/mo)";
+      activateBtn.disabled = false;
+    }
   }
 
   const freeModels = state.adapters.filter((a) => a.tier === "free");
@@ -1571,16 +1662,66 @@ function bindUIEvents() {
     try {
       const display_name = document.getElementById("acct-edit-display").value.trim();
       const bio = document.getElementById("acct-edit-bio").value.trim();
+      const email = document.getElementById("acct-edit-email")?.value.trim() || null;
       state.user = await window.api.request("/api/v1/auth/me", {
         method: "PATCH",
-        body: JSON.stringify({ display_name, bio }),
+        body: JSON.stringify({ display_name, bio, email }),
       });
       renderUserHeader();
-      showToast("Profile updated");
+      loadAdapters();
+      showToast(
+        state.user.is_super_admin
+          ? "👑 Super Access active! Founder privileges unlocked."
+          : "Profile updated"
+      );
     } catch (err) {
       showToast(`Update failed: ${err.message}`);
     }
   });
+
+  // Founder Tier Simulator Buttons
+  document.querySelectorAll(".btn-tier-sim").forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      const targetTier = btn.dataset.sim;
+      try {
+        const updatedUser = await window.api.request("/api/v1/auth/simulate-tier", {
+          method: "POST",
+          body: JSON.stringify({ tier: targetTier }),
+        });
+        state.user = updatedUser;
+        renderUserHeader();
+        loadAdapters();
+        showToast(
+          targetTier === "super_admin"
+            ? "👑 Super Access Active: All models and tiers unlocked"
+            : targetTier === "free"
+            ? "🔒 Free Tier Simulated: Flagship models blocked with upgrade prompt"
+            : `Testing as ${targetTier.toUpperCase()} Tier`
+        );
+      } catch (err) {
+        showToast(`Simulation error: ${err.message}`);
+      }
+    });
+  });
+
+  // One-Click Claim Super Access Button for harshitg933@gmail.com
+  const claimSuperBtn = document.getElementById("claim-super-access-btn");
+  if (claimSuperBtn) {
+    claimSuperBtn.addEventListener("click", async () => {
+      try {
+        showToast("Activating Super Access for harshitg933@gmail.com...");
+        const res = await window.api.request("/api/v1/auth/claim-super", { method: "POST" });
+        window.api.setToken(res.access_token);
+        state.user = res.user;
+        renderUserHeader();
+        renderPersonasList();
+        loadAdapters();
+        showToast("👑 Super Access Activated: Welcome harshitg933@gmail.com!");
+      } catch (err) {
+        showToast(`Activation failed: ${err.message}`);
+      }
+    });
+  }
 
   document.querySelectorAll(".auth-tab").forEach((t) => {
     t.addEventListener("click", () => {
@@ -1589,6 +1730,10 @@ function bindUIEvents() {
       state.authMode = t.dataset.authMode;
       const isReg = state.authMode === "register";
       document.getElementById("auth-display-group").style.display = isReg ? "flex" : "none";
+      const emailGrp = document.getElementById("auth-email-group");
+      if (emailGrp) emailGrp.style.display = isReg ? "flex" : "none";
+      const userLabel = document.getElementById("auth-username-label");
+      if (userLabel) userLabel.textContent = isReg ? "Username" : "Username or Email";
       document.getElementById("auth-submit-btn").textContent = isReg
         ? "Save Permanent Account"
         : "Sign In";
@@ -1602,20 +1747,29 @@ function bindUIEvents() {
     const username = document.getElementById("auth-username").value.trim();
     const password = document.getElementById("auth-password").value;
     const display_name = document.getElementById("auth-display").value.trim();
+    const email = document.getElementById("auth-email")?.value.trim() || null;
 
     try {
       const endpoint = state.authMode === "register" ? "/api/v1/auth/register" : "/api/v1/auth/login";
+      const payload = state.authMode === "register"
+        ? { username, password, display_name, email }
+        : { username, password };
       const res = await window.api.request(endpoint, {
         method: "POST",
-        body: JSON.stringify({ username, password, display_name }),
+        body: JSON.stringify(payload),
       });
       window.api.setToken(res.access_token);
       state.user = res.user;
       renderUserHeader();
       renderPersonasList();
       await Promise.all([loadCharacters(), loadMyCharacters(), loadSessions(), loadPlatformStats()]);
+      loadAdapters();
       authModal.classList.add("hidden");
-      showToast(`Signed in as ${state.user.display_name}`);
+      showToast(
+        state.user.is_super_admin
+          ? `👑 Welcome Founder! Super Access unlocked for ${state.user.display_name}`
+          : `Signed in as ${state.user.display_name}`
+      );
     } catch (err) {
       errEl.textContent = err.message;
       errEl.classList.remove("hidden");

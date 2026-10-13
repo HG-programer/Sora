@@ -29,3 +29,11 @@ OLLAMA_BASE_URL = os.getenv("OLLAMA_BASE_URL", "http://127.0.0.1:11434")
 
 HOST = os.getenv("HOST", "0.0.0.0")
 PORT = int(os.getenv("PORT", "5050"))
+
+# Super Admin / Founder emails that automatically receive Super Access (All Tiers Unlocked)
+SUPER_ADMIN_EMAILS = {
+    email.strip().lower()
+    for email in os.getenv("SUPER_ADMIN_EMAILS", "harshitg933@gmail.com").split(",")
+    if email.strip()
+}
+

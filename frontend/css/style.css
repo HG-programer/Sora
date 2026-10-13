@@ -2101,3 +2101,59 @@ input:focus, textarea:focus, select:focus {
     height: 240px;
   }
 }
+
+/* --- Founder & Super Admin Tier Simulator --- */
+.super-admin-panel {
+  transition: all 0.2s ease;
+}
+
+.tier-sim-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.45rem;
+}
+
+.btn-tier-sim {
+  padding: 0.5rem 0.65rem;
+  font-size: 0.74rem;
+  font-weight: 600;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-secondary);
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.15s ease;
+}
+
+.btn-tier-sim:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text-main);
+  border-color: rgba(217, 119, 87, 0.4);
+}
+
+.btn-tier-sim.active {
+  background: rgba(217, 119, 87, 0.18);
+  border-color: #d97757;
+  color: #fff;
+  box-shadow: 0 0 10px rgba(217, 119, 87, 0.25);
+}
+
+.badge-gold {
+  background: #e0a458 !important;
+  color: #18120f !important;
+  font-weight: 700 !important;
+}
+
+.badge-pro {
+  background: rgba(14, 165, 233, 0.18) !important;
+  color: #38bdf8 !important;
+  border: 1px solid rgba(56, 189, 248, 0.4) !important;
+}
+
+.badge-ultra {
+  background: rgba(168, 85, 247, 0.18) !important;
+  color: #c084fc !important;
+  border: 1px solid rgba(192, 132, 252, 0.4) !important;
+}
+

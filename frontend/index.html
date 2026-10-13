@@ -722,6 +722,7 @@
                 <span id="acct-tier-pill" class="badge-mini badge-warm">Guest Session</span>
               </div>
               <div id="acct-current-handle" class="muted-text" style="font-size:0.75rem;">@guest</div>
+              <div id="acct-current-email" class="muted-text" style="font-size:0.75rem;color:var(--text-subtle);">No email linked</div>
             </div>
             <label class="btn-glass btn-sm file-label-btn">
               Change Avatar
@@ -740,11 +741,35 @@
                 <input type="text" id="acct-edit-bio" maxlength="200" placeholder="Writer, RPG fan..." />
               </div>
             </div>
+            <div class="form-group">
+              <label for="acct-edit-email">Account Email <span class="muted-text">(harshitg933@gmail.com unlocks Super Access)</span></label>
+              <input type="email" id="acct-edit-email" placeholder="harshitg933@gmail.com" />
+            </div>
             <div style="display:flex;justify-content:space-between;align-items:center;gap:0.5rem;">
               <button type="submit" class="btn-glass btn-sm">Update Profile</button>
               <button type="button" id="logout-account-btn" class="btn-glass btn-sm hidden">Sign Out</button>
             </div>
           </form>
+        </div>
+
+        <!-- Founder & Super Admin Control Panel (Visible to harshitg933@gmail.com) -->
+        <div id="super-admin-panel" class="super-admin-panel hidden" style="margin-top:0.85rem;padding:0.85rem;background:rgba(217,119,87,0.08);border:1px solid rgba(217,119,87,0.35);border-radius:12px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:0.5rem;flex-wrap:wrap;margin-bottom:0.4rem;">
+            <div style="display:flex;align-items:center;gap:0.4rem;">
+              <span class="badge-mini" style="background:#e0a458;color:#18120f;font-weight:700;">👑 SUPER ACCESS</span>
+              <strong style="font-size:0.82rem;color:var(--text-main);">harshitg933@gmail.com</strong>
+            </div>
+            <span id="super-admin-active-tier-tag" class="badge-mini badge-warm">All Unlocked</span>
+          </div>
+          <p class="muted-text" style="font-size:0.76rem;margin-bottom:0.55rem;line-height:1.4;">
+            As Founder, you have universal super access. Click below to simulate different tiers and test user blocks/paywalls in real time:
+          </p>
+          <div class="tier-sim-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:0.4rem;">
+            <button type="button" class="btn-tier-sim active" data-sim="super_admin">👑 Super Access (Full)</button>
+            <button type="button" class="btn-tier-sim" data-sim="ultra">🌟 Ultra Tier ($19/mo)</button>
+            <button type="button" class="btn-tier-sim" data-sim="pro">💎 Flagship Pro ($9/mo)</button>
+            <button type="button" class="btn-tier-sim" data-sim="free">🔒 Free Tier (Simulate Block)</button>
+          </div>
         </div>
 
         <!-- Sign In / Register Permanent Account -->
@@ -756,8 +781,12 @@
 
           <form id="auth-form" style="margin-top:0.8rem;">
             <div class="form-group">
-              <label for="auth-username">Username</label>
+              <label for="auth-username" id="auth-username-label">Username</label>
               <input type="text" id="auth-username" required minlength="3" placeholder="choose_a_username" />
+            </div>
+            <div class="form-group" id="auth-email-group" style="display:flex;flex-direction:column;margin-top:0.6rem;">
+              <label for="auth-email">Email Address <span class="muted-text">(Enter harshitg933@gmail.com for Super Access)</span></label>
+              <input type="email" id="auth-email" placeholder="harshitg933@gmail.com" />
             </div>
             <div class="form-group" id="auth-display-group" style="display:flex;margin-top:0.6rem;">
               <label for="auth-display">Display Name</label>
@@ -770,6 +799,12 @@
             <p id="auth-error-msg" class="error-text hidden"></p>
             <button type="submit" id="auth-submit-btn" class="btn-primary" style="width:100%;margin-top:0.8rem;">Save Permanent Account</button>
           </form>
+
+          <div style="margin-top:0.75rem;padding-top:0.65rem;border-top:1px dashed var(--border-subtle);text-align:center;">
+            <button type="button" id="claim-super-access-btn" class="btn-glass btn-sm" style="width:100%;font-size:0.78rem;color:#e0a458;border-color:rgba(224,164,88,0.4);">
+              👑 One-Click Super Access (harshitg933@gmail.com)
+            </button>
+          </div>
 
           <div class="auth-divider"><span>or</span></div>
           <button type="button" id="new-guest-btn" class="btn-glass btn-sm" style="width:100%;">

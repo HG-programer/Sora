@@ -22,6 +22,10 @@ class User(Base):
     password_hash: Mapped[str] = mapped_column(String(256), nullable=False)
     avatar_url: Mapped[str] = mapped_column(String(500), default="")
     bio: Mapped[str] = mapped_column(String(500), default="")
+    email: Mapped[str | None] = mapped_column(String(255), unique=True, index=True, nullable=True)
+    tier: Mapped[str] = mapped_column(String(32), default="free")
+    is_super_admin: Mapped[bool] = mapped_column(Boolean, default=False)
+    simulated_tier: Mapped[str | None] = mapped_column(String(32), nullable=True)
     is_guest: Mapped[bool] = mapped_column(Boolean, default=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
 

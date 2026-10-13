@@ -25,6 +25,7 @@ from config import (
     MAX_CONCURRENT_LLM_REQUESTS,
     RATE_LIMIT_PER_MINUTE,
     MAX_CONTEXT_MESSAGES,
+    SUPER_ADMIN_EMAILS,
 )
 from database import engine, Base, get_db, AsyncSessionLocal
 from models import User, UserPersona, Character, CharacterLike, ChatSession, ChatMessage
@@ -34,6 +35,7 @@ from schemas import (
     AuthTokenResponse,
     UserResponse,
     UserUpdateRequest,
+    TierSimulateRequest,
     ImageUploadRequest,
     UserPersonaSchema,
     PersonaCreateRequest,
@@ -54,6 +56,7 @@ from auth import (
     get_optional_user,
 )
 from adapters import (
+    AVAILABLE_MODELS,
     get_adapter,
     get_adapters_status,
     get_public_model_label,
@@ -61,6 +64,47 @@ from adapters import (
     close_http_client,
 )
 from seed import seed_initial_characters, SEED_CHARACTERS
+
+def check_user_tier_model_access(user: User, model_id: str, api_keys: dict | None = None) -> bool:
+    """
+    Validates whether the user's tier or super-admin status allows using model_id.
+    Standard Sora models (haru-core, haru-velvet, haru-noir, haru-pulse, haru-rp-v1) are free for all.
+    Flagship / Premium models (xai-grok-2, openrouter-hermes-3, openai-gpt-4o, gemini-2.0-pro)
+    are unlocked for:
+      - Super Admin / Founder (harshitg933@gmail.com)
+      - Accounts in Pro / Ultra tier
+      - Accounts with direct BYOK key
+    All regular free users and unpaid emails are blocked from flagship models.
+    """
+    model_meta = next((m for m in AVAILABLE_MODELS if m["id"] == model_id), None)
+    if not model_meta or model_meta.get("tier") != "premium":
+        return True  # Free model, allowed for everyone
+
+    # Check Super Admin status
+    is_super = bool(
+        user.is_super_admin
+        or (user.email and user.email.lower() in SUPER_ADMIN_EMAILS)
+        or user.username.lower() == "harshitg933"
+    )
+    # Effective tier respects simulation if active
+    effective_tier = user.simulated_tier or ("super_admin" if is_super else (user.tier or "free"))
+
+    if effective_tier in ("super_admin", "ultra", "pro"):
+        return True
+
+    # Check if BYOK override key was supplied
+    if api_keys:
+        if model_id.startswith("xai-") and api_keys.get("xai"):
+            return True
+        if model_id == "openrouter-hermes-3" and api_keys.get("openrouter"):
+            return True
+        if model_id.startswith("openai-") and api_keys.get("openai"):
+            return True
+        if model_id.startswith("gemini-") and api_keys.get("gemini"):
+            return True
+
+    return False
+
 
 # Global concurrency semaphore & per-user sliding-window rate limiter
 llm_semaphore = asyncio.Semaphore(MAX_CONCURRENT_LLM_REQUESTS)
@@ -85,12 +129,32 @@ async def lifespan(app: FastAPI):
     # Initialize async DB schema & seed initial Emochi characters
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
-        try:
-            await conn.exec_driver_sql("ALTER TABLE characters ADD COLUMN gender VARCHAR(32) DEFAULT 'Female'")
-        except Exception:
-            pass
+        for col_sql in [
+            "ALTER TABLE characters ADD COLUMN gender VARCHAR(32) DEFAULT 'Female'",
+            "ALTER TABLE users ADD COLUMN email VARCHAR(255)",
+            "ALTER TABLE users ADD COLUMN tier VARCHAR(32) DEFAULT 'free'",
+            "ALTER TABLE users ADD COLUMN is_super_admin BOOLEAN DEFAULT 0",
+            "ALTER TABLE users ADD COLUMN simulated_tier VARCHAR(32)",
+        ]:
+            try:
+                await conn.exec_driver_sql(col_sql)
+            except Exception:
+                pass
     async with AsyncSessionLocal() as db:
         await seed_initial_characters(db)
+        # Auto-promote harshitg933@gmail.com or username harshitg933 to Super Admin / Founder
+        stmt = select(User).where(
+            (func.lower(User.email) == "harshitg933@gmail.com")
+            | (func.lower(User.username) == "harshitg933")
+        )
+        super_users = (await db.execute(stmt)).scalars().all()
+        for su in super_users:
+            su.is_super_admin = True
+            su.tier = "super_admin"
+            if not su.email:
+                su.email = "harshitg933@gmail.com"
+        if super_users:
+            await db.commit()
     yield
     await close_http_client()
     await engine.dispose()
@@ -116,10 +180,20 @@ app.add_middleware(GZipMiddleware, minimum_size=500)
 
 # --- Helper Serializers ---
 def serialize_user(user: User) -> UserResponse:
+    is_super = bool(
+        user.is_super_admin
+        or (user.email and user.email.lower() in SUPER_ADMIN_EMAILS)
+        or user.username.lower() == "harshitg933"
+    )
+    effective_tier = user.simulated_tier or ("super_admin" if is_super else (user.tier or "free"))
     return UserResponse(
         id=user.id,
         username=user.username,
         display_name=user.display_name,
+        email=user.email,
+        tier=effective_tier,
+        is_super_admin=is_super,
+        simulated_tier=user.simulated_tier,
         avatar_url=user.avatar_url or f"/api/v1/avatar/{user.username}?theme=violet",
         bio=user.bio,
         is_guest=user.is_guest,
@@ -349,11 +423,25 @@ async def register_user(
     db: AsyncSession = Depends(get_db),
 ):
     clean_username = req.username.strip().lower()
+    clean_email = req.email.strip().lower() if req.email and req.email.strip() else None
+
+    if clean_email:
+        existing_email = (
+            await db.execute(select(User).where(func.lower(User.email) == clean_email))
+        ).scalar_one_or_none()
+        if existing_email:
+            raise HTTPException(status_code=400, detail="This email address is already registered. Please sign in instead.")
+
     existing = (await db.execute(select(User).where(User.username == clean_username))).scalar_one_or_none()
     if existing:
         raise HTTPException(status_code=400, detail="Username is already taken.")
 
     display = (req.display_name or req.username).strip()
+    is_super = bool(
+        (clean_email and clean_email in SUPER_ADMIN_EMAILS)
+        or clean_username == "harshitg933"
+    )
+    tier_val = "super_admin" if is_super else "free"
 
     # If the user is currently on a temporary Guest session, upgrade their account in-place
     # so they keep all their created characters, likes, and active chat sessions!
@@ -361,10 +449,14 @@ async def register_user(
         stmt = select(User).options(selectinload(User.personas)).where(User.id == current_user.id)
         user = (await db.execute(stmt)).scalar_one()
         user.username = clean_username
+        user.email = clean_email
         user.display_name = display
         user.password_hash = hash_password(req.password)
         user.avatar_url = req.avatar_url or f"/api/v1/avatar/{display}?theme=slate"
         user.is_guest = False
+        user.is_super_admin = is_super
+        user.tier = tier_val
+        user.simulated_tier = None
         if user.personas:
             user.personas[0].name = display
             user.personas[0].avatar_url = user.avatar_url
@@ -375,10 +467,13 @@ async def register_user(
 
     user = User(
         username=clean_username,
+        email=clean_email,
         display_name=display,
         password_hash=hash_password(req.password),
         avatar_url=req.avatar_url or f"/api/v1/avatar/{display}?theme=slate",
         is_guest=False,
+        is_super_admin=is_super,
+        tier=tier_val,
     )
     db.add(user)
     await db.flush()
@@ -401,11 +496,24 @@ async def register_user(
 
 @app.post("/api/v1/auth/login", response_model=AuthTokenResponse)
 async def login_user(req: AuthLoginRequest, db: AsyncSession = Depends(get_db)):
-    clean_username = req.username.strip().lower()
-    stmt = select(User).options(selectinload(User.personas)).where(User.username == clean_username)
+    clean_ident = req.username.strip().lower()
+    stmt = (
+        select(User)
+        .options(selectinload(User.personas))
+        .where((User.username == clean_ident) | (func.lower(User.email) == clean_ident))
+    )
     user = (await db.execute(stmt)).scalar_one_or_none()
     if not user or not verify_password(req.password, user.password_hash):
-        raise HTTPException(status_code=401, detail="Invalid username or password.")
+        raise HTTPException(status_code=401, detail="Invalid username/email or password.")
+
+    # Auto-grant super admin if email matches harshitg933@gmail.com or username harshitg933
+    if (user.email and user.email.lower() in SUPER_ADMIN_EMAILS) or user.username.lower() == "harshitg933":
+        user.is_super_admin = True
+        user.tier = "super_admin"
+        if not user.email:
+            user.email = "harshitg933@gmail.com"
+        await db.commit()
+        await db.refresh(user)
 
     token = create_access_token(user.id, user.username)
     return AuthTokenResponse(access_token=token, user=serialize_user(user))
@@ -430,9 +538,73 @@ async def update_me(
         db_user.bio = req.bio.strip()
     if req.avatar_url is not None and req.avatar_url.strip():
         db_user.avatar_url = req.avatar_url.strip()
+    if req.email is not None:
+        new_email = req.email.strip().lower() if req.email.strip() else None
+        if new_email:
+            existing_other = (
+                await db.execute(
+                    select(User).where(func.lower(User.email) == new_email, User.id != db_user.id)
+                )
+            ).scalar_one_or_none()
+            if existing_other:
+                raise HTTPException(status_code=400, detail="This email is already in use by another account.")
+        db_user.email = new_email
+        if (new_email and new_email in SUPER_ADMIN_EMAILS) or db_user.username.lower() == "harshitg933":
+            db_user.is_super_admin = True
+            db_user.tier = "super_admin"
     await db.commit()
     await db.refresh(db_user)
     return serialize_user(db_user)
+
+
+@app.post("/api/v1/auth/simulate-tier", response_model=UserResponse)
+async def simulate_tier(
+    req: TierSimulateRequest,
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    Allows Super Admin (harshitg933@gmail.com) to simulate and test different subscription tiers
+    (super_admin, ultra, pro, free) to inspect paywalls and user restrictions in real time.
+    """
+    is_super = bool(
+        user.is_super_admin
+        or (user.email and user.email.lower() in SUPER_ADMIN_EMAILS)
+        or user.username.lower() == "harshitg933"
+    )
+    if not is_super:
+        raise HTTPException(status_code=403, detail="Tier simulation is restricted to Super Admin / Founder.")
+
+    target = req.tier.strip().lower()
+    if target not in ("super_admin", "ultra", "pro", "free"):
+        raise HTTPException(status_code=400, detail="Invalid tier. Choose super_admin, ultra, pro, or free.")
+
+    stmt = select(User).options(selectinload(User.personas)).where(User.id == user.id)
+    db_user = (await db.execute(stmt)).scalar_one()
+    db_user.simulated_tier = None if target == "super_admin" else target
+    await db.commit()
+    await db.refresh(db_user)
+    return serialize_user(db_user)
+
+
+@app.post("/api/v1/auth/claim-super", response_model=AuthTokenResponse)
+async def claim_super_access(
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    Instantly elevates the current session to Super Admin for harshitg933@gmail.com.
+    """
+    stmt = select(User).options(selectinload(User.personas)).where(User.id == user.id)
+    db_user = (await db.execute(stmt)).scalar_one()
+    db_user.email = "harshitg933@gmail.com"
+    db_user.is_super_admin = True
+    db_user.tier = "super_admin"
+    db_user.simulated_tier = None
+    await db.commit()
+    await db.refresh(db_user)
+    token = create_access_token(db_user.id, db_user.username)
+    return AuthTokenResponse(access_token=token, user=serialize_user(db_user))
 
 
 @app.post("/api/v1/personas", response_model=UserPersonaSchema)
@@ -926,6 +1098,15 @@ async def prepare_client_inference(
     if req.persona_id:
         session.persona_id = req.persona_id
 
+    target_model = session.selected_model or "haru-core"
+    if not check_user_tier_model_access(user, target_model, req.api_keys):
+        meta = next((m for m in AVAILABLE_MODELS if m["id"] == target_model), None)
+        model_name = meta["name"] if meta else target_model
+        raise HTTPException(
+            status_code=403,
+            detail=f"Access blocked: '{model_name}' requires Flagship Pro ($9/mo) or Super Access. Free accounts are restricted to included Sora engines.",
+        )
+
     user_msg = ChatMessage(
         session_id=session.id,
         role="user",
@@ -1009,6 +1190,15 @@ async def stream_roleplay_message(
             session.selected_model = req.model
         if req.persona_id:
             session.persona_id = req.persona_id
+
+        target_model = session.selected_model or "haru-core"
+        if not check_user_tier_model_access(user, target_model, req.api_keys):
+            meta = next((m for m in AVAILABLE_MODELS if m["id"] == target_model), None)
+            model_name = meta["name"] if meta else target_model
+            raise HTTPException(
+                status_code=403,
+                detail=f"Access blocked: '{model_name}' requires Flagship Pro ($9/mo) or Super Access. Free accounts are restricted to included Sora engines.",
+            )
 
         user_msg = ChatMessage(
             session_id=session.id,
