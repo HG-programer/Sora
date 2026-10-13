@@ -1,6 +1,6 @@
 {
-  "appId": "com.haru.emochi",
-  "appName": "Haru-Emochi",
+  "appId": "com.haru.sora",
+  "appName": "Sora",
   "webDir": "frontend",
   "bundledWebRuntime": false,
   "server": {

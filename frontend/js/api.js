@@ -10,23 +10,23 @@ const STORAGE_KEYS = {
 const DISTRIBUTED_GATEWAY = "https://text.pollinations.ai/openai";
 
 const HARU_FREE_MODELS = {
-  "haru-core": { label: "Haru Core v2", temp: 0.82, hint: "" },
+  "haru-core": { label: "Sora Core v2", temp: 0.82, hint: "" },
   "haru-velvet": {
-    label: "Haru Velvet",
+    label: "Sora Velvet",
     temp: 0.92,
     hint: "(Style directive: Expressive, emotionally nuanced, unfiltered creative fiction and character chemistry.)",
   },
   "haru-noir": {
-    label: "Haru Noir",
+    label: "Sora Noir",
     temp: 0.88,
     hint: "(Style directive: Atmospheric, grounded narrative detail, strong environmental sensory pacing.)",
   },
   "haru-pulse": {
-    label: "Haru Pulse",
+    label: "Sora Pulse",
     temp: 0.74,
     hint: "(Style directive: Crisp, natural, fast-paced conversational dialogue.)",
   },
-  "haru-rp-v1": { label: "Haru Core v2", temp: 0.82, hint: "" },
+  "haru-rp-v1": { label: "Sora Core v2", temp: 0.82, hint: "" },
 };
 
 class HaruEmochiAPI {

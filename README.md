@@ -1,20 +1,20 @@
-# Haru-Emochi: Scalable Multi-User AI Character & Roleplay Platform
+# Sora: Scalable Multi-User AI Character & Roleplay Platform
 
-An **Emochi-inspired AI Character Discovery, Creation & Roleplay Platform** with **Android compatibility (PWA + Capacitor APK)** and a **high-concurrency Async FastAPI + SQLAlchemy 2.0 backend** designed to support thousands of users simultaneously.
+An **AI Character Discovery, Creation & Roleplay Platform** with **Android compatibility (PWA + Capacitor APK)** and a **high-concurrency Async FastAPI + SQLAlchemy 2.0 backend** designed to support thousands of users simultaneously.
 
 Built as a next-generation evolution of [`HG-programer/Haru-Gpt`](https://github.com/HG-programer/Haru-Gpt) without modifying the original repository.
 
 ---
 
-## 🚀 How Haru-Emochi Upgrades Original `Haru-Gpt`
+## 🚀 How Sora Upgrades Original `Haru-Gpt`
 
-| Capability | Original `Haru-Gpt` | New `Haru-Emochi` Platform |
+| Capability | Original `Haru-Gpt` | New `Sora` Platform |
 | :--- | :--- | :--- |
 | **Concurrency** | Single-threaded synchronous Flask (`app.run()`) | **Async FastAPI (ASGI / Uvicorn)** + `httpx.AsyncClient` connection pooling + concurrency semaphores |
 | **User Capacity** | Single local browser (`localStorage` only) | **Thousands of users** with JWT Auth, Guest Quick-Auth, per-user rate limiting, and isolated DB sessions |
 | **Database** | None | **Async SQLAlchemy 2.0** (SQLite WAL mode for local dev; PostgreSQL `asyncpg` pool for cloud scale) |
-| **Experience** | Plain single-prompt chat box | **Emochi Character Discovery Feed**, **Deep Character Studio**, **Roleplay Personas**, **`*action*` formatting**, **Reroll/Swipe**, & **Pinned Story Memory** |
-| **LLM Adapters** | Synchronous Groq, Gemini, OpenAI, HF | **Async Streaming SSE Adapters** for Groq, Gemini, OpenAI, HuggingFace, Ollama + **Built-In Haru Roleplay Engine (`haru-rp-v1`)** (works with 0 API keys!) |
+| **Experience** | Plain single-prompt chat box | **Character Discovery Feed**, **Deep Character Studio**, **Roleplay Personas**, **`*action*` formatting**, **Reroll/Swipe**, & **Pinned Story Memory** |
+| **LLM Adapters** | Synchronous Groq, Gemini, OpenAI, HF | **Async Streaming SSE Adapters** for Groq, Gemini, OpenAI, HuggingFace, Ollama + **Built-In Sora Roleplay Engines (`sora-core`, `sora-velvet`, `sora-noir`, `sora-pulse`)** (works with 0 API keys!) |
 | **Android Support** | Desktop HTML only | **Mobile-First Bottom-Nav UI + Installable Android PWA (`manifest.webmanifest` + Service Worker) + Capacitor Native Android APK (`capacitor.config.json`)** |
 
 ---
@@ -33,7 +33,7 @@ python app.py
 ```
 Open **[http://localhost:5050](http://localhost:5050)** in your browser (or on your Android phone over LAN at `http://<YOUR_PC_LAN_IP>:5050`).
 
-> **Zero API Keys Needed to Start:** The built-in `haru-rp-v1` Roleplay Engine works immediately out of the box! You can also add `GROQ_API_KEY`, `GOOGLE_API_KEY`, `OPENAI_API_KEY`, or `HF_API_KEY` in `backend/.env` or directly in the UI's **Adapters & BYOK** tab.
+> **Zero API Keys Needed to Start:** The built-in Sora Roleplay Engine works immediately out of the box! You can also add `GROQ_API_KEY`, `GOOGLE_API_KEY`, `OPENAI_API_KEY`, or `HF_API_KEY` in `backend/.env` or directly in the UI's **Adapters & BYOK** tab.
 
 ---
 

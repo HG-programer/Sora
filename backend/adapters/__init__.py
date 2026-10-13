@@ -45,8 +45,8 @@ AVAILABLE_MODELS = [
     # --- FREE TIER: Custom Proprietary Names (Underlying provider hidden from users) ---
     {
         "id": "haru-core",
-        "name": "Haru Core v2",
-        "provider": "Haru Engine",
+        "name": "Sora Core v2",
+        "provider": "Sora Engine",
         "tier": "free",
         "badge": "Included · Standard",
         "description": "Balanced dialogue, character consistency, and situational awareness.",
@@ -54,8 +54,8 @@ AVAILABLE_MODELS = [
     },
     {
         "id": "haru-velvet",
-        "name": "Haru Velvet",
-        "provider": "Haru Engine",
+        "name": "Sora Velvet",
+        "provider": "Sora Engine",
         "tier": "free",
         "badge": "Included · Unfiltered RP",
         "description": "Tuned for expressive creative writing, romance, and unrestricted roleplay.",
@@ -63,8 +63,8 @@ AVAILABLE_MODELS = [
     },
     {
         "id": "haru-noir",
-        "name": "Haru Noir",
-        "provider": "Haru Engine",
+        "name": "Sora Noir",
+        "provider": "Sora Engine",
         "tier": "free",
         "badge": "Included · Narrative",
         "description": "Focused on atmospheric storytelling, dark fantasy, and long-form plotlines.",
@@ -72,8 +72,8 @@ AVAILABLE_MODELS = [
     },
     {
         "id": "haru-pulse",
-        "name": "Haru Pulse",
-        "provider": "Haru Engine",
+        "name": "Sora Pulse",
+        "provider": "Sora Engine",
         "tier": "free",
         "badge": "Included · Low Latency",
         "description": "High-speed conversational engine for rapid back-and-forth exchanges.",

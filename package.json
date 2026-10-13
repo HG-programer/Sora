@@ -1,7 +1,7 @@
 {
-  "name": "haru-emochi-platform",
+  "name": "sora-platform",
   "version": "2.0.0",
-  "description": "Emochi-style multi-user AI Character & Roleplay platform with Android Capacitor & PWA support",
+  "description": "Sora: Multi-user AI Character & Roleplay platform with Android Capacitor & PWA support",
   "private": true,
   "scripts": {
     "start:backend": "python backend/app.py",

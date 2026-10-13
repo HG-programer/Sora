@@ -165,7 +165,7 @@ async function loadAdapters() {
       selectEl.innerHTML = "";
 
       const freeGroup = document.createElement("optgroup");
-      freeGroup.label = "Haru Standard Models (Included Free)";
+      freeGroup.label = "Sora Standard Models (Included Free)";
       freeModels.forEach((m) => {
         const opt = document.createElement("option");
         opt.value = m.id;
