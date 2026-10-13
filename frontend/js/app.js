@@ -15,6 +15,19 @@ const state = {
   deferredPwaPrompt: null,
 };
 
+function triggerHaptic(ms = 12) {
+  if (typeof navigator !== "undefined" && navigator.vibrate) {
+    try { navigator.vibrate(ms); } catch (_) {}
+  }
+}
+
+function getCharacterCulture(c) {
+  const text = `${c.name} ${c.scenario || ""} ${(c.tags || []).join(" ")}`.toLowerCase();
+  if (text.includes("tokyo") || text.includes("kyoto") || text.includes("osaka") || text.includes("shrine") || text.includes("anime") || text.includes("manga") || text.includes("samurai") || text.includes("yakuza") || text.includes("senpai") || text.includes("sensei") || text.includes("japan")) return { flag: "🇯🇵", label: "JP" };
+  if (text.includes("mumbai") || text.includes("delhi") || text.includes("bangalore") || text.includes("jaipur") || text.includes("kolkata") || text.includes("diwali") || text.includes("desi") || text.includes("bollywood") || text.includes("punjab") || text.includes("kerala") || text.includes("india")) return { flag: "🇮🇳", label: "IN" };
+  return { flag: "🌐", label: "EN" };
+}
+
 function formatRoleplayHTML(rawText) {
   if (!rawText) return "";
   const escaped = rawText
@@ -25,10 +38,13 @@ function formatRoleplayHTML(rawText) {
   return escaped
     .replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>")
     .replace(/\*([^*\n]+)\*/g, '<span class="rp-action">*$1*</span>')
+    .replace(/“([^”\n]+)”/g, '<span class="rp-dialogue">“$1”</span>')
+    .replace(/"([^"\n]+)"/g, '<span class="rp-dialogue">“$1”</span>')
     .replace(/\n/g, "<br/>");
 }
 
 function showToast(message) {
+  triggerHaptic(8);
   const container = document.getElementById("toast-container");
   const el = document.createElement("div");
   el.className = "toast";
@@ -367,6 +383,7 @@ function renderCharacterGrid() {
 
     const previewSnippet = (c.scenario || c.greeting || "").replace(/\*/g, "").slice(0, 110);
     const charGender = c.gender || "Female";
+    const culture = getCharacterCulture(c);
 
     card.innerHTML = `
       <div class="char-tile-media">
@@ -375,6 +392,7 @@ function renderCharacterGrid() {
         <div class="char-tile-badges">
           <span class="badge-mini badge-gender">${charGender}</span>
           <span class="badge-mini badge-warm">${c.category}</span>
+          <span class="badge-mini" title="${culture.label}">${culture.flag} ${culture.label}</span>
         </div>
       </div>
       <div class="char-card-body">
@@ -404,6 +422,7 @@ function renderCharacterGrid() {
       const clickedTag = e.target.closest("[data-filter-tag]");
       if (clickedTag) {
         e.stopPropagation();
+        triggerHaptic(10);
         const tagVal = clickedTag.getAttribute("data-filter-tag") || "";
         const matchingChip = Array.from(document.querySelectorAll(".cat-chip")).find(
           (chip) => chip.dataset.category.toLowerCase() === tagVal.toLowerCase()
@@ -419,11 +438,13 @@ function renderCharacterGrid() {
         loadCharacters();
         return;
       }
+      triggerHaptic(14);
       openCharacterChat(c.id, false);
     });
 
     card.querySelector(`[data-like-id="${c.id}"]`).addEventListener("click", async (e) => {
       e.stopPropagation();
+      triggerHaptic(12);
       try {
         const res = await window.api.request(`/api/v1/characters/${c.id}/like`, { method: "POST" });
         c.liked_by_me = res.liked;
@@ -569,8 +590,13 @@ function applyChatBackground(url, dimPercent = 68, persist = true) {
   const dimSlider = document.getElementById("chat-bg-dim-slider");
   const dimLabel = document.getElementById("bg-dim-label");
 
+  // Mobile sheet elements
+  const sheetUrlInput = document.getElementById("sheet-bg-url-input");
+  const sheetDimSlider = document.getElementById("sheet-dim-slider");
+  const sheetDimVal = document.getElementById("sheet-dim-val");
+
   const cleanUrl = (url || "").trim();
-  const clampedDim = Math.max(20, Math.min(92, Number(dimPercent) || 68));
+  const clampedDim = Math.max(20, Math.min(95, Number(dimPercent) || 68));
 
   if (bgLayer) {
     if (cleanUrl) {
@@ -583,12 +609,16 @@ function applyChatBackground(url, dimPercent = 68, persist = true) {
   if (scrimLayer) {
     const alpha = cleanUrl ? (clampedDim / 100).toFixed(2) : "1";
     scrimLayer.style.background = cleanUrl
-      ? `rgba(21, 18, 16, ${alpha})`
+      ? `radial-gradient(circle at center 35%, rgba(21, 18, 16, ${Math.max(0.25, alpha - 0.25)}) 0%, rgba(21, 18, 16, ${alpha}) 75%, rgba(21, 18, 16, 0.96) 100%)`
       : "var(--bg-deep)";
   }
   if (urlInput) urlInput.value = cleanUrl;
   if (dimSlider) dimSlider.value = String(clampedDim);
   if (dimLabel) dimLabel.textContent = `Dimming: ${clampedDim}%`;
+
+  if (sheetUrlInput) sheetUrlInput.value = cleanUrl;
+  if (sheetDimSlider) sheetDimSlider.value = String(clampedDim);
+  if (sheetDimVal) sheetDimVal.textContent = `${clampedDim}%`;
 
   if (persist && state.activeSession) {
     window.api.setChatBgConfig(
@@ -596,6 +626,22 @@ function applyChatBackground(url, dimPercent = 68, persist = true) {
       state.activeSession.character?.id,
       { url: cleanUrl, dim: clampedDim }
     );
+  }
+}
+
+function applyChatBgBlur(blurMode = "none") {
+  const bgLayer = document.getElementById("chat-bg-layer");
+  if (!bgLayer) return;
+  bgLayer.classList.remove("blur-soft", "blur-dreamy");
+  if (blurMode === "soft") bgLayer.classList.add("blur-soft");
+  if (blurMode === "dreamy") bgLayer.classList.add("blur-dreamy");
+  document.querySelectorAll(".sheet-pill-btn[data-blur]").forEach((btn) => {
+    btn.classList.toggle("active", btn.dataset.blur === blurMode);
+  });
+  if (state.activeSession) {
+    try {
+      localStorage.setItem(`sora_bg_blur_${state.activeSession.id}`, blurMode);
+    } catch (_) {}
   }
 }
 
@@ -632,6 +678,7 @@ function mountChatDrawer(sessionData) {
   const drawer = document.getElementById("chat-drawer");
   drawer.classList.remove("hidden");
   drawer.setAttribute("aria-hidden", "false");
+  document.body.classList.add("chat-active");
 
   document.getElementById("chat-char-avatar").src = window.api.resolveAssetUrl(c.avatar_url);
   document.getElementById("chat-char-name").textContent = c.name;
@@ -639,25 +686,73 @@ function mountChatDrawer(sessionData) {
   document.getElementById("chat-char-tagline").textContent = c.tagline;
 
   document.getElementById("chat-lore-personality").textContent = c.personality;
-  document.getElementById("chat-lore-scenario").textContent = c.scenario ? `Setting: ${c.scenario}` : "";
+  document.getElementById("chat-lore-scenario").textContent = c.scenario ? `Setting: ${c.scenario}` : "Setting: Open World Interactive Roleplay";
   document.getElementById("chat-memory-input").value = sessionData.memory_notes || "";
+
+  // Mobile sheet fields sync
+  const sheetLorePers = document.getElementById("sheet-lore-personality");
+  if (sheetLorePers) sheetLorePers.textContent = c.personality;
+  const sheetLoreScen = document.getElementById("sheet-lore-scenario");
+  if (sheetLoreScen) sheetLoreScen.textContent = c.scenario ? `Setting: ${c.scenario}` : "Setting: Open World Interactive Roleplay";
+  const sheetMemInput = document.getElementById("sheet-memory-input");
+  if (sheetMemInput) sheetMemInput.value = sessionData.memory_notes || "";
 
   // Load saved custom chat background (or character's default banner_url / avatar_url)
   const defaultCharArt = c.banner_url || c.avatar_url || "";
   const bgCfg = window.api.getChatBgConfig(sessionData.id, c.id, defaultCharArt);
   applyChatBackground(bgCfg.url, bgCfg.dim, false);
 
+  const savedBlur = localStorage.getItem(`sora_bg_blur_${sessionData.id}`) || "none";
+  applyChatBgBlur(savedBlur);
+
   const modelSelect = document.getElementById("chat-model-select");
   if (sessionData.selected_model) {
     modelSelect.value = sessionData.selected_model;
+  }
+  const mobileModelLabel = document.getElementById("chat-mobile-model-label");
+  if (mobileModelLabel) {
+    mobileModelLabel.textContent = getPublicModelName(sessionData.selected_model || "haru-core");
+  }
+  const sheetModelSelect = document.getElementById("sheet-model-select");
+  if (sheetModelSelect && sessionData.selected_model) {
+    sheetModelSelect.value = sessionData.selected_model;
   }
 
   const personaSelect = document.getElementById("chat-persona-select");
   if (sessionData.persona_id) {
     personaSelect.value = sessionData.persona_id;
   }
+  const sheetPersonaSelect = document.getElementById("sheet-persona-select");
+  if (sheetPersonaSelect && sessionData.persona_id) {
+    sheetPersonaSelect.value = sessionData.persona_id;
+  }
 
   renderMessagesList();
+}
+
+function renderStoryPrologue(c) {
+  const div = document.createElement("div");
+  div.className = "story-prologue-card";
+  const avatar = window.api.resolveAssetUrl(c.avatar_url);
+  const culture = getCharacterCulture(c);
+  div.innerHTML = `
+    <div class="prologue-banner" style="background-image: url('${avatar}')"></div>
+    <div class="prologue-content">
+      <img src="${avatar}" alt="${c.name}" class="prologue-avatar" />
+      <h3 class="prologue-title">${c.name}</h3>
+      <p class="prologue-tagline">${c.tagline || ""}</p>
+      <div class="prologue-badges">
+        <span class="badge-mini badge-warm">${c.category}</span>
+        <span class="badge-mini badge-gender">${c.gender || "Female"}</span>
+        <span class="badge-mini" title="${culture.label}">${culture.flag} ${culture.label}</span>
+      </div>
+      ${c.scenario ? `<p class="prologue-setting"><strong>Setting:</strong> ${c.scenario}</p>` : ""}
+    </div>
+    <div class="prologue-divider">
+      <span>Chapter I · The Encounter</span>
+    </div>
+  `;
+  return div;
 }
 
 function renderMessagesList() {
@@ -665,7 +760,10 @@ function renderMessagesList() {
   container.innerHTML = "";
   if (!state.activeSession) return;
 
-  const charAvatar = window.api.resolveAssetUrl(state.activeSession.character.avatar_url);
+  const c = state.activeSession.character;
+  container.appendChild(renderStoryPrologue(c));
+
+  const charAvatar = window.api.resolveAssetUrl(c.avatar_url);
   const userAvatar = window.api.resolveAssetUrl(state.user?.avatar_url);
 
   state.activeSession.messages.forEach((m) => {
@@ -988,10 +1086,204 @@ function bindUIEvents() {
 
   document.getElementById("close-chat-btn").addEventListener("click", () => {
     document.getElementById("chat-drawer").classList.add("hidden");
+    document.body.classList.remove("chat-active");
     loadSessions();
   });
 
-  // --- Custom Chat Window Background Controls ---
+  // --- Mobile Bottom Sheet & Ambience Controls ---
+  const mobileSheet = document.getElementById("chat-mobile-sheet");
+  const openMobileSheet = (tab = "ambience") => {
+    triggerHaptic(10);
+    if (!mobileSheet) return;
+    mobileSheet.classList.remove("hidden");
+    switchSheetTab(tab);
+  };
+  const closeMobileSheet = () => {
+    triggerHaptic(8);
+    if (mobileSheet) mobileSheet.classList.add("hidden");
+  };
+  const switchSheetTab = (tabName) => {
+    document.querySelectorAll(".sheet-tab").forEach((btn) => {
+      btn.classList.toggle("active", btn.dataset.sheetTab === tabName);
+    });
+    document.querySelectorAll(".sheet-panel").forEach((panel) => {
+      panel.classList.toggle("active", panel.id === `sheet-section-${tabName}`);
+    });
+  };
+
+  document.querySelectorAll(".sheet-tab").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      triggerHaptic(8);
+      switchSheetTab(btn.dataset.sheetTab);
+    });
+  });
+
+  const mobileMenuBtn = document.getElementById("chat-mobile-menu-btn");
+  if (mobileMenuBtn) mobileMenuBtn.addEventListener("click", () => openMobileSheet("ambience"));
+
+  const mobileQuickSceneBtn = document.getElementById("mobile-quick-scene-btn");
+  if (mobileQuickSceneBtn) mobileQuickSceneBtn.addEventListener("click", () => openMobileSheet("ambience"));
+
+  const mobileModelBtn = document.getElementById("chat-mobile-model-btn");
+  if (mobileModelBtn) mobileModelBtn.addEventListener("click", () => openMobileSheet("model"));
+
+  const avatarProfileTrigger = document.getElementById("chat-avatar-profile-trigger");
+  if (avatarProfileTrigger) avatarProfileTrigger.addEventListener("click", () => openMobileSheet("lore"));
+
+  const metaProfileTrigger = document.getElementById("chat-meta-profile-trigger");
+  if (metaProfileTrigger) metaProfileTrigger.addEventListener("click", () => openMobileSheet("lore"));
+
+  const closeMobileSheetBtn = document.getElementById("close-mobile-sheet-btn");
+  if (closeMobileSheetBtn) closeMobileSheetBtn.addEventListener("click", closeMobileSheet);
+
+  if (mobileSheet) {
+    mobileSheet.addEventListener("click", (e) => {
+      if (e.target === mobileSheet) closeMobileSheet();
+    });
+  }
+
+  // Mobile Sheet Background Controls
+  const sheetBgFileInput = document.getElementById("sheet-bg-file-input");
+  if (sheetBgFileInput) {
+    sheetBgFileInput.addEventListener("change", async (e) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+      try {
+        showToast("Uploading custom chat background...");
+        const uploadedUrl = await window.api.uploadImageFile(file, "background");
+        const currentDim = Number(document.getElementById("sheet-dim-slider").value) || 68;
+        applyChatBackground(uploadedUrl, currentDim, true);
+        showToast("Custom chat background applied");
+      } catch (err) {
+        showToast(`Background upload failed: ${err.message}`);
+      }
+    });
+  }
+
+  const sheetApplyBgBtn = document.getElementById("sheet-apply-bg-url-btn");
+  if (sheetApplyBgBtn) {
+    sheetApplyBgBtn.addEventListener("click", () => {
+      const url = document.getElementById("sheet-bg-url-input").value.trim();
+      const currentDim = Number(document.getElementById("sheet-dim-slider").value) || 68;
+      applyChatBackground(url, currentDim, true);
+      showToast(url ? "Background applied" : "Reverted to solid background");
+    });
+  }
+
+  const sheetClearBgBtn = document.getElementById("sheet-clear-bg-btn");
+  if (sheetClearBgBtn) {
+    sheetClearBgBtn.addEventListener("click", () => {
+      applyChatBackground("", 68, true);
+      showToast("Reset to default background");
+    });
+  }
+
+  const sheetUseCharArtBtn = document.getElementById("sheet-use-char-art-btn");
+  if (sheetUseCharArtBtn) {
+    sheetUseCharArtBtn.addEventListener("click", () => {
+      if (!state.activeSession) return;
+      const c = state.activeSession.character;
+      const charArt = c.banner_url || c.avatar_url || "";
+      const currentDim = Number(document.getElementById("sheet-dim-slider").value) || 68;
+      applyChatBackground(charArt, currentDim, true);
+      showToast(charArt ? "Character AI art applied" : "No character art");
+    });
+  }
+
+  document.querySelectorAll("[data-scene-preset]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      triggerHaptic(10);
+      const sceneUrl = btn.getAttribute("data-scene-preset") || "";
+      const currentDim = Number(document.getElementById("sheet-dim-slider").value) || 68;
+      applyChatBackground(sceneUrl, currentDim, true);
+    });
+  });
+
+  const sheetDimSlider = document.getElementById("sheet-dim-slider");
+  if (sheetDimSlider) {
+    sheetDimSlider.addEventListener("input", (e) => {
+      const dim = Number(e.target.value) || 68;
+      const url = document.getElementById("sheet-bg-url-input").value.trim();
+      applyChatBackground(url, dim, true);
+    });
+  }
+
+  document.querySelectorAll(".sheet-pill-btn[data-blur]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      triggerHaptic(10);
+      applyChatBgBlur(btn.dataset.blur);
+    });
+  });
+
+  const sheetSaveMemBtn = document.getElementById("sheet-save-memory-btn");
+  if (sheetSaveMemBtn) {
+    sheetSaveMemBtn.addEventListener("click", async () => {
+      if (!state.activeSession) return;
+      triggerHaptic(12);
+      const notes = document.getElementById("sheet-memory-input").value;
+      await window.api.request(`/api/v1/sessions/${state.activeSession.id}`, {
+        method: "PATCH",
+        body: JSON.stringify({ memory_notes: notes }),
+      });
+      state.activeSession.memory_notes = notes;
+      document.getElementById("chat-memory-input").value = notes;
+      showToast("Story notes updated");
+    });
+  }
+
+  const sheetModelSelect = document.getElementById("sheet-model-select");
+  if (sheetModelSelect) {
+    sheetModelSelect.addEventListener("change", (e) => {
+      const model = e.target.value;
+      const mainSelect = document.getElementById("chat-model-select");
+      if (mainSelect) mainSelect.value = model;
+      const lbl = document.getElementById("chat-mobile-model-label");
+      if (lbl) lbl.textContent = getPublicModelName(model);
+      triggerHaptic(10);
+    });
+  }
+
+  const sheetPersonaSelect = document.getElementById("sheet-persona-select");
+  if (sheetPersonaSelect) {
+    sheetPersonaSelect.addEventListener("change", (e) => {
+      const persona = e.target.value;
+      const mainPersona = document.getElementById("chat-persona-select");
+      if (mainPersona) mainPersona.value = persona;
+      triggerHaptic(10);
+    });
+  }
+
+  const sheetNewSessionBtn = document.getElementById("sheet-new-session-btn");
+  if (sheetNewSessionBtn) {
+    sheetNewSessionBtn.addEventListener("click", () => {
+      if (!state.activeSession) return;
+      closeMobileSheet();
+      openCharacterChat(state.activeSession.character.id, true);
+      showToast("Started fresh story session");
+    });
+  }
+
+  // View Mode Switcher in Directory Toolbar
+  const compactBtn = document.getElementById("grid-view-compact-btn");
+  const storyBtn = document.getElementById("grid-view-story-btn");
+  const charGrid = document.getElementById("characters-grid");
+  const setGridViewMode = (mode) => {
+    triggerHaptic(10);
+    if (!charGrid) return;
+    const isCompact = mode === "compact";
+    charGrid.classList.toggle("compact-mode", isCompact);
+    if (compactBtn) compactBtn.classList.toggle("active", isCompact);
+    if (storyBtn) storyBtn.classList.toggle("active", !isCompact);
+    try {
+      localStorage.setItem("sora_grid_view_mode", mode);
+    } catch (_) {}
+  };
+  if (compactBtn) compactBtn.addEventListener("click", () => setGridViewMode("compact"));
+  if (storyBtn) storyBtn.addEventListener("click", () => setGridViewMode("story"));
+  const savedGridMode = localStorage.getItem("sora_grid_view_mode") || (window.innerWidth <= 640 ? "compact" : "story");
+  setGridViewMode(savedGridMode);
+
+  // --- Custom Chat Window Background Controls (Desktop) ---
   document.getElementById("toggle-bg-btn").addEventListener("click", () => {
     document.getElementById("chat-bg-panel").classList.toggle("hidden");
     document.getElementById("chat-lore-panel").classList.add("hidden");
@@ -1072,6 +1364,7 @@ function bindUIEvents() {
   });
 
   document.getElementById("insert-action-btn").addEventListener("click", () => {
+    triggerHaptic(10);
     const input = document.getElementById("chat-input");
     const start = input.selectionStart;
     const end = input.selectionEnd;
@@ -1083,9 +1376,28 @@ function bindUIEvents() {
       input.selectionStart = input.selectionEnd = input.value.length - 1;
     }
     input.focus();
+    autoResizeChatInput();
   });
 
   const chatInput = document.getElementById("chat-input");
+  function autoResizeChatInput() {
+    if (!chatInput) return;
+    chatInput.style.height = "auto";
+    chatInput.style.height = Math.min(chatInput.scrollHeight, 120) + "px";
+    const sendBtn = document.getElementById("chat-send-btn");
+    if (sendBtn) {
+      sendBtn.classList.toggle("ready-to-send", chatInput.value.trim().length > 0);
+    }
+  }
+
+  chatInput.addEventListener("input", autoResizeChatInput);
+  chatInput.addEventListener("focus", () => {
+    setTimeout(() => {
+      const container = document.getElementById("chat-messages");
+      if (container) container.scrollTop = container.scrollHeight;
+    }, 250);
+  });
+
   chatInput.addEventListener("keydown", (e) => {
     if (e.key === "Enter" && !e.shiftKey && window.innerWidth > 768) {
       e.preventDefault();
@@ -1099,7 +1411,12 @@ function bindUIEvents() {
     const content = chatInput.value.trim();
     if (!content) return;
 
+    triggerHaptic(15);
     chatInput.value = "";
+    chatInput.style.height = "auto";
+    const sendBtn = document.getElementById("chat-send-btn");
+    if (sendBtn) sendBtn.classList.remove("ready-to-send");
+
     const selectedModel = document.getElementById("chat-model-select").value;
     const selectedPersona = document.getElementById("chat-persona-select").value;
 
@@ -1186,12 +1503,13 @@ function bindUIEvents() {
     showToast(
       nextState
         ? "Flagship Access enabled — Verified models unlocked"
-        : "Reverted to Standard Free Tier (Haru Models)"
+        : "Reverted to Standard Free Tier (Sora Models)"
     );
   });
 
   document.getElementById("regenerate-btn").addEventListener("click", async () => {
     if (!state.activeSession) return;
+    triggerHaptic(12);
     const statusEl = document.getElementById("stream-status-indicator");
     const selectedModel = document.getElementById("chat-model-select").value;
     statusEl.textContent = "Regenerating...";
