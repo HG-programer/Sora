@@ -1,4 +1,4 @@
-# Sora: Scalable Multi-User AI Character & Roleplay Platform
+# Sora — Unfiltered stories, living characters, zero ads. Just pure immersion.
 
 An **AI Character Discovery, Creation & Roleplay Platform** with **Android compatibility (PWA + Capacitor APK)** and a **high-concurrency Async FastAPI + SQLAlchemy 2.0 backend** designed to support thousands of users simultaneously.
 

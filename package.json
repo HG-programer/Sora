@@ -1,7 +1,7 @@
 {
   "name": "sora-platform",
   "version": "2.0.0",
-  "description": "Sora: Multi-user AI Character & Roleplay platform with Android Capacitor & PWA support",
+  "description": "Sora — Unfiltered stories, living characters, zero ads. Just pure immersion.",
   "private": true,
   "scripts": {
     "start:backend": "python backend/app.py",

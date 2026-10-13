@@ -1,7 +1,7 @@
 {
-  "name": "Sora — Character & Story Lounge",
+  "name": "Sora — Unfiltered stories, living characters, zero ads. Just pure immersion.",
   "short_name": "Sora",
-  "description": "Interactive fiction and character sessions.",
+  "description": "Unfiltered stories, living characters, zero ads. Just pure immersion.",
   "start_url": "/",
   "display": "standalone",
   "orientation": "portrait",
