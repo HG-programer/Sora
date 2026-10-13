@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Sora</string>
+    <string name="title_activity_main">Sora</string>
+    <string name="package_name">com.haru.sora</string>
+    <string name="custom_url_scheme">com.haru.sora</string>
+</resources>

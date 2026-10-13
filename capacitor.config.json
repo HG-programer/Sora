@@ -2,7 +2,6 @@
   "appId": "com.haru.sora",
   "appName": "Sora",
   "webDir": "frontend",
-  "bundledWebRuntime": false,
   "server": {
     "androidScheme": "http",
     "cleartext": true,
