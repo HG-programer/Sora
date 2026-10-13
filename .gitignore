@@ -36,3 +36,11 @@ $RECYCLE.BIN/
 .pytest_cache/
 .coverage
 htmlcov/
+
+# Android build outputs & binaries
+*.apk
+*.aab
+.gradle/
+android/.gradle/
+android/app/build/
+android/build/

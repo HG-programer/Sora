@@ -45,18 +45,23 @@ Open **[http://localhost:5050](http://localhost:5050)** in your browser (or on y
 3. Tap **📲 Install App** in the top header (or Chrome Menu → **Add to Home Screen / Install App**).
 4. Launches full-screen in standalone Android mode with native bottom navigation and gesture bar safe-areas.
 
-### Option B: Build a Native Android `.apk` with Capacitor
-1. Install the Capacitor dependencies:
+### Option B: Download Pre-Built Android APK (GitHub Actions / Direct)
+- **Direct APK Download**: [**Download `app-debug.apk` (v1.0.0)**](https://github.com/HG-programer/Sora/releases/download/v1.0.0-apk/app-debug.apk) directly onto your Android device to install.
+- **GitHub Release Page**: View the release at [GitHub Releases `v1.0.0-apk`](https://github.com/HG-programer/Sora/releases/tag/v1.0.0-apk).
+- **Automated CI/CD**: Every push to `main` triggers `.github/workflows/build-apk.yml`, building a fresh debug APK in [GitHub Actions](https://github.com/HG-programer/Sora/actions).
+- **Local Copy**: The pre-compiled binary is also saved locally in the repo root as [`Sora-v1.0.0-debug.apk`](file:///c:/Users/Haru/Documents/antigravity/beautiful-faraday/Sora-v1.0.0-debug.apk).
+
+### Option C: Build Native Android `.apk` Locally with Capacitor
+1. Install dependencies and sync web assets:
    ```powershell
-   npm.cmd install
-   npm.cmd run android:add
-   npm.cmd run android:sync
+   npm install
+   npx cap sync android
    ```
-2. Open the generated `android/` project in **Android Studio**:
+2. Open in Android Studio or compile via Gradle:
    ```powershell
-   npm.cmd run android:open
+   cd android
+   .\gradlew.bat assembleDebug
    ```
-3. In the app's **⚡ Adapters** tab, set **Backend Server URL** to your backend host (e.g., `http://10.0.2.2:5050` for Android Emulator or your production HTTPS URL) and build your `.apk`!
 
 ---
 
