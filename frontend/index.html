@@ -668,6 +668,7 @@
               <div class="sheet-actions-row" style="display:flex;gap:0.5rem;flex-wrap:wrap;">
                 <button type="button" id="sheet-new-session-btn" class="btn-glass btn-sm">➕ New Chat</button>
                 <button type="button" id="sheet-export-chat-btn" class="btn-glass btn-sm">📥 Export Story (.md)</button>
+                <button type="button" id="sheet-delete-session-btn" class="btn-glass btn-sm" style="color:#f87171;border-color:rgba(239,68,68,0.35);">🗑️ Delete Chat</button>
               </div>
             </div>
           </div>
@@ -680,6 +681,15 @@
           <button type="button" id="insert-action-btn" class="chip-action rp-toolbar-chip" title="Insert *action* formatting">
             <span class="chip-symbol">✦</span>
             <span>*Action*</span>
+          </button>
+          <button type="button" class="chip-action rp-toolbar-chip rp-mood-chip" data-quick-action="*smiles warmly* " title="Insert *smiles warmly*">
+            <span>*smiles*</span>
+          </button>
+          <button type="button" class="chip-action rp-toolbar-chip rp-mood-chip" data-quick-action="*steps closer* " title="Insert *steps closer*">
+            <span>*steps closer*</span>
+          </button>
+          <button type="button" class="chip-action rp-toolbar-chip rp-mood-chip" data-quick-action="*whispers softly* " title="Insert *whispers softly*">
+            <span>*whispers*</span>
           </button>
           <button type="button" id="regenerate-btn" class="chip-action rp-toolbar-chip" title="Reroll last character response">
             <span class="chip-symbol">↺</span>

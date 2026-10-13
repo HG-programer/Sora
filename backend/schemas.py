@@ -76,6 +76,23 @@ class CharacterCreateRequest(BaseModel):
     default_model: str = Field(default="haru-core")
     is_public: bool = True
 
+class CharacterUpdateRequest(BaseModel):
+    name: Optional[str] = Field(None, min_length=1, max_length=100)
+    gender: Optional[str] = Field(None, max_length=32)
+    tagline: Optional[str] = Field(None, min_length=1, max_length=240)
+    category: Optional[str] = Field(None, max_length=50)
+    tags: Optional[list[str]] = None
+    avatar_url: Optional[str] = None
+    banner_url: Optional[str] = None
+    accent_color: Optional[str] = None
+    personality: Optional[str] = Field(None, min_length=3, max_length=6000)
+    backstory: Optional[str] = Field(None, max_length=8000)
+    scenario: Optional[str] = Field(None, max_length=4000)
+    greeting: Optional[str] = Field(None, min_length=2, max_length=4000)
+    example_dialogue: Optional[str] = Field(None, max_length=4000)
+    default_model: Optional[str] = None
+    is_public: Optional[bool] = None
+
 class CharacterResponse(BaseModel):
     id: str
     creator_id: Optional[str]

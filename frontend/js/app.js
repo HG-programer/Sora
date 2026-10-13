@@ -15,6 +15,7 @@ const state = {
   deferredPwaPrompt: null,
   ttsAutoPlay: false,
   isSpeaking: false,
+  editingCharacterId: null,
 };
 
 function triggerHaptic(ms = 12) {
@@ -749,16 +750,26 @@ function renderMyCharactersList() {
           ${c.tagline}
         </p>
       </div>
-      <button class="icon-btn" data-del-char="${c.id}" title="Delete character">Delete</button>
+      <div style="display:flex;align-items:center;gap:0.35rem;">
+        <button type="button" class="icon-btn btn-edit-my-char" data-edit-char="${c.id}" title="Edit character in Studio">Edit</button>
+        <button type="button" class="icon-btn" data-del-char="${c.id}" title="Delete character">Delete</button>
+      </div>
     `;
 
     item.addEventListener("click", (e) => {
-      if (e.target.closest("[data-del-char]")) return;
+      if (e.target.closest("[data-del-char]") || e.target.closest("[data-edit-char]")) return;
       openCharacterChat(c.id, false);
+    });
+
+    item.querySelector(`[data-edit-char="${c.id}"]`).addEventListener("click", (e) => {
+      e.stopPropagation();
+      triggerHaptic(10);
+      populateStudioFormForEdit(c);
     });
 
     item.querySelector(`[data-del-char="${c.id}"]`).addEventListener("click", async (e) => {
       e.stopPropagation();
+      if (!confirm(`Delete character ${c.name}?`)) return;
       try {
         await window.api.request(`/api/v1/characters/${c.id}`, { method: "DELETE" });
         showToast(`Deleted ${c.name}`);
@@ -770,6 +781,32 @@ function renderMyCharactersList() {
 
     listEl.appendChild(item);
   });
+}
+
+function populateStudioFormForEdit(c) {
+  state.editingCharacterId = c.id;
+  document.getElementById("cc-name").value = c.name || "";
+  document.getElementById("cc-gender").value = c.gender || "Female";
+  document.getElementById("cc-tagline").value = c.tagline || "";
+  document.getElementById("cc-category").value = c.category || "Romance";
+  document.getElementById("cc-tags").value = (c.tags || []).join(", ");
+  document.getElementById("cc-accent").value = c.accent_color || "#d97757";
+  document.getElementById("cc-avatar").value = c.avatar_url || "";
+  document.getElementById("cc-banner").value = c.banner_url || "";
+  document.getElementById("cc-model").value = c.default_model || "haru-core";
+  document.getElementById("cc-personality").value = c.personality || "";
+  document.getElementById("cc-backstory").value = c.backstory || "";
+  document.getElementById("cc-scenario").value = c.scenario || "";
+  document.getElementById("cc-greeting").value = c.greeting || "";
+  document.getElementById("cc-example").value = c.example_dialogue || "";
+  document.getElementById("cc-public").checked = Boolean(c.is_public);
+  document.getElementById("cc-avatar-preview").src = window.api.resolveAssetUrl(c.avatar_url);
+
+  const submitBtn = document.querySelector("#create-char-form button[type='submit']");
+  if (submitBtn) submitBtn.textContent = "Save Changes ✨";
+
+  switchTab("create");
+  showToast(`Editing ${c.name} in Character Studio ✏️`);
 }
 
 function applyChatBackground(url, dimPercent = 68, persist = true) {
@@ -1235,14 +1272,52 @@ function renderPersonasList() {
     const avatarSrc = window.api.resolveAssetUrl(p.avatar_url);
     card.innerHTML = `
       <img src="${avatarSrc}" alt="${p.name}" class="user-avatar-sm" style="width:38px;height:38px;" />
-      <div style="flex:1;">
+      <div style="flex:1;min-width:0;">
         <div style="display:flex;align-items:center;gap:0.4rem;">
           <strong style="font-size:0.86rem;">${p.name}</strong>
           ${p.is_default ? '<span class="badge-mini">Default</span>' : ""}
         </div>
         <p class="muted-text" style="font-size:0.78rem;margin-top:0.12rem;">${p.description || "Standard profile"}</p>
       </div>
+      <div style="display:flex;align-items:center;gap:0.35rem;">
+        ${!p.is_default ? `<button type="button" class="btn-xs btn-outline btn-set-default" data-persona-id="${p.id}" style="font-size:0.75rem;padding:0.25rem 0.5rem;">Set Active</button>` : ""}
+        <button type="button" class="btn-xs btn-outline btn-del-persona" data-persona-id="${p.id}" style="color:#f87171;font-size:0.75rem;padding:0.25rem 0.5rem;" title="Delete profile">Delete</button>
+      </div>
     `;
+
+    const setDefBtn = card.querySelector(".btn-set-default");
+    if (setDefBtn) {
+      setDefBtn.addEventListener("click", async () => {
+        triggerHaptic(10);
+        try {
+          await window.api.request(`/api/v1/personas/${p.id}/default`, { method: "POST" });
+          state.user = await window.api.request("/api/v1/auth/me");
+          renderUserHeader();
+          renderPersonasList();
+          showToast(`Default profile set to ${p.name}`);
+        } catch (err) {
+          showToast(err.message);
+        }
+      });
+    }
+
+    const delBtn = card.querySelector(".btn-del-persona");
+    if (delBtn) {
+      delBtn.addEventListener("click", async () => {
+        triggerHaptic(12);
+        if (!confirm(`Delete profile "${p.name}"?`)) return;
+        try {
+          await window.api.request(`/api/v1/personas/${p.id}`, { method: "DELETE" });
+          state.user = await window.api.request("/api/v1/auth/me");
+          renderUserHeader();
+          renderPersonasList();
+          showToast("Profile deleted");
+        } catch (err) {
+          showToast(err.message);
+        }
+      });
+    }
+
     container.appendChild(card);
   });
 }
@@ -1462,16 +1537,31 @@ function bindUIEvents() {
     };
 
     try {
-      const created = await window.api.request("/api/v1/characters", {
-        method: "POST",
-        body: JSON.stringify(payload),
-      });
-      showToast(`Created ${created.name}`);
-      e.target.reset();
-      document.querySelectorAll("[data-quick-tag]").forEach((b) => b.classList.remove("active"));
-      document.getElementById("cc-avatar-preview").src = "/assets/icon.svg";
-      await Promise.all([loadCharacters(), loadMyCharacters(), loadPlatformStats()]);
-      openCharacterChat(created.id, true);
+      const submitBtn = document.querySelector("#create-char-form button[type='submit']");
+      if (state.editingCharacterId) {
+        await window.api.request(`/api/v1/characters/${state.editingCharacterId}`, {
+          method: "PATCH",
+          body: JSON.stringify(payload),
+        });
+        showToast("Character updated successfully ✨");
+        state.editingCharacterId = null;
+        if (submitBtn) submitBtn.textContent = "Publish to Directory";
+        e.target.reset();
+        document.querySelectorAll("[data-quick-tag]").forEach((b) => b.classList.remove("active"));
+        document.getElementById("cc-avatar-preview").src = "/assets/icon.svg";
+        await Promise.all([loadCharacters(), loadMyCharacters(), loadPlatformStats()]);
+      } else {
+        const created = await window.api.request("/api/v1/characters", {
+          method: "POST",
+          body: JSON.stringify(payload),
+        });
+        showToast(`Created ${created.name}`);
+        e.target.reset();
+        document.querySelectorAll("[data-quick-tag]").forEach((b) => b.classList.remove("active"));
+        document.getElementById("cc-avatar-preview").src = "/assets/icon.svg";
+        await Promise.all([loadCharacters(), loadMyCharacters(), loadPlatformStats()]);
+        openCharacterChat(created.id, true);
+      }
     } catch (err) {
       showToast(`Error: ${err.message}`);
     }
@@ -1957,6 +2047,41 @@ function bindUIEvents() {
   if (chatExportBtn) chatExportBtn.addEventListener("click", exportCurrentStoryTranscript);
   const sheetExportBtn = document.getElementById("sheet-export-chat-btn");
   if (sheetExportBtn) sheetExportBtn.addEventListener("click", exportCurrentStoryTranscript);
+
+  const sheetDelChatBtn = document.getElementById("sheet-delete-session-btn");
+  if (sheetDelChatBtn) {
+    sheetDelChatBtn.addEventListener("click", async () => {
+      if (!state.activeSession) return;
+      triggerHaptic(14);
+      if (!confirm(`Delete this entire conversation with ${state.activeSession.character.name}? This cannot be undone.`)) return;
+      try {
+        await window.api.request(`/api/v1/sessions/${state.activeSession.id}`, { method: "DELETE" });
+        closeMobileSheet();
+        document.getElementById("close-chat-btn").click();
+        await loadSessions();
+        showToast("Conversation deleted 🗑️");
+      } catch (err) {
+        showToast(`Delete failed: ${err.message}`);
+      }
+    });
+  }
+
+  document.querySelectorAll(".rp-mood-chip[data-quick-action]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      triggerHaptic(8);
+      const actionText = btn.dataset.quickAction || "";
+      const input = document.getElementById("chat-input");
+      if (!input) return;
+      const start = input.selectionStart || 0;
+      const end = input.selectionEnd || 0;
+      const val = input.value;
+      input.value = val.slice(0, start) + actionText + val.slice(end);
+      input.selectionStart = input.selectionEnd = start + actionText.length;
+      input.focus();
+      const sendBtn = document.getElementById("chat-send-btn");
+      if (sendBtn) sendBtn.classList.toggle("ready-to-send", input.value.trim().length > 0);
+    });
+  });
 
   document.getElementById("chat-model-select").addEventListener("change", (e) => {
     const chosenId = e.target.value;

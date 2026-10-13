@@ -40,6 +40,7 @@ from schemas import (
     UserPersonaSchema,
     PersonaCreateRequest,
     CharacterCreateRequest,
+    CharacterUpdateRequest,
     CharacterResponse,
     SessionCreateRequest,
     SessionUpdateRequest,
@@ -654,6 +655,28 @@ async def delete_persona(
     return {"ok": True}
 
 
+@app.post("/api/v1/personas/{persona_id}/default")
+async def set_default_persona(
+    persona_id: str,
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    personas = (
+        await db.execute(select(UserPersona).where(UserPersona.user_id == user.id))
+    ).scalars().all()
+    found = False
+    for p in personas:
+        if p.id == persona_id:
+            p.is_default = True
+            found = True
+        else:
+            p.is_default = False
+    if not found:
+        raise HTTPException(status_code=404, detail="Persona not found")
+    await db.commit()
+    return {"ok": True}
+
+
 # ==========================================================
 # 3. CHARACTER DISCOVERY & DEEP CHARACTER STUDIO
 # ==========================================================
@@ -834,6 +857,56 @@ async def delete_character(
     await db.delete(char)
     await db.commit()
     return {"ok": True}
+
+
+@app.patch("/api/v1/characters/{character_id}", response_model=CharacterResponse)
+async def update_character(
+    character_id: str,
+    req: CharacterUpdateRequest,
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    stmt = select(Character).where(Character.id == character_id)
+    char = (await db.execute(stmt)).scalar_one_or_none()
+    if not char:
+        raise HTTPException(status_code=404, detail="Character not found")
+    if char.creator_id != user.id and not getattr(user, "is_super_admin", False):
+        raise HTTPException(status_code=403, detail="You can only edit characters you created.")
+
+    if req.name is not None:
+        char.name = req.name.strip()
+    if req.gender is not None:
+        char.gender = req.gender.strip()
+    if req.tagline is not None:
+        char.tagline = req.tagline.strip()
+    if req.category is not None:
+        char.category = req.category.strip()
+    if req.tags is not None:
+        char.tags = ",".join([t.strip() for t in req.tags if t.strip()])
+    if req.avatar_url is not None:
+        char.avatar_url = req.avatar_url.strip()
+    if req.banner_url is not None:
+        char.banner_url = req.banner_url.strip()
+    if req.accent_color is not None:
+        char.accent_color = req.accent_color.strip()
+    if req.personality is not None:
+        char.personality = req.personality.strip()
+    if req.backstory is not None:
+        char.backstory = req.backstory.strip()
+    if req.scenario is not None:
+        char.scenario = req.scenario.strip()
+    if req.greeting is not None:
+        char.greeting = req.greeting.strip()
+    if req.example_dialogue is not None:
+        char.example_dialogue = req.example_dialogue.strip()
+    if req.default_model is not None:
+        char.default_model = req.default_model.strip()
+    if req.is_public is not None:
+        char.is_public = req.is_public
+
+    await db.commit()
+    await db.refresh(char)
+    return serialize_character(char)
 
 
 @app.post("/api/v1/characters/{character_id}/like")
