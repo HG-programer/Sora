@@ -150,6 +150,26 @@ function copyFallback(text) {
   ta.remove();
 }
 
+function getFallbackAvatar(name = "Character", gender = "Female") {
+  const clean = (name || "").replace(/[^a-zA-Z0-9\s]/g, "").trim();
+  const initials = (clean.split(/\s+/).slice(0, 2).map((w) => w[0]).join("") || "S").toUpperCase();
+  const isMale = (gender || "").toLowerCase() === "male";
+  const c1 = isMale ? "#2b231c" : "#331c26";
+  const c2 = isMale ? "#d97757" : "#e07a90";
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
+    <defs>
+      <linearGradient id="g_${initials}" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0%" stop-color="${c1}"/>
+        <stop offset="100%" stop-color="#140f0c"/>
+      </linearGradient>
+    </defs>
+    <rect width="100" height="100" rx="18" fill="url(#g_${initials})"/>
+    <rect x="3" y="3" width="94" height="94" rx="15" fill="none" stroke="${c2}" stroke-width="1.5" stroke-opacity="0.45"/>
+    <text x="50" y="55" font-family="'Newsreader', Georgia, serif" font-size="38" font-weight="600" fill="#f7f2eb" text-anchor="middle" dominant-baseline="central">${initials}</text>
+  </svg>`;
+  return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
+}
+
 document.addEventListener("DOMContentLoaded", async () => {
   registerServiceWorker();
   bindUIEvents();
@@ -577,7 +597,7 @@ function renderCharacterGrid() {
 
     card.innerHTML = `
       <div class="char-tile-media">
-        <img src="${avatarSrc}" alt="${c.name}" class="char-tile-img" loading="lazy" decoding="async" onerror="this.src='/api/v1/avatar/${encodeURIComponent(c.name)}?theme=slate'" />
+        <img src="${avatarSrc}" alt="${c.name}" class="char-tile-img" loading="lazy" decoding="async" onerror="this.onerror=null; this.src=getFallbackAvatar('${c.name.replace(/'/g, "\\'")}', '${charGender}');" />
         <div class="char-tile-scrim"></div>
         <div class="char-tile-badges">
           <span class="badge-mini badge-gender">${charGender}</span>
@@ -684,8 +704,9 @@ function renderSessionsList() {
     const item = document.createElement("div");
     item.className = "session-card";
     const avatarSrc = window.api.resolveAssetUrl(s.character_avatar);
+    const safeName = (s.character_name || "").replace(/'/g, "\\'");
     item.innerHTML = `
-      <img src="${avatarSrc}" alt="${s.character_name}" class="char-avatar-lg" style="width:42px;height:42px;" />
+      <img src="${avatarSrc}" alt="${s.character_name}" class="char-avatar-lg" style="width:42px;height:42px;" onerror="this.onerror=null; this.src=getFallbackAvatar('${safeName}');" />
       <div style="flex:1;min-width:0;">
         <div style="display:flex;justify-content:space-between;align-items:center;">
           <strong style="font-size:0.88rem;">${s.character_name}</strong>
@@ -739,8 +760,9 @@ function renderMyCharactersList() {
     const item = document.createElement("div");
     item.className = "session-card";
     const avatarSrc = window.api.resolveAssetUrl(c.avatar_url);
+    const safeName = (c.name || "").replace(/'/g, "\\'");
     item.innerHTML = `
-      <img src="${avatarSrc}" alt="${c.name}" class="char-avatar-lg" style="width:44px;height:44px;" />
+      <img src="${avatarSrc}" alt="${c.name}" class="char-avatar-lg" style="width:44px;height:44px;" onerror="this.onerror=null; this.src=getFallbackAvatar('${safeName}', '${c.gender || ''}');" />
       <div style="flex:1;min-width:0;">
         <div style="display:flex;justify-content:space-between;align-items:center;gap:0.4rem;">
           <strong style="font-size:0.9rem;">${c.name}</strong>
@@ -906,7 +928,14 @@ function mountChatDrawer(sessionData) {
   drawer.setAttribute("aria-hidden", "false");
   document.body.classList.add("chat-active");
 
-  document.getElementById("chat-char-avatar").src = window.api.resolveAssetUrl(c.avatar_url);
+  const charAvatarEl = document.getElementById("chat-char-avatar");
+  if (charAvatarEl) {
+    charAvatarEl.onerror = () => {
+      charAvatarEl.onerror = null;
+      charAvatarEl.src = getFallbackAvatar(c.name, c.gender);
+    };
+    charAvatarEl.src = window.api.resolveAssetUrl(c.avatar_url);
+  }
   document.getElementById("chat-char-name").textContent = c.name;
   document.getElementById("chat-char-category").textContent = c.category;
   document.getElementById("chat-char-tagline").textContent = c.tagline;
@@ -963,11 +992,12 @@ function renderStoryPrologue(c) {
   const div = document.createElement("div");
   div.className = "story-prologue-card";
   const avatar = window.api.resolveAssetUrl(c.avatar_url);
+  const fallbackImg = getFallbackAvatar(c.name, c.gender);
   const culture = getCharacterCulture(c);
   div.innerHTML = `
     <div class="prologue-banner" style="background-image: url('${avatar}')"></div>
     <div class="prologue-content">
-      <img src="${avatar}" alt="${c.name}" class="prologue-avatar" />
+      <img src="${avatar}" alt="${c.name}" class="prologue-avatar" onerror="this.onerror=null; this.src='${fallbackImg}';" />
       <h3 class="prologue-title">${c.name}</h3>
       <p class="prologue-tagline">${c.tagline || ""}</p>
       <div class="prologue-badges">
@@ -1017,8 +1047,9 @@ function createMessageDom(msgOrRole, content, modelUsed, charAvatar, userAvatar,
     ? (state.user?.display_name || "You")
     : (state.activeSession?.character?.name || "Character");
 
+  const fallbackMsgAvatar = getFallbackAvatar(authorName);
   row.innerHTML = `
-    <img src="${avatar}" alt="${role}" class="msg-avatar" />
+    <img src="${avatar}" alt="${role}" class="msg-avatar" onerror="this.onerror=null; this.src='${fallbackMsgAvatar}';" />
     <div style="min-width:0;flex:1;">
       <div class="msg-bubble">${formatRoleplayHTML(text)}</div>
       <div class="msg-edit-box hidden">
@@ -1789,7 +1820,7 @@ function bindUIEvents() {
   // View Mode Switcher in Directory Toolbar
   const compactBtn = document.getElementById("grid-view-compact-btn");
   const storyBtn = document.getElementById("grid-view-story-btn");
-  const charGrid = document.getElementById("characters-grid");
+  const charGrid = document.getElementById("character-grid");
   const setGridViewMode = (mode) => {
     triggerHaptic(10);
     if (!charGrid) return;
@@ -1805,6 +1836,9 @@ function bindUIEvents() {
   if (storyBtn) storyBtn.addEventListener("click", () => setGridViewMode("story"));
   const savedGridMode = localStorage.getItem("sora_grid_view_mode") || (window.innerWidth <= 640 ? "compact" : "story");
   setGridViewMode(savedGridMode);
+
+  const navLogoBtn = document.getElementById("nav-logo-btn");
+  if (navLogoBtn) navLogoBtn.addEventListener("click", () => switchTab("discover"));
 
   // --- Custom Chat Window Background Controls (Desktop) ---
   document.getElementById("toggle-bg-btn").addEventListener("click", () => {
@@ -1880,11 +1914,14 @@ function bindUIEvents() {
     showToast("Session notes updated");
   });
 
-  document.getElementById("new-branch-btn").addEventListener("click", () => {
-    if (!state.activeSession) return;
-    openCharacterChat(state.activeSession.character.id, true);
-    showToast("Started new session");
-  });
+  const legacyBranchBtn = document.getElementById("new-branch-btn");
+  if (legacyBranchBtn) {
+    legacyBranchBtn.addEventListener("click", () => {
+      if (!state.activeSession) return;
+      openCharacterChat(state.activeSession.character.id, true);
+      showToast("Started new session");
+    });
+  }
 
   document.getElementById("insert-action-btn").addEventListener("click", () => {
     triggerHaptic(10);
@@ -2092,74 +2129,107 @@ function bindUIEvents() {
   });
 
   const premiumModal = document.getElementById("premium-modal");
-  document.getElementById("open-premium-btn").addEventListener("click", () => {
-    renderAdaptersTable();
-    premiumModal.classList.remove("hidden");
-  });
-  document.getElementById("close-premium-modal").addEventListener("click", () => {
-    premiumModal.classList.add("hidden");
-  });
-  document.getElementById("close-premium-continue-free").addEventListener("click", () => {
-    const chatSelect = document.getElementById("chat-model-select");
-    const chosen = state.adapters.find((a) => a.id === chatSelect.value);
-    if (chosen && chosen.tier === "premium" && !isModelUnlocked(chosen)) {
-      chatSelect.value = "haru-core";
-    }
-    premiumModal.classList.add("hidden");
-  });
-  document.getElementById("activate-premium-btn").addEventListener("click", () => {
-    const nextState = !window.api.hasPremiumPass();
-    window.api.setPremiumPass(nextState);
-    loadAdapters();
-    premiumModal.classList.add("hidden");
-    showToast(
-      nextState
-        ? "Flagship Access enabled — Verified models unlocked"
-        : "Reverted to Standard Free Tier (Sora Models)"
-    );
-  });
-
-  document.getElementById("regenerate-btn").addEventListener("click", async () => {
-    if (!state.activeSession) return;
-    triggerHaptic(12);
-    const statusEl = document.getElementById("stream-status-indicator");
-    const selectedModel = document.getElementById("chat-model-select").value;
-    statusEl.textContent = "Regenerating...";
-    try {
-      const newMsg = await window.api.request(
-        `/api/v1/sessions/${state.activeSession.id}/regenerate`,
-        {
-          method: "POST",
-          body: JSON.stringify({
-            model: selectedModel,
-            api_keys: window.api.getByokKeys(),
-          }),
+  const openPremBtn = document.getElementById("open-premium-btn");
+  if (openPremBtn && premiumModal) {
+    openPremBtn.addEventListener("click", () => {
+      renderAdaptersTable();
+      premiumModal.classList.remove("hidden");
+    });
+  }
+  const closePremBtn = document.getElementById("close-premium-modal");
+  if (closePremBtn && premiumModal) {
+    closePremBtn.addEventListener("click", () => premiumModal.classList.add("hidden"));
+  }
+  const closePremContBtn = document.getElementById("close-premium-continue-free");
+  if (closePremContBtn && premiumModal) {
+    closePremContBtn.addEventListener("click", () => {
+      const chatSelect = document.getElementById("chat-model-select");
+      if (chatSelect) {
+        const chosen = state.adapters.find((a) => a.id === chatSelect.value);
+        if (chosen && chosen.tier === "premium" && !isModelUnlocked(chosen)) {
+          chatSelect.value = "haru-core";
         }
-      );
-      if (
-        state.activeSession.messages.length > 1 &&
-        state.activeSession.messages[state.activeSession.messages.length - 1].role === "assistant"
-      ) {
-        state.activeSession.messages.pop();
       }
-      state.activeSession.messages.push(newMsg);
-      renderMessagesList();
-      statusEl.textContent = "";
-    } catch (err) {
-      statusEl.textContent = "";
-      showToast(`Regenerate failed: ${err.message}`);
-    }
-  });
+      premiumModal.classList.add("hidden");
+    });
+  }
+  const actPremBtn = document.getElementById("activate-premium-btn");
+  if (actPremBtn && premiumModal) {
+    actPremBtn.addEventListener("click", () => {
+      const nextState = !window.api.hasPremiumPass();
+      window.api.setPremiumPass(nextState);
+      loadAdapters();
+      premiumModal.classList.add("hidden");
+      showToast(
+        nextState
+          ? "Flagship Access enabled — Verified models unlocked"
+          : "Reverted to Standard Free Tier (Sora Models)"
+      );
+    });
+  }
+  if (premiumModal) {
+    premiumModal.addEventListener("click", (e) => {
+      if (e.target === premiumModal) premiumModal.classList.add("hidden");
+    });
+  }
+
+  const regenBtn = document.getElementById("regenerate-btn");
+  if (regenBtn) {
+    regenBtn.addEventListener("click", async () => {
+      if (!state.activeSession) return;
+      triggerHaptic(12);
+      const statusEl = document.getElementById("stream-status-indicator");
+      const modelSelectEl = document.getElementById("chat-model-select");
+      const selectedModel = modelSelectEl ? modelSelectEl.value : "haru-core";
+      if (statusEl) statusEl.textContent = "Regenerating...";
+      try {
+        const newMsg = await window.api.request(
+          `/api/v1/sessions/${state.activeSession.id}/regenerate`,
+          {
+            method: "POST",
+            body: JSON.stringify({
+              model: selectedModel,
+              api_keys: window.api.getByokKeys(),
+            }),
+          }
+        );
+        if (
+          state.activeSession.messages.length > 1 &&
+          state.activeSession.messages[state.activeSession.messages.length - 1].role === "assistant"
+        ) {
+          state.activeSession.messages.pop();
+        }
+        state.activeSession.messages.push(newMsg);
+        renderMessagesList();
+        if (statusEl) statusEl.textContent = "";
+      } catch (err) {
+        if (statusEl) statusEl.textContent = "";
+        showToast(`Regenerate failed: ${err.message}`);
+      }
+    });
+  }
 
   // --- Account & Profile Center Events ---
   const authModal = document.getElementById("auth-modal");
   const openAuth = () => {
-    renderUserHeader();
-    authModal.classList.remove("hidden");
+    try {
+      renderUserHeader();
+    } catch (_) {}
+    if (authModal) authModal.classList.remove("hidden");
   };
-  document.getElementById("open-auth-btn").addEventListener("click", openAuth);
-  document.getElementById("user-pill").addEventListener("click", openAuth);
-  document.getElementById("close-auth-modal").addEventListener("click", () => authModal.classList.add("hidden"));
+  const openAuthBtn = document.getElementById("open-auth-btn");
+  if (openAuthBtn) openAuthBtn.addEventListener("click", openAuth);
+  const userPill = document.getElementById("user-pill");
+  if (userPill) userPill.addEventListener("click", openAuth);
+  const closeAuthBtn = document.getElementById("close-auth-modal");
+  if (closeAuthBtn && authModal) {
+    closeAuthBtn.addEventListener("click", () => authModal.classList.add("hidden"));
+  }
+  if (authModal) {
+    authModal.addEventListener("click", (e) => {
+      if (e.target === authModal) authModal.classList.add("hidden");
+    });
+  }
 
   document.getElementById("acct-avatar-file").addEventListener("change", async (e) => {
     const file = e.target.files?.[0];
@@ -2308,14 +2378,19 @@ function bindUIEvents() {
     showToast(`Switched to ${state.user.display_name}`);
   };
 
-  document.getElementById("new-guest-btn").addEventListener("click", signOutOrSwitchGuest);
-  document.getElementById("logout-account-btn").addEventListener("click", signOutOrSwitchGuest);
+  const newGuestBtn = document.getElementById("new-guest-btn");
+  if (newGuestBtn) newGuestBtn.addEventListener("click", signOutOrSwitchGuest);
+  const logoutAcctBtn = document.getElementById("logout-account-btn");
+  if (logoutAcctBtn) logoutAcctBtn.addEventListener("click", signOutOrSwitchGuest);
 
-  document.getElementById("install-pwa-btn").addEventListener("click", async () => {
-    if (!state.deferredPwaPrompt) return;
-    state.deferredPwaPrompt.prompt();
-    await state.deferredPwaPrompt.userChoice;
-    state.deferredPwaPrompt = null;
-    document.getElementById("install-pwa-btn").classList.add("hidden");
-  });
+  const installPwaBtn = document.getElementById("install-pwa-btn");
+  if (installPwaBtn) {
+    installPwaBtn.addEventListener("click", async () => {
+      if (!state.deferredPwaPrompt) return;
+      state.deferredPwaPrompt.prompt();
+      await state.deferredPwaPrompt.userChoice;
+      state.deferredPwaPrompt = null;
+      installPwaBtn.classList.add("hidden");
+    });
+  }
 }

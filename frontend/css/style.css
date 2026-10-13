@@ -2211,6 +2211,40 @@ input:focus, textarea:focus, select:focus {
 }
 
 @media (max-width: 560px) {
+  .top-bar {
+    padding: var(--safe-top) 0.75rem 0;
+    gap: 0.4rem;
+  }
+
+  .top-bar-left {
+    min-width: 0;
+    flex-shrink: 1;
+  }
+
+  .view-title {
+    font-size: 0.85rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 140px;
+  }
+
+  .live-metrics-pill {
+    display: none;
+  }
+
+  .top-bar-right {
+    gap: 0.35rem;
+    flex-shrink: 0;
+  }
+
+  #open-premium-btn,
+  #open-auth-btn {
+    padding: 0.35rem 0.65rem;
+    font-size: 0.74rem;
+    white-space: nowrap;
+  }
+
   .search-row {
     flex-direction: column;
     gap: 0.5rem;

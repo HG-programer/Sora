@@ -41,7 +41,13 @@ class HaruEmochiAPI {
 
   resolveAssetUrl(url) {
     if (!url) return "/assets/icon.svg";
-    if (url.startsWith("http://") || url.startsWith("https://") || url.startsWith("data:")) {
+    if (url.startsWith("data:")) return url;
+    if (url.includes("nekos.best")) {
+      const base = this.getBaseUrl();
+      const prefix = base ? `${base}` : "";
+      return `${prefix}/api/v1/image-proxy?url=${encodeURIComponent(url)}`;
+    }
+    if (url.startsWith("http://") || url.startsWith("https://")) {
       return url;
     }
     const base = this.getBaseUrl();
