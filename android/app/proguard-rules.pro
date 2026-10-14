@@ -11,9 +11,14 @@
 -keep class org.apache.cordova.** { *; }
 -dontwarn org.apache.cordova.**
 
+# Preserve AndroidX framework and manifest components
+-keep class androidx.** { *; }
+-dontwarn androidx.**
+
 # Anti-Modding Obfuscation & Class Repackaging
 -repackageclasses 'o'
 -allowaccessmodification
 -keep class com.haru.sora.MainActivity { *; }
 -keep class com.haru.sora.BuildConfig { *; }
+-dontwarn com.haru.sora.BuildConfig
 

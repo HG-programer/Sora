@@ -1,5 +1,6 @@
 package com.haru.sora;
 
+import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.Signature;
@@ -30,8 +31,9 @@ public class MainActivity extends BridgeActivity {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        // Execute security & integrity enforcement in release builds
-        if (!BuildConfig.DEBUG) {
+        // Execute security & integrity enforcement in non-debuggable release builds
+        boolean isDebuggable = (getApplicationInfo().flags & ApplicationInfo.FLAG_DEBUGGABLE) != 0;
+        if (!isDebuggable) {
             enforceSecurityChecks();
             // Strictly disable WebView DevTools debugging in production release builds
             WebView.setWebContentsDebuggingEnabled(false);
@@ -68,9 +70,10 @@ public class MainActivity extends BridgeActivity {
                 SigningInfo signingInfo = packageInfo.signingInfo;
                 if (signingInfo == null) return false;
 
-                Signature[] signatures = signingInfo.hasMultipleSigners()
-                    ? signingInfo.getApkContentsSigners()
-                    : signingInfo.getSigningCertificateHistory();
+                Signature[] signatures = signingInfo.getApkContentsSigners();
+                if (signatures == null || signatures.length == 0) {
+                    signatures = signingInfo.getSigningCertificateHistory();
+                }
 
                 if (signatures == null || signatures.length == 0) return false;
 
@@ -143,7 +146,7 @@ public class MainActivity extends BridgeActivity {
             byte[] hash = md.digest(data);
             StringBuilder sb = new StringBuilder();
             for (byte b : hash) {
-                sb.append(String.format("%02X", b));
+                sb.append(String.format("%02X", b & 0xFF));
             }
             return sb.toString();
         } catch (Exception e) {

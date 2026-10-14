@@ -3,6 +3,9 @@ apply plugin: 'com.android.application'
 android {
     namespace "com.haru.sora"
     compileSdk rootProject.ext.compileSdkVersion
+    buildFeatures {
+        buildConfig true
+    }
     defaultConfig {
         applicationId "com.haru.sora"
         minSdkVersion rootProject.ext.minSdkVersion
