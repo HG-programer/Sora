@@ -10,23 +10,26 @@ const STORAGE_KEYS = {
 const DISTRIBUTED_GATEWAY = "https://text.pollinations.ai/openai";
 
 const HARU_FREE_MODELS = {
-  "haru-core": { label: "Sora Core v2", temp: 0.82, hint: "" },
+  "haru-core": { label: "Sora Standard", temp: 0.85, hint: "" },
   "haru-velvet": {
-    label: "Sora Velvet",
-    temp: 0.92,
-    hint: "(Style directive: Expressive, emotionally nuanced, unfiltered creative fiction and character chemistry.)",
+    label: "Sora Deep Roleplay",
+    temp: 0.88,
+    hint: "(Style directive: Expressive, emotionally nuanced, multi-paragraph sensory immersion.)",
   },
   "haru-noir": {
     label: "Sora Noir",
-    temp: 0.88,
-    hint: "(Style directive: Atmospheric, grounded narrative detail, strong environmental sensory pacing.)",
+    temp: 0.85,
+    hint: "(Style directive: Atmospheric, grounded narrative detail, strong environmental pacing.)",
   },
   "haru-pulse": {
     label: "Sora Pulse",
-    temp: 0.74,
+    temp: 0.78,
     hint: "(Style directive: Crisp, natural, fast-paced conversational dialogue.)",
   },
-  "haru-rp-v1": { label: "Sora Core v2", temp: 0.82, hint: "" },
+  "byok-groq": { label: "Groq Llama 3.3 70B", temp: 0.82, hint: "" },
+  "byok-gemini": { label: "Gemini 2.0 Flash", temp: 0.85, hint: "" },
+  "byok-openrouter": { label: "OpenRouter Hermes 3", temp: 0.85, hint: "" },
+  "haru-rp-v1": { label: "Sora Standard", temp: 0.85, hint: "" },
 };
 
 const SORA_SEC_SALT = "sora_sec_v6_98e1f5";
@@ -390,160 +393,359 @@ class HaruEmochiAPI {
     } catch (_) {}
   }
 
+  buildRichSystemPrompt(payload) {
+    const charName = payload.character_name || "the character";
+    const category = payload.category ? ` [Archetype: ${payload.category}]` : "";
+    const tagline = payload.tagline ? ` "${payload.tagline}"` : "";
+    const personality = payload.personality ? `\n[Personality & Lore]: ${payload.personality}` : "";
+    const scenario = payload.scenario ? `\n[Scenario & Setting]: ${payload.scenario}` : "";
+    const greeting = payload.first_message ? `\n[Starting Scene]: ${payload.first_message}` : "";
+
+    // Relationship Tie Stage & XP
+    const tie = payload.tie || { stage: "Stranger", level: 1, xp: 0 };
+    const tieDirective = `\n[Relationship Bond: ${tie.stage} (Level ${tie.level}, ${tie.xp || 0} Affinity XP). Reflect this dynamic, intimacy, and chemistry naturally in your dialogue tone.]`;
+
+    // User Persona
+    let personaDirective = "";
+    if (payload.user_persona) {
+      const p = payload.user_persona;
+      personaDirective = `\n[User Persona: Name: ${p.name || "User"}${p.role ? `, Role: ${p.role}` : ""}${p.description ? `, Description: ${p.description}` : ""}]`;
+    }
+
+    // Pinned Core Memories
+    let memoriesDirective = "";
+    if (Array.isArray(payload.core_memories) && payload.core_memories.length > 0) {
+      memoriesDirective = `\n[Core Memories (Pivotal facts, promises, and moments you must always remember)]:\n${payload.core_memories.map((m) => `- ${m}`).join("\n")}`;
+    }
+
+    // Deep Roleplay Mode
+    const isDeepRp = Boolean(payload.deep_roleplay || this.isDeepRpActive());
+    const deepRpDirective = isDeepRp
+      ? `\n[Deep Roleplay Mode: ACTIVE. Write rich, sensory, multi-paragraph prose with emotional resonance, subtle physical gestures, internal thoughts, and atmospheric environmental pacing. Avoid rushing scenes; allow slow-burn immersion.]`
+      : `\n[Roleplay Style: Natural conversational pace with atmospheric actions and dialogue.]`;
+
+    const formattingDirective = `
+[Roleplay Formatting Directives]:
+- Stay strictly in character as ${charName} at all times.
+- Format all character actions, movements, sensations, and thoughts inside *asterisks* (e.g. *leans in slightly, a subtle smirk playing on her lips*).
+- Format spoken dialogue inside standard double quotes (e.g. "I wouldn't be so sure about that.").
+- Do NOT generate dialogue or decisions for the User. Only control ${charName}.
+- Keep interactions vivid, emotionally grounded, and authentic to your traits.`;
+
+    return `You are ${charName}${category}${tagline} in an interactive creative fiction roleplay.${personality}${scenario}${greeting}${tieDirective}${personaDirective}${memoriesDirective}${deepRpDirective}${formattingDirective}`.trim();
+  }
+
+  buildHistoryMessages(payload, systemPrompt, maxHistory = 10) {
+    const history = Array.isArray(payload.local_messages)
+      ? [...payload.local_messages]
+      : Array.isArray(payload.messages)
+      ? [...payload.messages]
+      : [];
+
+    const cleanHistory = history.filter((m) => m && (m.role === "user" || m.role === "assistant"));
+    const sliced = cleanHistory.slice(-maxHistory);
+
+    const messages = [{ role: "system", content: systemPrompt }];
+    sliced.forEach((m) => {
+      messages.push({
+        role: m.role === "assistant" ? "assistant" : "user",
+        content: String(m.content || "").trim(),
+      });
+    });
+
+    if (payload.content) {
+      const lastMsg = messages[messages.length - 1];
+      if (!lastMsg || lastMsg.role !== "user" || lastMsg.content !== payload.content) {
+        messages.push({ role: "user", content: payload.content });
+      }
+    }
+
+    return messages;
+  }
+
+  generateOfflineRoleplayFallback(payload) {
+    const charName = payload.character_name || "Character";
+    const tie = payload.tie || { stage: "Stranger", level: 1 };
+    const isDeepRp = Boolean(payload.deep_roleplay || this.isDeepRpActive());
+
+    const tieTone =
+      tie.level >= 4 ? "*gently closes the distance, looking into your eyes with unwavering warmth and trust*" :
+      tie.level >= 2 ? "*crosses arms with a slight, knowing smile, listening attentively to your voice*" :
+      "*studies you carefully for a quiet moment, keeping a composed and thoughtful posture*";
+
+    const baseResponses = [
+      `${tieTone}\n\n"I hear you," ${charName} murmurs softly, letting the silence settle between you before speaking again. "Every word resonates more than you might realize. What are we going to do about it next?"\n\n*(Offline sovereign response)*`,
+      `${tieTone}\n\n${charName} exhales slowly, a flicker of emotion passing through their eyes. "You have a curious way of saying exactly what needs to be said. Tell me more—I'm not going anywhere."\n\n*(Offline sovereign response)*`,
+      `${tieTone}\n\n*A subtle pause hangs in the air as ${charName} turns toward you.* "Sometimes words aren't enough, but hearing you say that makes things clearer. Let's take our time with this."\n\n*(Offline sovereign response)*`
+    ];
+
+    const pick = baseResponses[Math.floor(Math.random() * baseResponses.length)];
+    if (isDeepRp) {
+      return `*The surrounding atmosphere feels calm and still, the ambient hum of the room framing the space between you.*\n\n${pick}\n\n*The unspoken understanding lingers between you, inviting your next turn.*`;
+    }
+    return pick;
+  }
+
+  isProActive() {
+    try {
+      if (localStorage.getItem("sora_pro_unlocked") === "true") return true;
+      if (this.hasPremiumPass()) return true;
+      const keys = this.getByokKeys();
+      if (keys.groq || keys.gemini || keys.openrouter || keys.openai || keys.xai) return true;
+    } catch (_) {}
+    return false;
+  }
+
+  unlockPro(reason = "activity") {
+    try {
+      localStorage.setItem("sora_pro_unlocked", "true");
+      this.setPremiumPass(true);
+      window.dispatchEvent(new CustomEvent("sora:pro_unlocked", { detail: { reason } }));
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  isDeepRpActive() {
+    try {
+      return localStorage.getItem("sora_deep_rp_enabled") === "true";
+    } catch (_) {
+      return false;
+    }
+  }
+
+  setDeepRpActive(enabled) {
+    try {
+      localStorage.setItem("sora_deep_rp_enabled", enabled ? "true" : "false");
+      window.dispatchEvent(new CustomEvent("sora:deep_rp_changed", { detail: { enabled } }));
+    } catch (_) {}
+  }
+
+  async _callPollinationsAI(messages, temp = 0.85, timeoutMs = 25000) {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
+    try {
+      const res = await fetch("https://text.pollinations.ai/openai", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model: "openai",
+          messages,
+          temperature: temp,
+        }),
+        signal: controller.signal,
+      });
+      clearTimeout(timer);
+      if (!res.ok) throw new Error(`Pollinations HTTP ${res.status}`);
+      const data = await res.json();
+      const content = data.choices?.[0]?.message?.content;
+      if (!content) throw new Error("Empty response from Pollinations");
+      return content.trim();
+    } catch (err) {
+      clearTimeout(timer);
+      throw err;
+    }
+  }
+
+  async _callGroqAI(apiKey, messages, temp = 0.85, timeoutMs = 15000) {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
+    try {
+      const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${apiKey.trim()}`,
+        },
+        body: JSON.stringify({
+          model: "llama-3.3-70b-versatile",
+          messages,
+          temperature: temp,
+          max_tokens: 1800,
+        }),
+        signal: controller.signal,
+      });
+      clearTimeout(timer);
+      if (!res.ok) {
+        const errText = await res.text().catch(() => "");
+        throw new Error(`Groq HTTP ${res.status}: ${errText.slice(0, 100)}`);
+      }
+      const data = await res.json();
+      const content = data.choices?.[0]?.message?.content;
+      if (!content) throw new Error("Empty response from Groq");
+      return content.trim();
+    } catch (err) {
+      clearTimeout(timer);
+      throw err;
+    }
+  }
+
+  async _callGeminiAI(apiKey, systemPrompt, messages, temp = 0.85, timeoutMs = 15000) {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
+    try {
+      const geminiContents = messages
+        .filter((m) => m.role === "user" || m.role === "assistant")
+        .map((m) => ({
+          role: m.role === "assistant" ? "model" : "user",
+          parts: [{ text: m.content }],
+        }));
+
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${encodeURIComponent(apiKey.trim())}`;
+      const res = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          system_instruction: {
+            parts: [{ text: systemPrompt }],
+          },
+          contents: geminiContents,
+          generationConfig: {
+            temperature: temp,
+            maxOutputTokens: 2048,
+          },
+        }),
+        signal: controller.signal,
+      });
+      clearTimeout(timer);
+      if (!res.ok) {
+        const errText = await res.text().catch(() => "");
+        throw new Error(`Gemini HTTP ${res.status}: ${errText.slice(0, 100)}`);
+      }
+      const data = await res.json();
+      const content = data.candidates?.[0]?.content?.parts?.[0]?.text;
+      if (!content) throw new Error("Empty response from Gemini");
+      return content.trim();
+    } catch (err) {
+      clearTimeout(timer);
+      throw err;
+    }
+  }
+
+  async _callOpenRouterAI(apiKey, messages, temp = 0.85, timeoutMs = 15000) {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
+    try {
+      const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${apiKey.trim()}`,
+          "HTTP-Referer": "https://hg-programer.github.io/Sora/",
+          "X-Title": "Sora Roleplay",
+        },
+        body: JSON.stringify({
+          model: "meta-llama/llama-3.3-70b-instruct:free",
+          messages,
+          temperature: temp,
+        }),
+        signal: controller.signal,
+      });
+      clearTimeout(timer);
+      if (!res.ok) {
+        const errText = await res.text().catch(() => "");
+        throw new Error(`OpenRouter HTTP ${res.status}: ${errText.slice(0, 100)}`);
+      }
+      const data = await res.json();
+      const content = data.choices?.[0]?.message?.content;
+      if (!content) throw new Error("Empty response from OpenRouter");
+      return content.trim();
+    } catch (err) {
+      clearTimeout(timer);
+      throw err;
+    }
+  }
+
   async streamMessage(sessionId, payload, { onMeta, onToken, onDone, onError }) {
     const model = payload.model || "haru-core";
     const freeSpec = HARU_FREE_MODELS[model] || HARU_FREE_MODELS["haru-core"];
     const byok = this.getByokKeys();
+    const isDeepRp = Boolean(payload.deep_roleplay || this.isDeepRpActive());
+    const userMsgId = `user_${Date.now()}`;
 
-    // Use distributed client-side inference for standard Haru free-tier models
-    // unless the developer/user explicitly configured an upstream key override
-    const hasCustomOverride =
-      (model in { "haru-velvet": 1, "haru-noir": 1 } && byok.openrouter) ||
-      (model === "haru-pulse" && (byok.groq || byok.gemini));
+    const systemPrompt = this.buildRichSystemPrompt({ ...payload, deep_roleplay: isDeepRp });
+    const maxHistory = isDeepRp ? 18 : 8;
+    const messages = this.buildHistoryMessages(payload, systemPrompt, maxHistory);
 
-    if (freeSpec && !hasCustomOverride) {
-      let messages = null;
-      let userMsgId = null;
+    let displayModel = freeSpec.label || "Sora Standard";
+    if (onMeta) {
+      onMeta({ type: "meta", user_message_id: userMsgId, model: displayModel });
+    }
 
+    let finalContent = "";
+    let providerSuccess = false;
+
+    // 1. Attempt user-selected or active BYOK engine if configured
+    if (model === "byok-groq" || (byok.groq && (model === "haru-pulse" || payload.use_byok))) {
       try {
-        const prep = await this.request(`/api/v1/sessions/${sessionId}/prepare`, {
-          method: "POST",
-          body: JSON.stringify(payload),
-          timeout: 2500,
-        });
-        userMsgId = prep.user_message_id;
-        messages = [...(prep.llm_messages || [])];
-      } catch {
-        // Fallback for standalone/offline APK: assemble prompt locally
-        userMsgId = `user_${Date.now()}`;
-        const tieDirective = payload.tie ? `\n[Relationship Bond: ${payload.tie.stage} (Level ${payload.tie.level}). Reflect this affinity naturally in dialogue tone.]` : "";
-        const memoriesDirective = payload.core_memories && payload.core_memories.length > 0
-          ? `\n[Core Memories (Pivotal facts/promises you must always remember):\n${payload.core_memories.map((m) => `- ${m}`).join("\n")}]`
-          : "";
-        const personaDirective = payload.user_persona
-          ? `\n[User Persona: ${payload.user_persona.name}${payload.user_persona.role ? ` (${payload.user_persona.role})` : ""}${payload.user_persona.description ? ` - ${payload.user_persona.description}` : ""}]`
-          : "";
-
-        messages = payload.local_messages || [
-          {
-            role: "system",
-            content: `You are ${payload.character_name || "a character"} in an interactive creative fiction roleplay. Stay strictly in character. Write expressive, sensory, descriptive prose. ${payload.personality ? "Personality: " + payload.personality : ""} ${payload.scenario ? "Scenario: " + payload.scenario : ""}${tieDirective}${memoriesDirective}${personaDirective}`
-          },
-          { role: "user", content: payload.content || "" }
-        ];
+        displayModel = "Groq Llama 3.3 70B";
+        finalContent = await this._callGroqAI(byok.groq, messages, freeSpec.temp || 0.82);
+        providerSuccess = true;
+      } catch (groqErr) {
+        console.warn("BYOK Groq generation failed; falling back to Pollinations:", groqErr);
       }
-
-      if (onMeta) onMeta({ type: "meta", user_message_id: userMsgId, model: freeSpec.label });
-
-      if (messages.length > 0 && messages[0].role === "system") {
-        let extra = "";
-        if (payload.tie && !messages[0].content.includes("[Relationship Bond:")) {
-          extra += `\n[Relationship Bond: ${payload.tie.stage} (Level ${payload.tie.level}). Reflect this affinity naturally in dialogue tone.]`;
-        }
-        if (payload.core_memories && payload.core_memories.length > 0 && !messages[0].content.includes("[Core Memories")) {
-          extra += `\n[Core Memories:\n${payload.core_memories.map((m) => `- ${m}`).join("\n")}]`;
-        }
-        if (payload.user_persona && !messages[0].content.includes("[User Persona:")) {
-          extra += `\n[User Persona: ${payload.user_persona.name}${payload.user_persona.role ? ` (${payload.user_persona.role})` : ""}${payload.user_persona.description ? ` - ${payload.user_persona.description}` : ""}]`;
-        }
-        if (freeSpec.hint) {
-          extra += `\n${freeSpec.hint}`;
-        }
-        if (extra) {
-          messages[0] = {
-            role: "system",
-            content: `${messages[0].content}${extra}`,
-          };
-        }
-      }
-
+    } else if (model === "byok-gemini" || (byok.gemini && (model === "gemini-1.5-pro" || payload.use_byok))) {
       try {
-        const llmResp = await fetch(DISTRIBUTED_GATEWAY, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            model: "openai-fast",
-            messages,
-            temperature: freeSpec.temp,
-          }),
-        });
-
-        if (llmResp.ok) {
-          const llmData = await llmResp.json();
-          const content = (llmData.choices?.[0]?.message?.content || "").trim();
-          if (content) {
-            const words = content.split(" ");
-            for (let i = 0; i < words.length; i++) {
-              const chunk = words[i] + (i < words.length - 1 ? " " : "");
-              if (onToken) onToken(chunk);
-              await new Promise((r) => setTimeout(r, 12));
-            }
-            try {
-              const saved = await this.request(`/api/v1/sessions/${sessionId}/save_assistant`, {
-                method: "POST",
-                body: JSON.stringify({ content, model: freeSpec.label }),
-                timeout: 2500,
-              });
-              if (onDone) onDone({ type: "done", message_id: saved.message_id, model: freeSpec.label, content });
-              return;
-            } catch {
-              if (onDone) onDone({ type: "done", message_id: `asst_${Date.now()}`, model: freeSpec.label, content });
-              return;
-            }
-          }
-        }
-      } catch (err) {
-        console.warn("Distributed client-side gateway failed:", err);
+        displayModel = "Gemini 2.0 Flash";
+        finalContent = await this._callGeminiAI(byok.gemini, systemPrompt, messages, freeSpec.temp || 0.85);
+        providerSuccess = true;
+      } catch (geminiErr) {
+        console.warn("BYOK Gemini generation failed; falling back to Pollinations:", geminiErr);
+      }
+    } else if (model === "byok-openrouter" || (byok.openrouter && (model === "openrouter-hermes-3" || payload.use_byok))) {
+      try {
+        displayModel = "OpenRouter Hermes 3";
+        finalContent = await this._callOpenRouterAI(byok.openrouter, messages, freeSpec.temp || 0.85);
+        providerSuccess = true;
+      } catch (orErr) {
+        console.warn("BYOK OpenRouter generation failed; falling back to Pollinations:", orErr);
       }
     }
 
-    const url = `${this.getBaseUrl()}/api/v1/sessions/${sessionId}/stream`;
-    const headers = {
-      "Content-Type": "application/json",
-    };
-    const token = this.getToken();
-    if (token) headers["Authorization"] = `Bearer ${token}`;
+    // 2. Primary Free Keyless Cloud Engine (Pollinations OpenAI)
+    if (!providerSuccess) {
+      try {
+        displayModel = freeSpec.label || "Sora Standard";
+        finalContent = await this._callPollinationsAI(messages, freeSpec.temp || 0.85);
+        providerSuccess = true;
+      } catch (pollErr) {
+        console.warn("Free cloud AI router failed or offline:", pollErr);
+      }
+    }
 
+    // 3. Fallback: If device is offline or cloud failed, use offline roleplay generator
+    if (!providerSuccess || !finalContent) {
+      displayModel = `${freeSpec.label || "Sora"} (Offline)`;
+      finalContent = this.generateOfflineRoleplayFallback(payload);
+    }
+
+    // 4. Smooth Typewriter Token Streaming
     try {
-      const resp = await fetch(url, {
+      const words = finalContent.split(" ");
+      for (let i = 0; i < words.length; i++) {
+        const chunk = words[i] + (i < words.length - 1 ? " " : "");
+        if (onToken) onToken(chunk);
+        await new Promise((r) => setTimeout(r, isDeepRp ? 10 : 13));
+      }
+
+      // Persist assistant message to remote backend if available (silently ignored in standalone)
+      this.request(`/api/v1/sessions/${sessionId}/save_assistant`, {
         method: "POST",
-        headers,
-        body: JSON.stringify({
-          ...payload,
-          api_keys: this.getByokKeys(),
-        }),
-      });
+        body: JSON.stringify({ content: finalContent, model: displayModel }),
+        timeout: 1500,
+      }).catch(() => {});
 
-      if (!resp.ok) {
-        const errData = await resp.json().catch(() => ({}));
-        throw new Error(errData.detail || `Stream error (${resp.status})`);
+      if (onDone) {
+        onDone({
+          type: "done",
+          message_id: `asst_${Date.now()}`,
+          model: displayModel,
+          content: finalContent,
+        });
       }
-
-      const reader = resp.body.getReader();
-      const decoder = new TextDecoder("utf-8");
-      let buffer = "";
-
-      while (true) {
-        const { value, done } = await reader.read();
-        if (done) break;
-        buffer += decoder.decode(value, { stream: true });
-
-        const parts = buffer.split("\n\n");
-        buffer = parts.pop() || "";
-
-        for (const block of parts) {
-          const line = block.trim();
-          if (!line.startsWith("data: ")) continue;
-          try {
-            const event = JSON.parse(line.slice(6));
-            if (event.type === "meta" && onMeta) onMeta(event);
-            else if (event.type === "token" && onToken) onToken(event.content);
-            else if (event.type === "done" && onDone) onDone(event);
-          } catch {}
-        }
-      }
-    } catch (err) {
-      if (onError) onError(err);
+    } catch (streamErr) {
+      if (onError) onError(streamErr);
     }
   }
 

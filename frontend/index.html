@@ -114,8 +114,9 @@
             <span class="pulse-dot"></span>
             <span id="metrics-text">Online</span>
           </div>
-          <button id="open-premium-btn" class="btn-glass btn-sm" title="View Verified Flagship Models">
-            Flagship Models
+          <button id="open-premium-btn" class="btn-glass btn-sm pro-top-pill" title="Sora Pro — Community Edition">
+            <span class="pro-sparkle">✦</span>
+            <span id="top-pro-label">Sora Pro</span>
           </button>
           <a id="get-app-btn" href="https://github.com/HG-programer/Sora/releases/latest/download/app-release.apk" class="btn-glass btn-sm hidden" title="Download Signed Android APK" download style="text-decoration:none;display:inline-flex;align-items:center;gap:0.35rem;">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
@@ -461,8 +462,8 @@
           <div class="glass-card" style="margin-top: 1rem;">
             <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:1rem;flex-wrap:wrap;margin-bottom: 1rem;">
               <div>
-                <h2>Verified Flagship Models — Purchase Transparency</h2>
-                <p class="muted-text">Premium tier routes directly to verified official flagship models with full provider disclosure and zero model substitution.</p>
+                <h2>Sora Pro &amp; Model Engines (Earnable &amp; Free)</h2>
+                <p class="muted-text">Zero advertising, zero subscriptions. Unlocked through roleplay affinity or free BYOK provider keys.</p>
               </div>
               <span id="premium-plan-badge" class="badge-mini">Standard Tier</span>
             </div>
@@ -822,6 +823,10 @@
             <span class="chip-symbol">🎙</span>
             <span id="quick-tts-label">Voice: Off</span>
           </button>
+          <button type="button" id="deep-rp-toggle-btn" class="chip-action rp-toolbar-chip" title="Toggle Deep Roleplay Mode (Rich multi-paragraph sensory narrative &amp; extended memory)">
+            <span class="chip-symbol">✦</span>
+            <span id="deep-rp-toggle-label">Deep RP: Off</span>
+          </button>
           <button type="button" id="mobile-quick-scene-btn" class="chip-action rp-toolbar-chip" title="Scene &amp; Atmosphere">
             <span class="chip-symbol">✦</span>
             <span>Scene</span>
@@ -1004,27 +1009,143 @@
     </div>
 
     <!-- ==========================================================
-         VERIFIED FLAGSHIP MODELS (PURCHASE TRANSPARENCY MODAL)
+         SORA PRO — EARNABLE & COMMUNITY EDITION MODAL
          ========================================================== -->
     <div id="premium-modal" class="modal-backdrop hidden">
-      <div class="modal-card glass-card modal-card-wide">
+      <div class="modal-card glass-card modal-card-wide pro-modal-card" style="max-width:620px;max-height:90dvh;overflow-y:auto;">
         <div class="modal-header">
-          <div>
-            <h3>Verified Flagship Models</h3>
-            <p class="muted-text" style="margin-top:0.15rem;">Full model transparency before you upgrade—every flagship model is explicitly disclosed by provider, parameter count, and context window.</p>
+          <div style="display:flex;align-items:center;gap:0.65rem;">
+            <div class="pro-modal-icon-badge">✦</div>
+            <div>
+              <div style="display:flex;align-items:center;gap:0.5rem;flex-wrap:wrap;">
+                <h3 style="margin:0;">Sora Pro</h3>
+                <span id="pro-modal-tier-badge" class="badge-mini badge-warm">Earnable Edition · $0</span>
+              </div>
+              <p class="muted-text" style="font-size:0.78rem;margin-top:0.2rem;">Zero ads, zero subscriptions, sovereign local roleplay. Unlocked through affinity or free BYOK.</p>
+            </div>
           </div>
-          <button id="close-premium-modal" class="icon-btn">Close</button>
+          <button id="close-premium-modal" class="icon-btn" aria-label="Close">Close</button>
         </div>
 
-        <div id="modal-premium-list" class="premium-specs-grid" style="margin-top:0.25rem;"></div>
-
-        <div class="transparency-notice">
-          <strong>Transparency Commitment:</strong> Standard tier users have unlimited access to our in-house <strong>Sora Core v2</strong>, <strong>Sora Velvet</strong>, <strong>Sora Noir</strong>, and <strong>Sora Pulse</strong> engines at no cost. Upgrading to Flagship Access unlocks direct, unthrottled routing to the verified models listed above.
+        <!-- Pro Active Status Banner (Shown if unlocked) -->
+        <div id="pro-active-banner" class="pro-unlocked-banner hidden">
+          <div style="display:flex;align-items:center;gap:0.5rem;">
+            <span class="pro-sparkle" style="font-size:1.2rem;">✦</span>
+            <div>
+              <strong style="color:var(--text-main);font-size:0.9rem;">Sora Pro is Active on your Device!</strong>
+              <p class="muted-text" style="font-size:0.75rem;margin:0;">Deep Roleplay Mode, multi-provider model switching, and ✦ PRO Astral badge enabled.</p>
+            </div>
+          </div>
         </div>
 
-        <div class="modal-actions-row">
-          <button id="close-premium-continue-free" class="btn-glass">Continue with Included Sora Models</button>
-          <button id="activate-premium-btn" class="btn-primary">Unlock Flagship Access ($9/mo)</button>
+        <!-- Unlock Methods (Free & Earnable) -->
+        <div id="pro-unlock-methods-wrap" style="display:flex;flex-direction:column;gap:0.85rem;margin-top:0.75rem;">
+          <!-- Method 1: Affinity & Activity -->
+          <div class="pro-method-card">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.4rem;">
+              <div style="display:flex;align-items:center;gap:0.4rem;">
+                <span style="font-size:1rem;">⚡</span>
+                <strong style="font-size:0.85rem;">Method 1: Affinity &amp; Activity Unlock (Free)</strong>
+              </div>
+              <span class="badge-mini" style="background:rgba(110,123,242,0.15);color:#8B98F8;">100% Earnable</span>
+            </div>
+            <p class="muted-text" style="font-size:0.76rem;line-height:1.45;margin-bottom:0.6rem;">
+              Roleplay with characters to unlock Pro. Send 10+ messages across conversations OR reach Level 2+ Tie with any companion:
+            </p>
+
+            <div class="pro-progress-group">
+              <div class="pro-progress-label-row">
+                <span>Story Messages Sent</span>
+                <span id="pro-progress-msg-label">0 / 10 Messages</span>
+              </div>
+              <div class="pro-progress-track">
+                <div id="pro-progress-msg-bar" class="pro-progress-fill" style="width: 0%;"></div>
+              </div>
+            </div>
+
+            <div class="pro-progress-group" style="margin-top:0.5rem;">
+              <div class="pro-progress-label-row">
+                <span>Highest Character Bond</span>
+                <span id="pro-progress-tie-label">Stranger (Lv.1 / Lv.2)</span>
+              </div>
+              <div class="pro-progress-track">
+                <div id="pro-progress-tie-bar" class="pro-progress-fill" style="width: 0%;"></div>
+              </div>
+            </div>
+
+            <div style="margin-top:0.75rem;display:flex;justify-content:flex-end;">
+              <button type="button" id="claim-pro-btn" class="btn-primary btn-sm" style="display:inline-flex;align-items:center;gap:0.4rem;">
+                <span class="pro-sparkle">✦</span>
+                <span id="claim-pro-btn-label">Claim Sora Pro (Free)</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Method 2: Free Bring Your Own Key -->
+          <div class="pro-method-card">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.4rem;">
+              <div style="display:flex;align-items:center;gap:0.4rem;">
+                <span style="font-size:1rem;">🔑</span>
+                <strong style="font-size:0.85rem;">Method 2: Free BYOK Provider Key</strong>
+              </div>
+              <span class="badge-mini" style="background:rgba(16,185,129,0.15);color:#34D399;">Instant Unlock</span>
+            </div>
+            <p class="muted-text" style="font-size:0.76rem;line-height:1.45;margin-bottom:0.6rem;">
+              Connecting a free API key from Groq, Google Gemini, or OpenRouter grants instant Pro status and direct flagship inference:
+            </p>
+            <div style="display:flex;gap:0.5rem;flex-wrap:wrap;">
+              <a href="https://console.groq.com/keys" target="_blank" rel="noopener noreferrer" class="btn-glass btn-xs" style="text-decoration:none;font-size:0.74rem;">
+                Free Groq Key (30 req/min) ↗
+              </a>
+              <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener noreferrer" class="btn-glass btn-xs" style="text-decoration:none;font-size:0.74rem;">
+                Free Gemini Flash Key ↗
+              </a>
+              <a href="https://openrouter.ai/keys" target="_blank" rel="noopener noreferrer" class="btn-glass btn-xs" style="text-decoration:none;font-size:0.74rem;">
+                Free OpenRouter Key ↗
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Pro Perks Grid -->
+        <div style="margin-top:1rem;">
+          <h4 style="font-size:0.85rem;margin-bottom:0.5rem;color:var(--text-main);">Included Sora Pro Perks ($0.00 Forever):</h4>
+          <div class="pro-perks-grid">
+            <div class="pro-perk-item">
+              <span class="pro-perk-icon">✦</span>
+              <div>
+                <strong>Deep Roleplay Mode</strong>
+                <p class="muted-text">Multi-paragraph sensory prose, inner monologues, and extended memory retention.</p>
+              </div>
+            </div>
+            <div class="pro-perk-item">
+              <span class="pro-perk-icon">✦</span>
+              <div>
+                <strong>AI Model Switcher</strong>
+                <p class="muted-text">Toggle between Sora Standard, Sora Deep Roleplay, and high-speed BYOK engines.</p>
+              </div>
+            </div>
+            <div class="pro-perk-item">
+              <span class="pro-perk-icon">✦</span>
+              <div>
+                <strong>Unlimited Characters &amp; Personas</strong>
+                <p class="muted-text">Craft unlimited original characters, lore scenarios, and writer identities.</p>
+              </div>
+            </div>
+            <div class="pro-perk-item">
+              <span class="pro-perk-icon">✦</span>
+              <div>
+                <strong>Astral Pro Badge</strong>
+                <p class="muted-text">Exclusive ✦ PRO highlight displayed on your profile and community comments.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div id="modal-premium-list" class="premium-specs-grid hidden" style="margin-top:0.25rem;"></div>
+
+        <div class="modal-actions-row" style="margin-top:1rem;justify-content:flex-end;">
+          <button id="close-premium-continue-free" class="btn-glass">Done</button>
         </div>
       </div>
     </div>

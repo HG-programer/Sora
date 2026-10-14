@@ -778,6 +778,7 @@ function renderCommentsFeed(charId, sortMode = "top") {
           <div>
             <div style="display:flex;align-items:center;gap:0.4rem;flex-wrap:wrap;">
               <span class="comment-author-name">${comm.author_name}</span>
+              ${(comm.is_pro || (isMine && isSoraProActive())) ? `<span class="badge-mini badge-pro-astral" style="font-size:0.65rem;padding:0.1rem 0.38rem;" title="Sora Pro Member">✦ PRO</span>` : ""}
               <span class="badge-mini ${tieInfo.badgeClass || "badge-friend"}" style="font-size:0.68rem;padding:0.12rem 0.4rem;">
                 ${tieInfo.icon || "✨"} ${tieInfo.stage} Lv.${tieInfo.level}
               </span>
@@ -1114,6 +1115,8 @@ document.addEventListener("DOMContentLoaded", async () => {
     loadSessions(),
   ]);
 
+  checkAndAutoUnlockPro();
+  renderProBadge();
   updateTiesNavBadge();
 });
 
@@ -1282,14 +1285,14 @@ function renderUserHeader() {
   if (userTier === "super_admin") {
     tierLabel = "👑 Super Access (Founder)";
     tierClass = "badge-mini badge-gold";
-  } else if (userTier === "ultra") {
-    tierLabel = "🌟 Ultra Member ($19/mo)";
-    tierClass = "badge-mini badge-ultra";
-  } else if (userTier === "pro") {
-    tierLabel = "💎 Flagship Pro ($9/mo)";
-    tierClass = "badge-mini badge-pro";
+  } else if (isSoraProActive()) {
+    tierLabel = "✦ Sora Pro (Community Edition)";
+    tierClass = "badge-mini badge-pro-astral";
   } else if (state.user.is_guest) {
-    tierLabel = "Temporary Guest";
+    tierLabel = "Standard Member (Guest)";
+    tierClass = "badge-mini badge-warm";
+  } else {
+    tierLabel = "Standard Member";
     tierClass = "badge-mini badge-warm";
   }
 
@@ -1377,69 +1380,178 @@ function getPublicModelName(modelId) {
   return found ? found.name : modelId;
 }
 
+function getUserActivityStats() {
+  const sessions = getLocalSessions();
+  let totalMessages = 0;
+  sessions.forEach((s) => {
+    (s.messages || []).forEach((m) => {
+      if (m && m.role === "user") totalMessages++;
+    });
+  });
+
+  const ties = getLocalTies();
+  let maxTieLevel = 1;
+  let highestTieStage = "Stranger";
+  Object.values(ties).forEach((t) => {
+    if (t && typeof t.level === "number" && t.level > maxTieLevel) {
+      maxTieLevel = t.level;
+      highestTieStage = t.stage || "Stranger";
+    }
+  });
+
+  return { totalMessages, maxTieLevel, highestTieStage };
+}
+
+function isSoraProActive() {
+  if (window.api && typeof window.api.isProActive === "function") {
+    if (window.api.isProActive()) return true;
+  }
+  if (localStorage.getItem("sora_pro_unlocked") === "true") return true;
+  const keys = window.api ? window.api.getByokKeys() : {};
+  if (keys.groq || keys.gemini || keys.openrouter || keys.openai || keys.xai) return true;
+  const userTier = state.user?.tier;
+  if (userTier === "super_admin" || userTier === "ultra" || userTier === "pro") return true;
+  const stats = getUserActivityStats();
+  if (stats.totalMessages >= 10 || stats.maxTieLevel >= 2) return true;
+  return false;
+}
+
+function renderProBadge() {
+  const isPro = isSoraProActive();
+  const topBtn = document.getElementById("open-premium-btn");
+  const topLabel = document.getElementById("top-pro-label");
+  if (topBtn) {
+    topBtn.classList.toggle("pro-active", isPro);
+    topBtn.classList.toggle("badge-pro-astral", isPro);
+  }
+  if (topLabel) {
+    topLabel.textContent = isPro ? "PRO Active" : "Unlock Pro (Free)";
+  }
+
+  // Update Deep Roleplay toolbar button state
+  const deepRpBtn = document.getElementById("deep-rp-toggle-btn");
+  const deepRpLabel = document.getElementById("deep-rp-toggle-label");
+  const isDeepRp = Boolean(window.api?.isDeepRpActive?.());
+  if (deepRpBtn) {
+    deepRpBtn.classList.toggle("active", isDeepRp);
+  }
+  if (deepRpLabel) {
+    deepRpLabel.textContent = isDeepRp ? "Deep RP: ON" : "Deep RP: Off";
+  }
+}
+
+function renderProModal() {
+  const isPro = isSoraProActive();
+  const stats = getUserActivityStats();
+
+  const activeBanner = document.getElementById("pro-active-banner");
+  if (activeBanner) activeBanner.classList.toggle("hidden", !isPro);
+
+  const tierBadge = document.getElementById("pro-modal-tier-badge");
+  if (tierBadge) {
+    tierBadge.textContent = isPro ? "✦ PRO Active · $0" : "Earnable Edition · $0";
+    tierBadge.className = isPro ? "badge-mini badge-pro-astral" : "badge-mini badge-warm";
+  }
+
+  const msgLabel = document.getElementById("pro-progress-msg-label");
+  const msgBar = document.getElementById("pro-progress-msg-bar");
+  if (msgLabel) msgLabel.textContent = `${Math.min(stats.totalMessages, 10)} / 10 Messages`;
+  if (msgBar) msgBar.style.width = `${Math.min((stats.totalMessages / 10) * 100, 100)}%`;
+
+  const tieLabel = document.getElementById("pro-progress-tie-label");
+  const tieBar = document.getElementById("pro-progress-tie-bar");
+  if (tieLabel) tieLabel.textContent = `${stats.highestTieStage} (Lv.${stats.maxTieLevel} / Lv.2)`;
+  if (tieBar) tieBar.style.width = `${Math.min((stats.maxTieLevel / 2) * 100, 100)}%`;
+
+  const claimBtn = document.getElementById("claim-pro-btn");
+  const claimLabel = document.getElementById("claim-pro-btn-label");
+  if (claimBtn && claimLabel) {
+    if (isPro) {
+      claimLabel.textContent = "✦ PRO Unlocked";
+      claimBtn.disabled = true;
+      claimBtn.classList.remove("btn-primary");
+      claimBtn.classList.add("btn-glass");
+    } else {
+      claimLabel.textContent = "Claim Sora Pro (Free)";
+      claimBtn.disabled = false;
+      claimBtn.classList.add("btn-primary");
+      claimBtn.classList.remove("btn-glass");
+    }
+  }
+}
+
+function checkAndAutoUnlockPro() {
+  if (localStorage.getItem("sora_pro_unlocked") === "true") return true;
+  const stats = getUserActivityStats();
+  if (stats.totalMessages >= 10 || stats.maxTieLevel >= 2) {
+    if (window.api?.unlockPro) {
+      window.api.unlockPro("activity");
+    } else {
+      localStorage.setItem("sora_pro_unlocked", "true");
+    }
+    triggerHaptic(30);
+    showToast("🎉 Sora Pro Unlocked for Free! ✦ PRO perks are now active.");
+    renderProBadge();
+    loadAdapters();
+    renderUserHeader();
+    return true;
+  }
+  return false;
+}
+
 function isModelUnlocked(adapter) {
   if (!adapter) return true;
   if (adapter.tier === "free") return true;
-
-  const activeTier = state.user?.tier || "free";
-  if (activeTier === "super_admin" || activeTier === "ultra" || activeTier === "pro") {
-    return true;
-  }
+  if (isSoraProActive()) return true;
 
   const keys = window.api.getByokKeys();
-  if (adapter.id.startsWith("xai-") && keys.xai) return true;
-  if (adapter.id === "openrouter-hermes-3" && keys.openrouter) return true;
-  if (adapter.id.startsWith("openai-") && keys.openai) return true;
-  if (adapter.id.startsWith("gemini-") && keys.gemini) return true;
+  if (adapter.id === "byok-groq" && keys.groq) return true;
+  if (adapter.id === "byok-gemini" && keys.gemini) return true;
+  if (adapter.id === "byok-openrouter" && keys.openrouter) return true;
   return false;
 }
 
 async function loadAdapters() {
-  try {
-    const data = await window.api.request("/api/v1/adapters", { timeout: 2500 });
-    state.adapters = data.adapters || [];
-  } catch (err) {
-    state.adapters = [
-      { id: "haru-core", name: "Sora Core v2", tier: "free", badge: "Included · Primary", description: "Standard expressive creative roleplay engine.", provider: "Sora In-House" },
-      { id: "haru-velvet", name: "Sora Velvet", tier: "free", badge: "Included · Emotional", description: "Nuanced, high-chemistry emotional dialogue.", provider: "Sora In-House" },
-      { id: "haru-noir", name: "Sora Noir", tier: "free", badge: "Included · Atmospheric", description: "Rich sensory descriptions and grounded pacing.", provider: "Sora In-House" },
-      { id: "haru-pulse", name: "Sora Pulse", tier: "free", badge: "Included · Fast Dialogue", description: "Snappy, fast-paced conversational banter.", provider: "Sora In-House" },
-      { id: "grok-beta", name: "Grok 2 (xAI)", tier: "premium", badge: "Flagship · 128k", description: "Direct unthrottled xAI flagship routing.", provider: "xAI" },
-      { id: "openrouter-hermes-3", name: "Hermes 3 Llama-3.1 70B", tier: "premium", badge: "Flagship · 128k", description: "Unfiltered deep character roleplay flagship.", provider: "NousResearch" },
-      { id: "openai-gpt-4o", name: "GPT-4o (OpenAI)", tier: "premium", badge: "Flagship · 128k", description: "High-reasoning flagship intelligence.", provider: "OpenAI" },
-      { id: "gemini-1.5-pro", name: "Gemini 1.5 Pro", tier: "premium", badge: "Flagship · 1M", description: "Massive 1M token context memory.", provider: "Google" }
-    ];
-  }
+  state.adapters = [
+    { id: "haru-core", name: "Sora Standard", tier: "free", badge: "Fast · Free", description: "Standard responsive roleplay engine powered by free cloud AI.", provider: "Cloud AI" },
+    { id: "haru-velvet", name: "Sora Deep Roleplay", tier: "free", badge: "Creative · Free", description: "Expressive, emotionally nuanced multi-paragraph creative narrative.", provider: "Cloud AI" },
+    { id: "haru-noir", name: "Sora Noir", tier: "free", badge: "Atmospheric · Free", description: "Rich sensory descriptions and grounded environmental pacing.", provider: "Cloud AI" },
+    { id: "haru-pulse", name: "Sora Pulse", tier: "free", badge: "Snappy · Free", description: "Snappy, fast-paced conversational banter.", provider: "Cloud AI" },
+    { id: "byok-groq", name: "Groq Llama 3.3 70B", tier: "pro", badge: "High-Speed · BYOK", description: "High-throughput Llama 3.3 70B via free Groq API key.", provider: "Groq" },
+    { id: "byok-gemini", name: "Gemini 2.0 Flash", tier: "pro", badge: "Massive Context · BYOK", description: "Google Gemini 2.0 Flash via free Google AI Studio key.", provider: "Google" },
+    { id: "byok-openrouter", name: "OpenRouter Hermes 3", tier: "pro", badge: "Unfiltered RP · BYOK", description: "Unfiltered deep character roleplay via free OpenRouter key.", provider: "NousResearch" }
+  ];
 
   const freeModels = state.adapters.filter((m) => m.tier === "free");
-  const premiumModels = state.adapters.filter((m) => m.tier === "premium");
+  const proModels = state.adapters.filter((m) => m.tier === "pro");
+  const proActive = isSoraProActive();
 
   document.querySelectorAll(".model-dropdown-populate").forEach((selectEl) => {
     const currentVal = selectEl.value;
     selectEl.innerHTML = "";
 
     const freeGroup = document.createElement("optgroup");
-    freeGroup.label = "Sora Standard Models (Included Free)";
+    freeGroup.label = "Included Free Engines (Zero Cost)";
     freeModels.forEach((m) => {
       const opt = document.createElement("option");
       opt.value = m.id;
-      opt.textContent = `${m.name} (${m.badge.replace("Included · ", "")})`;
+      opt.textContent = `${m.name} (${m.badge})`;
       freeGroup.appendChild(opt);
     });
     selectEl.appendChild(freeGroup);
 
-    const premGroup = document.createElement("optgroup");
-    premGroup.label = "Verified Flagship Models (Premium)";
-    premiumModels.forEach((m) => {
+    const proGroup = document.createElement("optgroup");
+    proGroup.label = "Sora Pro & BYOK Engines";
+    proModels.forEach((m) => {
       const unlocked = isModelUnlocked(m);
       const opt = document.createElement("option");
       opt.value = m.id;
-      opt.textContent = `${m.name} — ${unlocked ? "Unlocked" : "🔒 Pro/Ultra Required"}`;
-      premGroup.appendChild(opt);
+      opt.textContent = `${m.name} — ${unlocked ? "✦ Unlocked" : "🔒 Pro Required"}`;
+      proGroup.appendChild(opt);
     });
-    selectEl.appendChild(premGroup);
+    selectEl.appendChild(proGroup);
 
-    if (currentVal && currentVal !== "haru-rp-v1") {
+    if (currentVal && state.adapters.some((a) => a.id === currentVal)) {
       selectEl.value = currentVal;
     } else {
       selectEl.value = "haru-core";
@@ -1447,54 +1559,27 @@ async function loadAdapters() {
   });
 
   renderAdaptersTable();
+  renderProBadge();
 }
 
 function renderAdaptersTable() {
   const freeTbody = document.getElementById("free-adapters-table-body");
   const premGrid = document.getElementById("premium-transparency-grid");
-  const modalPremGrid = document.getElementById("modal-premium-list");
   const planBadge = document.getElementById("premium-plan-badge");
-  const activateBtn = document.getElementById("activate-premium-btn");
-
-  const userTier = state.user?.tier || "free";
-  const isSuper = Boolean(
-    state.user?.is_super_admin ||
-    (state.user?.email && state.user.email.toLowerCase() === "harshitg933@gmail.com") ||
-    state.user?.username === "harshitg933"
-  );
-  const hasPass = isSuper || userTier === "super_admin" || userTier === "ultra" || userTier === "pro";
+  const isPro = isSoraProActive();
 
   if (planBadge) {
-    if (userTier === "super_admin") {
-      planBadge.textContent = "👑 Super Access (Founder)";
-      planBadge.className = "badge-mini badge-gold";
-    } else if (userTier === "ultra") {
-      planBadge.textContent = "🌟 Ultra Member ($19/mo)";
-      planBadge.className = "badge-mini badge-ultra";
-    } else if (userTier === "pro") {
-      planBadge.textContent = "💎 Flagship Pro ($9/mo)";
-      planBadge.className = "badge-mini badge-pro";
+    if (isPro) {
+      planBadge.textContent = "✦ Sora Pro Active (Community Edition)";
+      planBadge.className = "badge-mini badge-pro-astral";
     } else {
       planBadge.textContent = "Standard Free Tier";
-      planBadge.className = "badge-mini";
+      planBadge.className = "badge-mini badge-warm";
     }
   }
 
-  if (activateBtn) {
-    if (isSuper) {
-      activateBtn.textContent = "👑 Super Access Active (Founder)";
-      activateBtn.disabled = true;
-    } else if (hasPass) {
-      activateBtn.textContent = "Plan Active";
-      activateBtn.disabled = true;
-    } else {
-      activateBtn.textContent = "Unlock Flagship Access ($9/mo)";
-      activateBtn.disabled = false;
-    }
-  }
-
+  const proModels = state.adapters.filter((a) => a.tier === "pro");
   const freeModels = state.adapters.filter((a) => a.tier === "free");
-  const premiumModels = state.adapters.filter((a) => a.tier === "premium");
 
   if (freeTbody) {
     freeTbody.innerHTML = "";
@@ -1504,21 +1589,21 @@ function renderAdaptersTable() {
         <td style="font-weight:600;">${a.name}</td>
         <td><span class="badge-mini">${a.badge}</span></td>
         <td class="muted-text">${a.description || ""}</td>
-        <td class="muted-text"><span class="status-dot" style="background:#10b981;"></span>Included · Active</td>
+        <td class="muted-text"><span class="status-dot" style="background:#10b981;"></span>Included · 100% Free</td>
       `;
       freeTbody.appendChild(tr);
     });
   }
 
-  const renderPremiumCards = (container) => {
+  const renderProCards = (container) => {
     if (!container) return;
     container.innerHTML = "";
-    premiumModels.forEach((a) => {
+    proModels.forEach((a) => {
       const unlocked = isModelUnlocked(a);
       const card = document.createElement("div");
       card.className = `premium-spec-card ${unlocked ? "unlocked" : ""}`;
       const dotColor = unlocked ? "#10b981" : "#a1a1aa";
-      const statusLabel = unlocked ? "Unlocked · Direct API Routing" : "Verified Flagship · Upgrade to Unlock";
+      const statusLabel = unlocked ? "Unlocked · Active" : "✦ Pro Status or BYOK Required";
       card.innerHTML = `
         <div class="premium-spec-top">
           <span class="premium-spec-provider">${a.provider}</span>
@@ -1528,15 +1613,14 @@ function renderAdaptersTable() {
         <div class="premium-spec-desc">${a.description || ""}</div>
         <div class="premium-spec-meta">
           <span><span class="status-dot" style="background:${dotColor};"></span>${statusLabel}</span>
-          <span>100% Disclosed</span>
+          <span>Zero-Cost AI</span>
         </div>
       `;
       container.appendChild(card);
     });
   };
 
-  renderPremiumCards(premGrid);
-  renderPremiumCards(modalPremGrid);
+  renderProCards(premGrid);
 }
 
 // --- Character Directory ---
@@ -2361,11 +2445,15 @@ function createMessageDom(msgOrRole, content, modelUsed, charAvatar, userAvatar,
             content: historyBefore[historyBefore.length - 1]?.content || "Continue the scene.",
             model: selectedModel,
             character_name: char.name,
+            tagline: char.tagline,
+            category: char.category,
+            first_message: char.first_message,
             personality: char.personality,
             scenario: char.scenario,
             tie: { level: tie.level, stage: tie.stage, xp: tie.xp },
             core_memories: coreMems,
             user_persona: personaObj ? { name: personaObj.name, description: personaObj.description } : null,
+            deep_roleplay: Boolean(window.api?.isDeepRpActive?.()),
             local_messages: historyBefore.map((m) => ({ role: m.role, content: m.content })),
           },
           {
@@ -3167,17 +3255,30 @@ function bindUIEvents() {
     if (srv) localStorage.setItem("haru_emochi_server_url", srv);
     else localStorage.removeItem("haru_emochi_server_url");
 
+    const groqKey = document.getElementById("cfg-groq-key").value.trim();
+    const geminiKey = document.getElementById("cfg-gemini-key").value.trim();
+    const openrouterKey = document.getElementById("cfg-openrouter-key").value.trim();
+
     window.api.setByokKeys({
-      groq: document.getElementById("cfg-groq-key").value.trim(),
-      gemini: document.getElementById("cfg-gemini-key").value.trim(),
+      groq: groqKey,
+      gemini: geminiKey,
       openai: document.getElementById("cfg-openai-key").value.trim(),
-      openrouter: document.getElementById("cfg-openrouter-key").value.trim(),
+      openrouter: openrouterKey,
       xai: document.getElementById("cfg-xai-key").value.trim(),
       hf: document.getElementById("cfg-hf-key").value.trim(),
       ollama_url: document.getElementById("cfg-ollama-url").value.trim(),
     });
-    showToast("Configuration saved");
+
+    if (groqKey || geminiKey || openrouterKey) {
+      if (window.api?.unlockPro) window.api.unlockPro("byok");
+      else localStorage.setItem("sora_pro_unlocked", "true");
+      triggerHaptic(25);
+      showToast("✦ Sora Pro Activated via BYOK Key! All engines unlocked.");
+    } else {
+      showToast("Configuration saved");
+    }
     loadAdapters();
+    renderProBadge();
   });
 
   document.getElementById("close-chat-btn").addEventListener("click", () => {
@@ -3575,6 +3676,9 @@ function bindUIEvents() {
         model: selectedModel,
         persona_id: selectedPersona || null,
         character_name: activeChar?.name,
+        tagline: activeChar?.tagline,
+        category: activeChar?.category,
+        first_message: activeChar?.first_message,
         personality: activeChar?.personality,
         scenario: activeChar?.scenario,
         tie: {
@@ -3584,6 +3688,7 @@ function bindUIEvents() {
         },
         core_memories: coreMems,
         user_persona: activePersona ? { name: activePersona.name, description: activePersona.description } : null,
+        deep_roleplay: Boolean(window.api?.isDeepRpActive?.()),
         local_messages: (state.activeSession.messages || []).map((m) => ({
           role: m.role,
           content: m.content,
@@ -3623,6 +3728,7 @@ function bindUIEvents() {
           if (idx >= 0) sessions[idx] = state.activeSession;
           else sessions.unshift(state.activeSession);
           saveLocalSessions(sessions);
+          checkAndAutoUnlockPro();
           loadPlatformStats();
           if (state.activeSession?.character) {
             recordTieInteraction(state.activeSession.character.id, state.activeSession.character, 10);
@@ -3717,14 +3823,16 @@ function bindUIEvents() {
   document.getElementById("chat-model-select").addEventListener("change", (e) => {
     const chosenId = e.target.value;
     const adapter = state.adapters.find((a) => a.id === chosenId);
-    if (adapter && adapter.tier === "premium" && !isModelUnlocked(adapter)) {
-      document.getElementById("premium-modal").classList.remove("hidden");
+    if (adapter && adapter.tier === "pro" && !isModelUnlocked(adapter)) {
+      renderProModal();
+      openPremium();
     }
   });
 
   const premiumModal = document.getElementById("premium-modal");
   const openPremBtn = document.getElementById("open-premium-btn");
   const openPremium = () => {
+    renderProModal();
     renderAdaptersTable();
     if (premiumModal) {
       premiumModal.classList.remove("hidden");
@@ -3749,31 +3857,45 @@ function bindUIEvents() {
   }
   const closePremContBtn = document.getElementById("close-premium-continue-free");
   if (closePremContBtn && premiumModal) {
-    closePremContBtn.addEventListener("click", () => {
-      const chatSelect = document.getElementById("chat-model-select");
-      if (chatSelect) {
-        const chosen = state.adapters.find((a) => a.id === chatSelect.value);
-        if (chosen && chosen.tier === "premium" && !isModelUnlocked(chosen)) {
-          chatSelect.value = "haru-core";
-        }
-      }
-      closePremium();
-    });
+    closePremContBtn.addEventListener("click", closePremium);
   }
-  const actPremBtn = document.getElementById("activate-premium-btn");
-  if (actPremBtn && premiumModal) {
-    actPremBtn.addEventListener("click", () => {
-      const nextState = !window.api.hasPremiumPass();
-      window.api.setPremiumPass(nextState);
+
+  const claimProBtn = document.getElementById("claim-pro-btn");
+  if (claimProBtn && premiumModal) {
+    claimProBtn.addEventListener("click", () => {
+      triggerHaptic(25);
+      if (window.api?.unlockPro) window.api.unlockPro("claimed");
+      else localStorage.setItem("sora_pro_unlocked", "true");
+      showToast("🎉 Sora Pro Unlocked! Community Edition perks are now active.");
+      renderProModal();
+      renderProBadge();
       loadAdapters();
-      closePremium();
-      showToast(
-        nextState
-          ? "Flagship Access enabled — Verified models unlocked"
-          : "Reverted to Standard Free Tier (Sora Models)"
-      );
+      renderUserHeader();
     });
   }
+
+  // Deep Roleplay Mode Toggle Wiring
+  const deepRpBtn = document.getElementById("deep-rp-toggle-btn");
+  if (deepRpBtn) {
+    deepRpBtn.addEventListener("click", () => {
+      triggerHaptic(12);
+      if (!isSoraProActive()) {
+        showToast("✦ Unlock Sora Pro (Free) to enable Deep Roleplay Mode!");
+        renderProModal();
+        openPremium();
+        return;
+      }
+      const nextState = !Boolean(window.api?.isDeepRpActive?.());
+      if (window.api?.setDeepRpActive) {
+        window.api.setDeepRpActive(nextState);
+      } else {
+        localStorage.setItem("sora_deep_rp_enabled", nextState ? "true" : "false");
+      }
+      renderProBadge();
+      showToast(nextState ? "✦ Deep Roleplay Mode ON (Rich multi-paragraph narrative)" : "Deep Roleplay Mode OFF");
+    });
+  }
+
   if (premiumModal) {
     premiumModal.addEventListener("click", (e) => {
       if (e.target === premiumModal) closePremium();
@@ -4252,6 +4374,7 @@ function bindUIEvents() {
             reaction_tag: reactionTag,
             text,
             is_mine: true,
+            is_pro: isSoraProActive(),
           });
         }
         if (input) input.value = "";
