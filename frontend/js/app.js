@@ -1667,6 +1667,174 @@ function loadSavedByokForm() {
   document.getElementById("cfg-ollama-url").value = keys.ollama_url || "";
 }
 
+function exportSoraBackup() {
+  try {
+    triggerHaptic(10);
+    const sessions = getLocalSessions();
+    const characters = getMyCharactersLocal();
+    const liked = Array.from(getLikedIds());
+    const user = state.user || JSON.parse(localStorage.getItem("sora_cached_user") || "null");
+    const personas = user?.personas || [];
+    const chatBgs = JSON.parse(localStorage.getItem("haru_emochi_chat_bgs") || "{}");
+    const serverUrl = localStorage.getItem("haru_emochi_server_url") || "";
+
+    const backupPayload = {
+      version: 1,
+      app: "com.haru.sora",
+      exported_at: new Date().toISOString(),
+      user,
+      personas,
+      sessions,
+      characters,
+      liked_character_ids: liked,
+      chat_backgrounds: chatBgs,
+      settings: {
+        server_url: serverUrl,
+        grid_mode: localStorage.getItem("sora_grid_view_mode") || "story",
+      },
+    };
+
+    const jsonStr = JSON.stringify(backupPayload, null, 2);
+    const blob = new Blob([jsonStr], { type: "application/json" });
+    const now = new Date();
+    const yyyy = now.getFullYear();
+    const mm = String(now.getMonth() + 1).padStart(2, "0");
+    const dd = String(now.getDate()).padStart(2, "0");
+    const filename = `sora-backup-${yyyy}-${mm}-${dd}.json`;
+
+    const downloadLink = document.createElement("a");
+    downloadLink.href = URL.createObjectURL(blob);
+    downloadLink.download = filename;
+    document.body.appendChild(downloadLink);
+    downloadLink.click();
+    setTimeout(() => {
+      URL.revokeObjectURL(downloadLink.href);
+      downloadLink.remove();
+    }, 1500);
+
+    showToast(`Backup exported: ${filename} (${sessions.length} chats, ${characters.length} characters)`);
+  } catch (err) {
+    console.error("Backup export failed:", err);
+    showToast(`Export failed: ${err.message}`);
+  }
+}
+
+async function importSoraBackup(file) {
+  if (!file) return;
+  try {
+    triggerHaptic(12);
+    showToast("Validating and importing backup...");
+    const rawText = await file.text();
+    let data;
+    try {
+      data = JSON.parse(rawText);
+    } catch (_) {
+      throw new Error("Invalid file content: Not valid JSON.");
+    }
+
+    if (!data || typeof data !== "object") {
+      throw new Error("Invalid backup format: Expected a JSON object.");
+    }
+
+    if (!Array.isArray(data.sessions) && !Array.isArray(data.characters) && !data.user) {
+      throw new Error("Unrecognized backup format: No Sora sessions, characters, or user profile found.");
+    }
+
+    let sessionsCount = 0;
+    let charsCount = 0;
+    let personasCount = 0;
+
+    // 1. Restore & merge sessions
+    if (Array.isArray(data.sessions)) {
+      const existing = getLocalSessions();
+      const map = new Map();
+      existing.forEach((s) => s?.id && map.set(s.id, s));
+      data.sessions.forEach((s) => {
+        if (s?.id) {
+          map.set(s.id, s);
+          sessionsCount++;
+        }
+      });
+      saveLocalSessions(Array.from(map.values()));
+    }
+
+    // 2. Restore & merge custom characters
+    if (Array.isArray(data.characters)) {
+      const existing = getMyCharactersLocal();
+      const map = new Map();
+      existing.forEach((c) => c?.id && map.set(c.id, c));
+      data.characters.forEach((c) => {
+        if (c?.id) {
+          map.set(c.id, c);
+          charsCount++;
+        }
+      });
+      saveMyCharactersLocal(Array.from(map.values()));
+    }
+
+    // 3. Restore liked character ids
+    if (Array.isArray(data.liked_character_ids)) {
+      const liked = getLikedIds();
+      data.liked_character_ids.forEach((id) => liked.add(id));
+      saveLikedIds(liked);
+    }
+
+    // 4. Restore chat background configs
+    if (data.chat_backgrounds && typeof data.chat_backgrounds === "object") {
+      try {
+        const cur = JSON.parse(localStorage.getItem("haru_emochi_chat_bgs") || "{}");
+        const merged = Object.assign({}, cur, data.chat_backgrounds);
+        localStorage.setItem("haru_emochi_chat_bgs", JSON.stringify(merged));
+      } catch (_) {}
+    }
+
+    // 5. Restore user profile & personas
+    if (data.user) {
+      const curUser = state.user || JSON.parse(localStorage.getItem("sora_cached_user") || "null") || {};
+      const mergedPersonas = [...(curUser.personas || [])];
+      const pIdSet = new Set(mergedPersonas.map((p) => p.id));
+      const importedPersonas = data.personas || data.user.personas || [];
+      if (Array.isArray(importedPersonas)) {
+        for (const p of importedPersonas) {
+          if (p?.id && !pIdSet.has(p.id)) {
+            mergedPersonas.push(p);
+            pIdSet.add(p.id);
+            personasCount++;
+          }
+        }
+      }
+
+      state.user = {
+        ...curUser,
+        ...data.user,
+        personas: mergedPersonas,
+      };
+      localStorage.setItem("sora_cached_user", JSON.stringify(state.user));
+    }
+
+    // 6. Restore settings if present
+    if (data.settings?.server_url) {
+      localStorage.setItem("haru_emochi_server_url", data.settings.server_url);
+      const srvEl = document.getElementById("cfg-server-url");
+      if (srvEl) srvEl.value = data.settings.server_url;
+    }
+    if (data.settings?.grid_mode) {
+      localStorage.setItem("sora_grid_view_mode", data.settings.grid_mode);
+    }
+
+    triggerHaptic(15);
+    showToast(`Restore complete! ${sessionsCount} sessions, ${charsCount} characters, ${personasCount} personas imported.`);
+
+    // Refresh application state
+    renderUserHeader();
+    renderPersonasList();
+    await Promise.all([loadCharacters(), loadMyCharacters(), loadSessions()]);
+  } catch (err) {
+    console.error("Backup import failed:", err);
+    showToast(`Restore failed: ${err.message}`);
+  }
+}
+
 function bindUIEvents() {
   document.querySelectorAll(".nav-item").forEach((btn) => {
     btn.addEventListener("click", () => switchTab(btn.dataset.tab));
@@ -2729,7 +2897,29 @@ function bindUIEvents() {
   const logoutAcctBtn = document.getElementById("logout-account-btn");
   if (logoutAcctBtn) logoutAcctBtn.addEventListener("click", signOutOrSwitchGuest);
 
-    const installPwaBtn = document.getElementById("install-pwa-btn");
+  // --- Backup & Restore Handlers ---
+  const backupFileInput = document.getElementById("import-backup-file");
+  if (backupFileInput) {
+    backupFileInput.addEventListener("change", (e) => {
+      const file = e.target.files?.[0];
+      if (file) {
+        importSoraBackup(file);
+      }
+      e.target.value = "";
+    });
+  }
+
+  const exportBackupBtn = document.getElementById("export-backup-btn");
+  if (exportBackupBtn) exportBackupBtn.addEventListener("click", exportSoraBackup);
+  const cfgExportBackupBtn = document.getElementById("cfg-export-backup-btn");
+  if (cfgExportBackupBtn) cfgExportBackupBtn.addEventListener("click", exportSoraBackup);
+
+  const importBackupBtn = document.getElementById("import-backup-btn");
+  if (importBackupBtn) importBackupBtn.addEventListener("click", () => backupFileInput?.click());
+  const cfgImportBackupBtn = document.getElementById("cfg-import-backup-btn");
+  if (cfgImportBackupBtn) cfgImportBackupBtn.addEventListener("click", () => backupFileInput?.click());
+
+  const installPwaBtn = document.getElementById("install-pwa-btn");
   if (installPwaBtn) {
     installPwaBtn.addEventListener("click", async () => {
       if (!state.deferredPwaPrompt) return;

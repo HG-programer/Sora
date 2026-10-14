@@ -444,6 +444,26 @@
               </div>
             </form>
           </div>
+
+          <div class="glass-card" style="margin-top: 1rem;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.5rem;flex-wrap:wrap;gap:0.5rem;">
+              <div>
+                <h3>Local Backup &amp; Device Migration</h3>
+                <p class="muted-text">Safeguard your chat histories, personas, and custom creations as a portable JSON file.</p>
+              </div>
+              <span class="badge-mini" style="background:rgba(255,255,255,0.06);color:var(--text-muted);">1-Click JSON</span>
+            </div>
+            <div style="display:flex;gap:0.6rem;flex-wrap:wrap;margin-top:0.75rem;">
+              <button type="button" id="cfg-export-backup-btn" class="btn-glass btn-sm" style="display:inline-flex;align-items:center;gap:0.35rem;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                <span>Export All Chats &amp; Personas (.json)</span>
+              </button>
+              <button type="button" id="cfg-import-backup-btn" class="btn-glass btn-sm" style="display:inline-flex;align-items:center;gap:0.35rem;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                <span>Import Backup File</span>
+              </button>
+            </div>
+          </div>
         </div>
       </section>
     </main>
@@ -771,6 +791,31 @@
               <button type="button" id="logout-account-btn" class="btn-glass btn-sm hidden">Sign Out</button>
             </div>
           </form>
+        </div>
+
+        <!-- Local Backup & Restore (JSON Export / Import) -->
+        <div class="account-profile-box" style="margin-top:0.85rem;padding:0.85rem;border-radius:12px;background:rgba(255,255,255,0.02);border:1px solid var(--border-subtle);">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.4rem;">
+            <div style="display:flex;align-items:center;gap:0.4rem;">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--accent-solid);"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              <strong style="font-size:0.82rem;color:var(--text-main);">Backup &amp; Restore</strong>
+            </div>
+            <span class="badge-mini" style="background:rgba(255,255,255,0.06);color:var(--text-muted);font-size:0.7rem;">Portable JSON</span>
+          </div>
+          <p class="muted-text" style="font-size:0.75rem;margin-bottom:0.65rem;line-height:1.45;">
+            Export conversations, personas, and custom characters to a local backup file or restore previously saved data.
+          </p>
+          <div style="display:flex;gap:0.5rem;flex-wrap:wrap;">
+            <button type="button" id="export-backup-btn" class="btn-glass btn-sm" style="flex:1;min-width:120px;display:inline-flex;align-items:center;justify-content:center;gap:0.35rem;">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              <span>Export Backup</span>
+            </button>
+            <button type="button" id="import-backup-btn" class="btn-glass btn-sm" style="flex:1;min-width:120px;display:inline-flex;align-items:center;justify-content:center;gap:0.35rem;">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+              <span>Import Backup</span>
+            </button>
+            <input type="file" id="import-backup-file" accept=".json,application/json" style="display:none;" />
+          </div>
         </div>
 
         <!-- Founder & Super Admin Control Panel (Visible to harshitg933@gmail.com) -->
