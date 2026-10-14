@@ -4,17 +4,20 @@
   "description": "Sora — Unfiltered stories, living characters, zero ads. Just pure immersion.",
   "private": true,
   "scripts": {
+    "build": "node scripts/build-web.js",
     "start:backend": "python backend/app.py",
     "android:add": "npx @capacitor/cli add android",
-    "android:sync": "npx @capacitor/cli sync android",
+    "android:sync": "npm run build && npx @capacitor/cli sync android",
     "android:open": "npx @capacitor/cli open android",
     "test:concurrency": "python tests/load_test_multiuser.py"
   },
   "dependencies": {
     "@capacitor/android": "^6.1.0",
+    "@capacitor/app": "^6.0.0",
     "@capacitor/core": "^6.1.0"
   },
   "devDependencies": {
-    "@capacitor/cli": "^6.1.0"
+    "@capacitor/cli": "^6.1.0",
+    "esbuild": "^0.28.2"
   }
 }

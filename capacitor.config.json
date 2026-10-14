@@ -1,7 +1,7 @@
 {
   "appId": "com.haru.sora",
   "appName": "Sora",
-  "webDir": "frontend",
+  "webDir": "dist",
   "server": {
     "androidScheme": "http",
     "cleartext": true,

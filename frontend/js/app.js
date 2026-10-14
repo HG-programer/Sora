@@ -179,6 +179,7 @@ function getFallbackAvatar(name = "Character", gender = "Female") {
   </svg>`;
   return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
 }
+window.getFallbackAvatar = getFallbackAvatar;
 
 // Offline Storage & State Helpers
 function getLocalSessions() {
@@ -686,8 +687,16 @@ async function loadCharacters() {
     mine_only: isMine ? "true" : "false",
     favorites_only: isFav ? "true" : "false",
   });
+  const path = `/api/v1/characters?${qs.toString()}`;
   try {
-    state.characters = await window.api.request(`/api/v1/characters?${qs.toString()}`, { timeout: 2500 });
+    const data = await window.api.requestWithSWR(path, {
+      timeout: 8000,
+      onRevalidate: (fresh) => {
+        state.characters = fresh;
+        renderCharacterGrid();
+      },
+    });
+    state.characters = data;
     renderCharacterGrid();
   } catch (err) {
     // Offline / standalone APK fallback: filter bundled catalog
@@ -697,7 +706,14 @@ async function loadCharacters() {
 
 async function loadTemplates() {
   try {
-    state.templates = await window.api.request("/api/v1/templates", { timeout: 2500 });
+    const data = await window.api.requestWithSWR("/api/v1/templates", {
+      timeout: 8000,
+      onRevalidate: (fresh) => {
+        state.templates = fresh;
+        renderTemplateDropdown("All");
+      },
+    });
+    state.templates = data;
     renderTemplateDropdown("All");
   } catch {
     state.templates = [...(window.SORA_DEFAULT_CATALOG || [])];
@@ -851,18 +867,31 @@ function renderCharacterGrid() {
 // --- Active Sessions List ---
 async function loadSessions() {
   try {
-    state.sessions = await window.api.request("/api/v1/sessions", { timeout: 2500 });
+    const data = await window.api.requestWithSWR("/api/v1/sessions", {
+      timeout: 8000,
+      onRevalidate: (fresh) => {
+        state.sessions = fresh;
+        updateSessionsBadge();
+        renderSessionsList();
+      },
+    });
+    state.sessions = data;
   } catch {
     state.sessions = getLocalSessions();
   }
+  updateSessionsBadge();
+  renderSessionsList();
+}
+
+function updateSessionsBadge() {
   const badge = document.getElementById("chats-count-badge");
+  if (!badge) return;
   if (state.sessions && state.sessions.length > 0) {
     badge.textContent = state.sessions.length;
     badge.classList.remove("hidden");
   } else {
     badge.classList.add("hidden");
   }
-  renderSessionsList();
 }
 
 function renderSessionsList() {
@@ -1161,6 +1190,9 @@ function mountChatDrawer(sessionData) {
   drawer.classList.remove("hidden");
   drawer.setAttribute("aria-hidden", "false");
   document.body.classList.add("chat-active");
+  if (window.history && window.history.state?.view !== "chat") {
+    window.history.pushState({ view: "chat", sessionId: sessionData.id }, "");
+  }
 
   const charAvatarEl = document.getElementById("chat-char-avatar");
   if (charAvatarEl) {
@@ -1587,7 +1619,7 @@ function renderPersonasList() {
   });
 }
 
-function switchTab(tabName) {
+function switchTab(tabName, pushHistory = true) {
   document.querySelectorAll(".nav-item").forEach((btn) => {
     btn.classList.toggle("active", btn.dataset.tab === tabName);
   });
@@ -1602,6 +1634,9 @@ function switchTab(tabName) {
     settings: "Configuration",
   };
   document.getElementById("view-title").textContent = titles[tabName] || "Haru";
+  if (pushHistory && window.history && tabName !== "discover" && window.history.state?.tab !== tabName) {
+    window.history.pushState({ view: "tab", tab: tabName }, "");
+  }
 }
 window.switchTab = switchTab;
 
@@ -1873,9 +1908,13 @@ function bindUIEvents() {
   });
 
   document.getElementById("close-chat-btn").addEventListener("click", () => {
-    document.getElementById("chat-drawer").classList.add("hidden");
-    document.body.classList.remove("chat-active");
-    loadSessions();
+    if (window.history.state?.view === "chat") {
+      window.history.back();
+    } else {
+      document.getElementById("chat-drawer").classList.add("hidden");
+      document.body.classList.remove("chat-active");
+      loadSessions();
+    }
   });
 
   // --- Mobile Bottom Sheet & Ambience Controls ---
@@ -1885,10 +1924,17 @@ function bindUIEvents() {
     if (!mobileSheet) return;
     mobileSheet.classList.remove("hidden");
     switchSheetTab(tab);
+    if (window.history && window.history.state?.view !== "sheet") {
+      window.history.pushState({ view: "sheet", sheetTab: tab }, "");
+    }
   };
   const closeMobileSheet = () => {
     triggerHaptic(8);
-    if (mobileSheet) mobileSheet.classList.add("hidden");
+    if (window.history.state?.view === "sheet") {
+      window.history.back();
+    } else if (mobileSheet) {
+      mobileSheet.classList.add("hidden");
+    }
   };
   const switchSheetTab = (tabName) => {
     document.querySelectorAll(".sheet-tab").forEach((btn) => {
@@ -2378,15 +2424,28 @@ function bindUIEvents() {
 
   const premiumModal = document.getElementById("premium-modal");
   const openPremBtn = document.getElementById("open-premium-btn");
-  if (openPremBtn && premiumModal) {
-    openPremBtn.addEventListener("click", () => {
-      renderAdaptersTable();
+  const openPremium = () => {
+    renderAdaptersTable();
+    if (premiumModal) {
       premiumModal.classList.remove("hidden");
-    });
+      if (window.history && window.history.state?.view !== "premium-modal") {
+        window.history.pushState({ view: "premium-modal" }, "");
+      }
+    }
+  };
+  const closePremium = () => {
+    if (window.history.state?.view === "premium-modal") {
+      window.history.back();
+    } else if (premiumModal) {
+      premiumModal.classList.add("hidden");
+    }
+  };
+  if (openPremBtn && premiumModal) {
+    openPremBtn.addEventListener("click", openPremium);
   }
   const closePremBtn = document.getElementById("close-premium-modal");
   if (closePremBtn && premiumModal) {
-    closePremBtn.addEventListener("click", () => premiumModal.classList.add("hidden"));
+    closePremBtn.addEventListener("click", closePremium);
   }
   const closePremContBtn = document.getElementById("close-premium-continue-free");
   if (closePremContBtn && premiumModal) {
@@ -2398,7 +2457,7 @@ function bindUIEvents() {
           chatSelect.value = "haru-core";
         }
       }
-      premiumModal.classList.add("hidden");
+      closePremium();
     });
   }
   const actPremBtn = document.getElementById("activate-premium-btn");
@@ -2407,7 +2466,7 @@ function bindUIEvents() {
       const nextState = !window.api.hasPremiumPass();
       window.api.setPremiumPass(nextState);
       loadAdapters();
-      premiumModal.classList.add("hidden");
+      closePremium();
       showToast(
         nextState
           ? "Flagship Access enabled — Verified models unlocked"
@@ -2417,7 +2476,7 @@ function bindUIEvents() {
   }
   if (premiumModal) {
     premiumModal.addEventListener("click", (e) => {
-      if (e.target === premiumModal) premiumModal.classList.add("hidden");
+      if (e.target === premiumModal) closePremium();
     });
   }
 
@@ -2463,7 +2522,19 @@ function bindUIEvents() {
     try {
       renderUserHeader();
     } catch (_) {}
-    if (authModal) authModal.classList.remove("hidden");
+    if (authModal) {
+      authModal.classList.remove("hidden");
+      if (window.history && window.history.state?.view !== "auth-modal") {
+        window.history.pushState({ view: "auth-modal" }, "");
+      }
+    }
+  };
+  const closeAuth = () => {
+    if (window.history.state?.view === "auth-modal") {
+      window.history.back();
+    } else if (authModal) {
+      authModal.classList.add("hidden");
+    }
   };
   const openAuthBtn = document.getElementById("open-auth-btn");
   if (openAuthBtn) openAuthBtn.addEventListener("click", openAuth);
@@ -2471,11 +2542,11 @@ function bindUIEvents() {
   if (userPill) userPill.addEventListener("click", openAuth);
   const closeAuthBtn = document.getElementById("close-auth-modal");
   if (closeAuthBtn && authModal) {
-    closeAuthBtn.addEventListener("click", () => authModal.classList.add("hidden"));
+    closeAuthBtn.addEventListener("click", closeAuth);
   }
   if (authModal) {
     authModal.addEventListener("click", (e) => {
-      if (e.target === authModal) authModal.classList.add("hidden");
+      if (e.target === authModal) closeAuth();
     });
   }
 
@@ -2631,7 +2702,7 @@ function bindUIEvents() {
   const logoutAcctBtn = document.getElementById("logout-account-btn");
   if (logoutAcctBtn) logoutAcctBtn.addEventListener("click", signOutOrSwitchGuest);
 
-  const installPwaBtn = document.getElementById("install-pwa-btn");
+    const installPwaBtn = document.getElementById("install-pwa-btn");
   if (installPwaBtn) {
     installPwaBtn.addEventListener("click", async () => {
       if (!state.deferredPwaPrompt) return;
@@ -2639,6 +2710,55 @@ function bindUIEvents() {
       await state.deferredPwaPrompt.userChoice;
       state.deferredPwaPrompt = null;
       installPwaBtn.classList.add("hidden");
+    });
+  }
+
+  // --- Hardware & Gesture Navigation (Android Back Button & Popstate) ---
+  function handleHardwareBack() {
+    const mobileSheet = document.getElementById("chat-mobile-sheet");
+    if (mobileSheet && !mobileSheet.classList.contains("hidden")) {
+      mobileSheet.classList.add("hidden");
+      return true;
+    }
+    const premiumModal = document.getElementById("premium-modal");
+    if (premiumModal && !premiumModal.classList.contains("hidden")) {
+      premiumModal.classList.add("hidden");
+      return true;
+    }
+    const authModal = document.getElementById("auth-modal");
+    if (authModal && !authModal.classList.contains("hidden")) {
+      authModal.classList.add("hidden");
+      return true;
+    }
+    const chatDrawer = document.getElementById("chat-drawer");
+    if (chatDrawer && !chatDrawer.classList.contains("hidden")) {
+      chatDrawer.classList.add("hidden");
+      document.body.classList.remove("chat-active");
+      loadSessions();
+      return true;
+    }
+    const activeTab = document.querySelector(".tab-panel.active");
+    if (activeTab && activeTab.id !== "tab-discover") {
+      switchTab("discover", false);
+      return true;
+    }
+    return false;
+  }
+
+  window.addEventListener("popstate", (e) => {
+    const handled = handleHardwareBack();
+    if (!handled && e.state?.tab) {
+      switchTab(e.state.tab, false);
+    }
+  });
+
+  // Capacitor native hardware back-button integration
+  if (window.Capacitor?.isNativePlatform?.() && window.Capacitor?.Plugins?.App) {
+    window.Capacitor.Plugins.App.addListener("backButton", () => {
+      const handled = handleHardwareBack();
+      if (!handled) {
+        window.Capacitor.Plugins.App.exitApp();
+      }
     });
   }
 }

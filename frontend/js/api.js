@@ -30,6 +30,10 @@ const HARU_FREE_MODELS = {
 };
 
 class HaruEmochiAPI {
+  constructor() {
+    this._inFlightRequests = new Map();
+  }
+
   getBaseUrl() {
     const saved = (localStorage.getItem(STORAGE_KEYS.SERVER_URL) || "").trim();
     if (saved) return saved.replace(/\/+$/, "");
@@ -156,31 +160,128 @@ class HaruEmochiAPI {
       headers["Authorization"] = `Bearer ${token}`;
     }
 
+    const method = (options.method || "GET").toUpperCase();
+    const isGet = method === "GET";
+    const dedupeKey = isGet ? `${method}:${url}` : null;
+
+    if (dedupeKey && this._inFlightRequests.has(dedupeKey)) {
+      return this._inFlightRequests.get(dedupeKey);
+    }
+
     const controller = new AbortController();
-    const timeout = options.timeout || 3500;
+    const timeout = options.timeout || 8000;
     const timeoutId = setTimeout(() => controller.abort(), timeout);
 
-    try {
-      const resp = await fetch(url, {
-        ...options,
-        headers,
-        signal: controller.signal,
-      });
-      clearTimeout(timeoutId);
-
-      if (!resp.ok) {
-        let errDetail = `HTTP ${resp.status}`;
-        try {
-          const errJson = await resp.json();
-          errDetail = errJson.detail || errJson.error || errDetail;
-        } catch {}
-        throw new Error(errDetail);
-      }
-      return resp.json();
-    } catch (err) {
-      clearTimeout(timeoutId);
-      throw err;
+    if (options.signal) {
+      options.signal.addEventListener("abort", () => controller.abort());
     }
+
+    const fetchPromise = (async () => {
+      try {
+        const resp = await fetch(url, {
+          ...options,
+          headers,
+          signal: controller.signal,
+        });
+        clearTimeout(timeoutId);
+
+        if (!resp.ok) {
+          let errDetail = `HTTP ${resp.status}`;
+          try {
+            const errJson = await resp.json();
+            errDetail = errJson.detail || errJson.error || errDetail;
+          } catch {}
+          throw new Error(errDetail);
+        }
+        return await resp.json();
+      } catch (err) {
+        clearTimeout(timeoutId);
+        throw err;
+      } finally {
+        if (dedupeKey) {
+          this._inFlightRequests.delete(dedupeKey);
+        }
+      }
+    })();
+
+    if (dedupeKey) {
+      this._inFlightRequests.set(dedupeKey, fetchPromise);
+    }
+
+    return fetchPromise;
+  }
+
+  async requestWithSWR(path, options = {}) {
+    const cacheKey = `sora_swr_${path}`;
+    let cachedPayload = null;
+
+    try {
+      const raw = localStorage.getItem(cacheKey);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (parsed && parsed.data !== undefined) {
+          cachedPayload = parsed.data;
+        }
+      }
+    } catch (_) {}
+
+    const revalidatePromise = (async () => {
+      try {
+        const freshData = await this.request(path, {
+          ...options,
+          timeout: options.timeout || 8000,
+        });
+
+        const isDifferent =
+          !cachedPayload || JSON.stringify(freshData) !== JSON.stringify(cachedPayload);
+
+        if (isDifferent) {
+          try {
+            localStorage.setItem(
+              cacheKey,
+              JSON.stringify({ timestamp: Date.now(), data: freshData })
+            );
+          } catch (storageErr) {
+            console.warn("SWR localStorage write failed:", storageErr);
+          }
+
+          if (typeof options.onRevalidate === "function") {
+            try {
+              options.onRevalidate(freshData, false);
+            } catch (cbErr) {
+              console.error("SWR onRevalidate callback error:", cbErr);
+            }
+          }
+        }
+        return freshData;
+      } catch (networkErr) {
+        if (cachedPayload !== null) {
+          return cachedPayload;
+        }
+        throw networkErr;
+      }
+    })();
+
+    if (cachedPayload !== null) {
+      // Background revalidation triggered silently; return cached payload immediately (<1ms)
+      revalidatePromise.catch((e) => console.debug("Background SWR revalidation caught:", e));
+      return cachedPayload;
+    }
+
+    return revalidatePromise;
+  }
+
+  clearSWRCache(prefix = "") {
+    try {
+      const toRemove = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const k = localStorage.key(i);
+        if (k && k.startsWith("sora_swr_") && (!prefix || k.includes(prefix))) {
+          toRemove.push(k);
+        }
+      }
+      toRemove.forEach((k) => localStorage.removeItem(k));
+    } catch (_) {}
   }
 
   async streamMessage(sessionId, payload, { onMeta, onToken, onDone, onError }) {

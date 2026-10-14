@@ -35,6 +35,9 @@ jobs:
       - name: Install Node Dependencies
         run: npm install
 
+      - name: Build Web Assets (Minification)
+        run: npm run build
+
       - name: Sync Capacitor Android Assets
         run: npx cap sync android
 
