@@ -79,10 +79,10 @@ console.log('📄 [Sora Build] Processing index.html with cache buster...');
 const buildVer = Date.now().toString(36);
 let html = fs.readFileSync(path.join(SRC_DIR, 'index.html'), 'utf-8');
 html = html
-  .replace(/\/css\/style\.css/g, `/css/style.css?v=${buildVer}`)
-  .replace(/\/js\/api\.js/g, `/js/api.js?v=${buildVer}`)
-  .replace(/\/js\/catalog\.js/g, `/js/catalog.js?v=${buildVer}`)
-  .replace(/\/js\/app\.js/g, `/js/app.js?v=${buildVer}`)
+  .replace(/(?:\.\/|\/)css\/style\.css/g, `./css/style.css?v=${buildVer}`)
+  .replace(/(?:\.\/|\/)js\/api\.js/g, `./js/api.js?v=${buildVer}`)
+  .replace(/(?:\.\/|\/)js\/catalog\.js/g, `./js/catalog.js?v=${buildVer}`)
+  .replace(/(?:\.\/|\/)js\/app\.js/g, `./js/app.js?v=${buildVer}`)
   .replace(/<!--[\s\S]*?-->/g, '')
   .replace(/\n\s*\n/g, '\n')
   .replace(/^\s+/gm, ' ');

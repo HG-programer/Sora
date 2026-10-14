@@ -78,11 +78,11 @@ jobs:
         uses: softprops/action-gh-release@v2
         continue-on-error: true
         with:
-          tag_name: "v1.0.1-apk"
-          name: "Sora v1.0.1 — Android APK & Web Release"
+          tag_name: "v1.0.2-apk"
+          name: "Sora v1.0.2 — Android APK & Web Release"
           make_latest: true
           body: |
-            ### 📱 Sora — Official Release (v1.0.1)
+            ### 📱 Sora — Official Release (v1.0.2)
             **Unfiltered stories, living characters, zero ads. Just pure immersion.**
 
             #### 📥 Direct Downloads & Packages:
