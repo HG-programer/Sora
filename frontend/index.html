@@ -556,72 +556,56 @@
             </div>
           </div>
         </div>
-      </section>
     </main>
+  </div>
 
-    <!-- ==========================================================
-         CONVERSATION VIEW DRAWER (WITH CUSTOM BACKGROUND SUPPORT)
-         ========================================================== -->
-    <aside id="chat-drawer" class="chat-drawer hidden" aria-hidden="true">
-      <!-- Custom Chat Window Background Layer & Adjustable Warm Scrim -->
-      <div id="chat-bg-layer" class="chat-bg-layer"></div>
-      <div id="chat-bg-scrim" class="chat-bg-scrim"></div>
+  <!-- ==========================================================
+       CONVERSATION VIEW DRAWER (WITH CUSTOM BACKGROUND SUPPORT)
+       ========================================================== -->
+  <aside id="chat-drawer" class="chat-drawer hidden" aria-hidden="true">
+    <!-- Custom Chat Window Background Layer & Adjustable Warm Scrim -->
+    <div id="chat-bg-layer" class="chat-bg-layer"></div>
+    <div id="chat-bg-scrim" class="chat-bg-scrim"></div>
 
-      <!-- Chat Top Header -->
-      <header class="chat-header">
-        <div class="chat-header-left">
-          <button id="close-chat-btn" class="icon-btn header-back-btn" title="Return to directory">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
-          </button>
-          <div class="chat-avatar-wrapper" id="chat-avatar-profile-trigger" title="Tap to view character profile &amp; lore">
-            <img id="chat-char-avatar" src="/assets/icon.svg" alt="Character" class="chat-avatar-header" />
-            <span class="chat-online-pulse"></span>
+    <!-- Chat Top Header: Clean 3-Zone Architecture -->
+    <header class="chat-header">
+      <!-- Zone 1: Left (Back Button + Character Avatar) -->
+      <div class="chat-header-left">
+        <button id="close-chat-btn" class="icon-btn header-back-btn" title="Return to directory">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+        </button>
+        <div class="chat-avatar-wrapper" id="chat-avatar-profile-trigger" title="Tap to view character profile &amp; lore">
+          <img id="chat-char-avatar" src="/assets/icon.svg" alt="Character" class="chat-avatar-header" />
+          <span class="chat-online-pulse"></span>
+        </div>
+      </div>
+
+      <!-- Zone 2: Center (Character Name + Bond Pill + Tagline) -->
+      <div class="chat-header-center" id="chat-meta-profile-trigger" title="Tap to view character profile &amp; lore">
+        <div class="chat-char-title-row">
+          <h2 id="chat-char-name">Character</h2>
+          <div id="chat-bond-pill" class="chat-bond-pill" title="Character Tie &amp; Bond Progression">
+            <span id="chat-bond-icon">🌿</span>
+            <span id="chat-bond-label">Stranger Lv.1</span>
+            <span id="chat-bond-pct" class="chat-bond-pct">0%</span>
           </div>
-          <div class="chat-char-meta" id="chat-meta-profile-trigger" title="Tap to view character profile &amp; lore">
-            <div class="chat-char-title-row">
-              <h2 id="chat-char-name">Character</h2>
-              <span id="chat-char-category" class="badge-mini badge-warm">Category</span>
-              <div id="chat-bond-pill" class="chat-bond-pill" title="Character Tie &amp; Bond Progression">
-                <span id="chat-bond-icon">🌿</span>
-                <span id="chat-bond-label">Stranger Lv.1</span>
-                <span id="chat-bond-pct" class="chat-bond-pct">0%</span>
-              </div>
-              <span id="chat-mood-badge" class="badge-mini chat-mood-badge" title="Character Live Mood">✨ Curious</span>
-              <button type="button" id="chat-header-comments-btn" class="chat-comments-btn" title="View Character Community Comments">
-                <span>💬</span>
-                <span id="chat-comments-count">0</span>
-              </button>
-              <button type="button" id="chat-favorite-btn" class="icon-btn-round" title="Save to Favorites" style="width:26px;height:26px;border-radius:50%;font-size:0.8rem;display:inline-flex;align-items:center;justify-content:center;padding:0;background:rgba(255,255,255,0.06);border:1px solid var(--border-subtle);cursor:pointer;">🤍</button>
-            </div>
-            <p id="chat-char-tagline" class="chat-char-tagline"></p>
-          </div>
+          <span id="chat-char-category" class="badge-mini badge-warm hidden-xs">Category</span>
+          <span id="chat-mood-badge" class="badge-mini chat-mood-badge hidden-xs" title="Character Live Mood">✨ Curious</span>
         </div>
+        <p id="chat-char-tagline" class="chat-char-tagline"></p>
+      </div>
 
-        <div class="chat-header-controls desktop-controls">
-          <select id="chat-model-select" class="select-pill select-sm model-dropdown-populate" title="Active Model"></select>
-          <select id="chat-persona-select" class="select-pill select-sm" title="Active User Profile"></select>
-          <button type="button" id="open-core-memories-btn" class="icon-btn" title="View &amp; Manage Character Core Memories">📌 Memories (<span id="core-memories-count-badge">0</span>)</button>
-          <button id="chat-tts-toggle-btn" class="icon-btn" title="Toggle Voice Narration">🔊 Voice Off</button>
-          <button id="chat-new-branch-btn" class="icon-btn" title="Start fresh conversation with this character">➕ New Chat</button>
-          <button id="chat-export-btn" class="icon-btn" title="Export roleplay conversation as Markdown">📥 Export</button>
-          <button id="toggle-bg-btn" class="icon-btn" title="Customize Chat Background Image">Atmosphere</button>
-          <button id="toggle-lore-btn" class="icon-btn" title="Context &amp; Memory Notes">Notes</button>
-        </div>
-
-        <div class="chat-header-mobile-controls">
-          <button type="button" id="chat-mobile-memories-btn" class="icon-btn" style="padding:0.35rem 0.45rem;font-size:0.85rem;" title="Core Memories">📌 <span id="chat-mobile-memories-count">0</span></button>
-          <button type="button" id="chat-mobile-comments-btn" class="icon-btn" style="padding:0.35rem 0.45rem;font-size:0.85rem;" title="Comments">💬 <span id="chat-mobile-comments-count">0</span></button>
-          <button type="button" id="chat-mobile-fav-btn" class="icon-btn" style="padding:0.35rem 0.45rem;font-size:0.85rem;" title="Favorite">🤍</button>
-          <button type="button" id="chat-mobile-tts-btn" class="icon-btn" style="padding:0.35rem 0.45rem;font-size:0.85rem;" title="Voice Narration">🔊</button>
-          <button type="button" id="chat-mobile-model-btn" class="mobile-chip-pill" title="Active Engine">
-            <span class="mobile-bolt-icon">⚡</span>
-            <span id="chat-mobile-model-label">Sora Core v2</span>
-          </button>
-          <button type="button" id="chat-mobile-menu-btn" class="icon-btn mobile-menu-icon" title="Atmosphere &amp; Story Sheet">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="1.5"/><circle cx="19" cy="12" r="1.5"/><circle cx="5" cy="12" r="1.5"/></svg>
-          </button>
-        </div>
-      </header>
+      <!-- Zone 3: Right (Comments + Options Menu) -->
+      <div class="chat-header-right">
+        <button type="button" id="chat-header-comments-btn" class="chat-header-btn chat-comments-btn" title="View Character Community Comments">
+          <span>💬</span>
+          <span id="chat-comments-count">0</span>
+        </button>
+        <button type="button" id="chat-mobile-menu-btn" class="chat-header-btn chat-options-btn" title="Chat Atmosphere, Lore &amp; Options">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="1.5"/><circle cx="19" cy="12" r="1.5"/><circle cx="5" cy="12" r="1.5"/></svg>
+        </button>
+      </div>
+    </header>
 
       <!-- Collapsible Custom Background Image Customizer Panel -->
       <div id="chat-bg-panel" class="chat-lore-panel hidden">
@@ -698,6 +682,33 @@
             <button type="button" id="close-mobile-sheet-btn" class="icon-btn" title="Close sheet" aria-label="Close">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
             </button>
+          </div>
+
+          <!-- Sheet Quick Actions Toolbar -->
+          <div class="sheet-quick-actions" style="display:flex;gap:0.4rem;align-items:center;padding:0.4rem 0 0.75rem;border-bottom:1px solid var(--border-subtle);flex-wrap:wrap;">
+            <button type="button" id="chat-favorite-btn" class="btn-glass btn-sm" title="Save to Favorites" style="display:inline-flex;align-items:center;gap:0.35rem;">
+              <span id="chat-favorite-icon">🤍</span>
+              <span>Favorite</span>
+            </button>
+            <button type="button" id="chat-mobile-fav-btn" style="display:none;"></button>
+            <button type="button" id="chat-tts-toggle-btn" class="btn-glass btn-sm" title="Toggle Voice Narration" style="display:inline-flex;align-items:center;gap:0.35rem;">
+              <span>🔊</span>
+              <span>Voice Off</span>
+            </button>
+            <button type="button" id="chat-mobile-tts-btn" style="display:none;"></button>
+            <button type="button" id="open-core-memories-btn" class="btn-glass btn-sm" title="Manage Character Core Memories" style="display:inline-flex;align-items:center;gap:0.35rem;">
+              <span>📌</span>
+              <span>Memories (<span id="core-memories-count-badge">0</span>)</span>
+            </button>
+            <button type="button" id="chat-mobile-memories-btn" style="display:none;"><span id="chat-mobile-memories-count">0</span></button>
+            <button type="button" id="chat-mobile-comments-btn" style="display:none;"><span id="chat-mobile-comments-count">0</span></button>
+            <button type="button" id="chat-new-branch-btn" class="btn-glass btn-sm" title="Start fresh conversation">➕ New Chat</button>
+            <button type="button" id="chat-export-btn" class="btn-glass btn-sm" title="Export conversation as Markdown">📥 Export</button>
+            <button type="button" id="toggle-bg-btn" style="display:none;">Atmosphere</button>
+            <button type="button" id="toggle-lore-btn" style="display:none;">Notes</button>
+            <button type="button" id="chat-mobile-model-btn" style="display:none;"><span id="chat-mobile-model-label">Sora Core v2</span></button>
+            <select id="chat-model-select" style="display:none;" class="model-dropdown-populate"></select>
+            <select id="chat-persona-select" style="display:none;"></select>
           </div>
 
           <!-- Section 1: Ambience & Custom Background -->
@@ -1249,7 +1260,6 @@
 
     <!-- Toast Notification Container -->
     <div id="toast-container" class="toast-container"></div>
-  </div>
 
   <script src="/js/api.js"></script>
   <script src="/js/catalog.js"></script>

@@ -1,6 +1,6 @@
 // frontend/sw.js
 // Production Service Worker for Sora PWA (Offline shell caching & stale-while-revalidate)
-const CACHE_NAME = "sora-shell-v1";
+const CACHE_NAME = "sora-shell-v3";
 const SHELL_ASSETS = [
   "/",
   "/index.html",
@@ -35,6 +35,11 @@ self.addEventListener("activate", (event) => {
 
 self.addEventListener("fetch", (event) => {
   const url = new URL(event.request.url);
+
+  // Strictly bypass all cross-origin requests (CDNs, external image hosts, AI APIs)
+  if (url.origin !== self.location.origin) {
+    return;
+  }
 
   // Never intercept API calls, non-GET requests, or non-HTTP protocols
   if (

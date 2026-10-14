@@ -15,10 +15,7 @@
 -keep class androidx.** { *; }
 -dontwarn androidx.**
 
-# Anti-Modding Obfuscation & Class Repackaging
--repackageclasses 'o'
--allowaccessmodification
+# Sora Application Classes
 -keep class com.haru.sora.MainActivity { *; }
 -keep class com.haru.sora.BuildConfig { *; }
 -dontwarn com.haru.sora.BuildConfig
-

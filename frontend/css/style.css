@@ -556,17 +556,20 @@ html, body {
 .char-tile-media {
   position: relative;
   width: 100%;
-  height: 220px;
+  min-height: 200px;
+  aspect-ratio: 4 / 3;
   background: var(--bg-deep);
   overflow: hidden;
 }
 
-.char-tile-img {
+.char-tile-img,
+.char-portrait-img {
   width: 100%;
   height: 100%;
   object-fit: cover;
   object-position: center 15%;
   transition: transform 0.45s var(--spring-ease);
+  display: block;
 }
 
 .char-tile-scrim {
@@ -791,23 +794,39 @@ html, body {
 }
 
 /* ==========================================================
-   CONVERSATION DRAWER
+   CONVERSATION DRAWER: FIXED FULLSCREEN VIEWPORT STACKING
    ========================================================== */
+body.chat-active {
+  overflow: hidden !important;
+}
+
+body.chat-active #main-nav,
+body.chat-active .web-install-banner,
+body.chat-active .top-bar {
+  display: none !important;
+}
+
 .chat-drawer {
-  position: fixed;
-  inset: 0;
-  z-index: 50;
-  background: var(--bg-deep);
-  display: flex;
-  flex-direction: column;
-  height: 100vh;
-  height: 100dvh;
-  width: 100vw;
-  overflow: hidden;
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  height: 100dvh !important;
+  z-index: 5000 !important;
+  background: #090A0F !important;
+  display: flex !important;
+  flex-direction: column !important;
+  overflow: hidden !important;
+  transform: none !important;
+  padding: 0;
+  margin: 0;
 }
 
 .chat-drawer.hidden {
-  display: none;
+  display: none !important;
 }
 
 .chat-bg-layer {
@@ -830,49 +849,70 @@ html, body {
   transition: background-color 0.15s ease;
 }
 
+/* Flagship 3-Zone Non-Overlapping Chat Header */
 .chat-header {
   position: relative;
-  z-index: 2;
+  z-index: 10;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 0.75rem;
-  padding: calc(0.6rem + var(--safe-top)) 1.25rem 0.6rem;
-  background: rgba(29, 25, 22, 0.92);
+  gap: 0.65rem;
+  padding: max(0.6rem, env(safe-area-inset-top)) 0.85rem 0.6rem;
+  background: rgba(18, 20, 28, 0.96);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
   border-bottom: 1px solid var(--border-subtle);
-  flex-wrap: wrap;
+  flex-shrink: 0;
+  overflow: hidden;
+  box-sizing: border-box;
+  width: 100%;
+  flex-wrap: nowrap;
 }
 
 .chat-header-left {
   display: flex;
   align-items: center;
-  gap: 0.65rem;
-  min-width: 0;
+  gap: 0.5rem;
+  flex-shrink: 0;
 }
 
 .header-back-btn {
-  width: 38px;
-  height: 38px;
+  width: 36px;
+  height: 36px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border-subtle);
   border-radius: var(--radius-sm);
+  color: var(--text-main);
   cursor: pointer;
+  padding: 0;
+  flex-shrink: 0;
+  transition: all 0.15s ease;
+}
+
+.header-back-btn:active {
+  transform: scale(0.95);
+  background: rgba(255, 255, 255, 0.1);
 }
 
 .chat-avatar-wrapper {
   position: relative;
-  display: inline-flex;
-  cursor: pointer;
+  width: 40px;
+  height: 40px;
   flex-shrink: 0;
+  cursor: pointer;
+  display: inline-flex;
 }
 
 .chat-avatar-header {
-  width: 38px;
-  height: 38px;
-  border-radius: 10px;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-sm);
   border: 1px solid var(--border-subtle);
   object-fit: cover;
+  display: block;
 }
 
 .chat-online-pulse {
@@ -883,50 +923,78 @@ html, body {
   height: 9px;
   border-radius: 50%;
   background: #10b981;
-  border: 2px solid var(--bg-surface);
+  border: 2px solid #12141c;
   box-shadow: 0 0 6px rgba(16, 185, 129, 0.7);
 }
 
-.chat-char-meta {
+.chat-header-center {
+  flex: 1;
   min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 0.15rem;
   cursor: pointer;
+  overflow: hidden;
 }
 
 .chat-char-title-row {
   display: flex;
   align-items: center;
   gap: 0.45rem;
+  min-width: 0;
 }
 
 .chat-char-title-row h2 {
   font-family: var(--font-serif);
-  font-size: 1rem;
+  font-size: 1.05rem;
   font-weight: 600;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  color: var(--text-main);
+  margin: 0;
+  line-height: 1.2;
 }
 
 .chat-char-tagline {
-  font-size: 0.73rem;
+  font-size: 0.72rem;
   color: var(--text-muted);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  margin: 0;
+  line-height: 1.2;
   max-width: 360px;
 }
 
-.chat-header-controls {
+.chat-header-right {
   display: flex;
   align-items: center;
   gap: 0.4rem;
-  flex-wrap: wrap;
+  flex-shrink: 0;
 }
 
-.chat-header-mobile-controls {
-  display: none;
+.chat-header-btn {
+  height: 36px;
+  padding: 0 0.55rem;
+  display: inline-flex;
   align-items: center;
-  gap: 0.45rem;
+  justify-content: center;
+  gap: 0.35rem;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  color: var(--text-main);
+  font-size: 0.82rem;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: all 0.15s ease;
+}
+
+.chat-header-btn:active {
+  transform: scale(0.95);
+  background: rgba(255, 255, 255, 0.1);
 }
 
 .mobile-chip-pill {
@@ -1104,7 +1172,10 @@ html, body {
   border-radius: var(--radius-lg);
   line-height: 1.65;
   font-size: 1.02rem;
-  word-wrap: break-word;
+  word-break: break-word;
+  overflow-wrap: break-word;
+  max-width: 100%;
+  box-sizing: border-box;
   position: relative;
   box-shadow: var(--shadow-subtle);
 }
@@ -1601,7 +1672,7 @@ input:focus, textarea:focus, select:focus {
 .modal-backdrop {
   position: fixed;
   inset: 0;
-  z-index: 80;
+  z-index: 5200;
   background: rgba(0, 0, 0, 0.78);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
@@ -1767,7 +1838,7 @@ input:focus, textarea:focus, select:focus {
   position: fixed;
   bottom: calc(4.5rem + var(--safe-bottom));
   right: 1.2rem;
-  z-index: 100;
+  z-index: 6000;
   display: flex;
   flex-direction: column;
   gap: 0.4rem;
@@ -1904,7 +1975,7 @@ input:focus, textarea:focus, select:focus {
 .mobile-sheet-backdrop {
   position: fixed;
   inset: 0;
-  z-index: 120;
+  z-index: 5100;
   background: rgba(10, 8, 7, 0.68);
   backdrop-filter: blur(6px);
   -webkit-backdrop-filter: blur(6px);
@@ -2265,27 +2336,35 @@ input:focus, textarea:focus, select:focus {
   }
 
   .chat-header {
-    padding: calc(0.45rem + var(--safe-top)) 0.85rem 0.55rem;
+    padding: max(0.5rem, var(--safe-top)) 0.75rem 0.5rem;
     flex-wrap: nowrap;
   }
 
   .chat-header-left {
+    flex: 0 0 auto;
+  }
+
+  .chat-header-center {
     flex: 1;
     min-width: 0;
   }
 
+  .chat-header-right {
+    flex: 0 0 auto;
+  }
+
   .chat-avatar-header {
-    width: 40px;
-    height: 40px;
+    width: 38px;
+    height: 38px;
   }
 
   .chat-char-title-row h2 {
-    font-size: 1.15rem;
+    font-size: 1.02rem;
   }
 
   .chat-char-tagline {
-    font-size: 0.82rem;
-    max-width: 220px;
+    font-size: 0.72rem;
+    max-width: 180px;
   }
 
   /* Message Stream on Mobile */
@@ -2469,14 +2548,15 @@ input:focus, textarea:focus, select:focus {
   align-items: center;
   justify-content: space-between;
   gap: 0.5rem;
-  margin-top: 0.25rem;
+  margin-top: 0.35rem;
   width: 100%;
+  flex-wrap: wrap;
 }
 
 .msg-meta-info {
-  font-size: 0.68rem;
+  font-size: 0.72rem;
   color: var(--text-muted);
-  display: flex;
+  display: inline-flex;
   align-items: center;
   gap: 0.35rem;
 }
@@ -2484,8 +2564,11 @@ input:focus, textarea:focus, select:focus {
 .msg-action-btns {
   display: inline-flex;
   align-items: center;
-  gap: 0.25rem;
-  opacity: 0.7;
+  gap: 0.3rem;
+  flex-wrap: wrap;
+  position: static;
+  margin-top: 2px;
+  opacity: 0.85;
   transition: opacity 0.15s ease;
 }
 
@@ -2828,14 +2911,13 @@ input:focus, textarea:focus, select:focus {
   position: relative;
   width: 100%;
   aspect-ratio: 4 / 3;
-  min-height: 220px;
-  background: linear-gradient(90deg, #12141C 25%, #1D212E 50%, #12141C 75%);
-  background-size: 200% 100%;
-  animation: skeletonShimmer 2.2s infinite ease-in-out;
+  min-height: 200px;
+  background: #12141C;
   overflow: hidden;
 }
 
-.char-tile-img {
+.char-tile-img,
+.char-portrait-img {
   width: 100%;
   height: 100%;
   object-fit: cover;
@@ -2844,8 +2926,9 @@ input:focus, textarea:focus, select:focus {
   display: block;
 }
 
-.char-card:hover .char-tile-img {
-  transform: scale(1.05);
+.char-card:hover .char-tile-img,
+.char-card:hover .char-portrait-img {
+  transform: scale(1.04);
 }
 
 .char-tile-scrim {

@@ -249,18 +249,59 @@ function getFallbackAvatar(name = "Character", gender = "Female", category = "Ro
   const clean = (name || "").replace(/[^a-zA-Z0-9\s]/g, "").trim();
   const initials = (clean.split(/\s+/).slice(0, 2).map((w) => w[0]).join("") || "S").toUpperCase();
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120"><rect width="120" height="120" rx="22" fill="#181B26"/><text x="60" y="66" font-family="sans-serif" font-size="40" font-weight="700" fill="#6E7BF2" text-anchor="middle" dominant-baseline="central">${initials}</text></svg>`;
-  return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
+  return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
 }
 window.getFallbackAvatar = getFallbackAvatar;
 
-function getCharacterAvatarUrl(char) {
-  if (!char) return getFallbackAvatar();
-  if (char.avatar_url && typeof char.avatar_url === "string" && char.avatar_url.trim().length > 0) {
-    return window.api?.resolveAssetUrl ? window.api.resolveAssetUrl(char.avatar_url) : char.avatar_url;
+function getCharacterPortraitURI(char) {
+  if (typeof window.getCharacterPortraitURI === "function" && window.getCharacterPortraitURI !== getCharacterPortraitURI) {
+    return window.getCharacterPortraitURI(char);
   }
-  return typeof window.generateCharacterPortraitSVG === "function"
-    ? window.generateCharacterPortraitSVG(char)
-    : getFallbackAvatar(char.name, char.gender, char.category);
+  if (!char) {
+    return typeof window.generateCharacterPortraitSVG === "function"
+      ? window.generateCharacterPortraitSVG({ name: "Character", gender: "Female", category: "Romance" })
+      : getFallbackAvatar();
+  }
+  let raw = (typeof char === "string" ? char : char.avatar_url) || "";
+  raw = typeof raw === "string" ? raw.trim() : "";
+
+  if (raw.startsWith("data:image/svg+xml")) {
+    if (raw.includes("<svg") || raw.includes("#")) {
+      const commaIdx = raw.indexOf(",");
+      if (commaIdx !== -1) {
+        const payload = raw.slice(commaIdx + 1);
+        try {
+          const decoded = decodeURIComponent(payload);
+          return "data:image/svg+xml;charset=utf-8," + encodeURIComponent(decoded);
+        } catch {
+          return "data:image/svg+xml;charset=utf-8," + encodeURIComponent(payload);
+        }
+      }
+    }
+    if (!raw.startsWith("data:image/svg+xml;charset=utf-8,")) {
+      return raw.replace(/^data:image\/svg\+xml(?:;[a-z0-9=_-]+)*,/i, "data:image/svg+xml;charset=utf-8,");
+    }
+    return raw;
+  }
+
+  if (raw.startsWith("/") || raw.startsWith("./") || raw.startsWith("assets/") || raw.includes("/uploads/")) {
+    return (window.api && typeof window.api.resolveAssetUrl === "function")
+      ? window.api.resolveAssetUrl(raw)
+      : raw;
+  }
+
+  if (!raw || raw.includes("api.dicebear.com")) {
+    return typeof window.generateCharacterPortraitSVG === "function"
+      ? window.generateCharacterPortraitSVG(char)
+      : getFallbackAvatar(char.name, char.gender, char.category);
+  }
+
+  return raw;
+}
+window.getCharacterPortraitURI = getCharacterPortraitURI;
+
+function getCharacterAvatarUrl(char) {
+  return getCharacterPortraitURI(char);
 }
 window.getCharacterAvatarUrl = getCharacterAvatarUrl;
 
@@ -550,7 +591,7 @@ function renderTiesTab(filter = "all") {
 
     card.innerHTML = `
       <div class="tie-card-header">
-        <img src="${avatarUrl}" alt="${tie.character_name}" class="tie-avatar" loading="lazy" decoding="async" onerror="this.onerror=null; this.src=getFallbackAvatar('${safeName}', 'Female', '${safeCategory}');" />
+        <img src="${avatarUrl}" alt="${tie.character_name}" class="tie-avatar char-portrait-img" loading="lazy" decoding="async" onerror="this.onerror=null; this.src=getFallbackAvatar('${safeName}', 'Female', '${safeCategory}');" />
         <div class="tie-meta">
           <div class="tie-char-name">${tie.character_name}</div>
           <div class="tie-badge-row">
@@ -1762,7 +1803,7 @@ function renderCharacterGrid() {
 
     card.innerHTML = `
       <div class="char-tile-media">
-        <img src="${avatarSrc}" alt="${c.name}" class="char-tile-img" loading="lazy" decoding="async" onerror="this.onerror=null; this.src=getFallbackAvatar('${safeName}', '${charGender}', '${safeCategory}');" />
+        <img src="${avatarSrc}" alt="${c.name}" class="char-tile-img char-portrait-img" loading="lazy" decoding="async" onerror="this.onerror=null; this.src=getFallbackAvatar('${safeName}', '${charGender}', '${safeCategory}');" />
         <div class="char-tile-scrim"></div>
         <div class="char-tile-badges">
           <span class="badge-mini badge-gender">${charGender}</span>
@@ -1897,10 +1938,10 @@ function renderSessionsList() {
   state.sessions.forEach((s) => {
     const item = document.createElement("div");
     item.className = "session-card";
-    const avatarSrc = window.api.resolveAssetUrl(s.character_avatar);
+    const avatarSrc = getCharacterPortraitURI({ name: s.character_name, avatar_url: s.character_avatar });
     const safeName = (s.character_name || "").replace(/'/g, "\\'");
     item.innerHTML = `
-      <img src="${avatarSrc}" alt="${s.character_name}" class="char-avatar-lg" style="width:42px;height:42px;" onerror="this.onerror=null; this.src=getFallbackAvatar('${safeName}');" />
+      <img src="${avatarSrc}" alt="${s.character_name}" class="char-avatar-lg char-portrait-img" style="width:42px;height:42px;" onerror="this.onerror=null; this.src=getFallbackAvatar('${safeName}');" />
       <div style="flex:1;min-width:0;">
         <div style="display:flex;justify-content:space-between;align-items:center;">
           <strong style="font-size:0.88rem;">${s.character_name}</strong>
@@ -1959,10 +2000,10 @@ function renderMyCharactersList() {
   state.myCharacters.forEach((c) => {
     const item = document.createElement("div");
     item.className = "session-card";
-    const avatarSrc = window.api.resolveAssetUrl(c.avatar_url);
+    const avatarSrc = getCharacterPortraitURI(c);
     const safeName = (c.name || "").replace(/'/g, "\\'");
     item.innerHTML = `
-      <img src="${avatarSrc}" alt="${c.name}" class="char-avatar-lg" style="width:44px;height:44px;" onerror="this.onerror=null; this.src=getFallbackAvatar('${safeName}', '${c.gender || ''}');" />
+      <img src="${avatarSrc}" alt="${c.name}" class="char-avatar-lg char-portrait-img" style="width:44px;height:44px;" onerror="this.onerror=null; this.src=getFallbackAvatar('${safeName}', '${c.gender || ''}');" />
       <div style="flex:1;min-width:0;">
         <div style="display:flex;justify-content:space-between;align-items:center;gap:0.4rem;">
           <strong style="font-size:0.9rem;">${c.name}</strong>
@@ -2327,7 +2368,7 @@ function createMessageDom(msgOrRole, content, modelUsed, charAvatar, userAvatar,
 
   row.innerHTML = `
     <img src="${avatar}" alt="${role}" class="msg-avatar" onerror="this.onerror=null; this.src='${fallbackMsgAvatar}';" />
-    <div style="min-width:0;flex:1;">
+    <div class="msg-wrapper" style="min-width:0;flex:1;">
       <div class="msg-bubble">${formatRoleplayHTML(text)}</div>
       <div class="msg-edit-box hidden">
         <textarea class="msg-inline-edit-input" placeholder="Edit message text..."></textarea>

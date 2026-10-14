@@ -151,6 +151,52 @@ function generateCharacterPortraitSVG(char = {}) {
 
 window.generateCharacterPortraitSVG = generateCharacterPortraitSVG;
 
+function getCharacterPortraitURI(char) {
+  if (!char) {
+    return generateCharacterPortraitSVG({ name: "Character", gender: "Female", category: "Romance" });
+  }
+
+  let raw = (typeof char === "string" ? char : char.avatar_url) || "";
+  raw = typeof raw === "string" ? raw.trim() : "";
+
+  // If avatar_url is an SVG data URI
+  if (raw.startsWith("data:image/svg+xml")) {
+    if (raw.includes("<svg") || raw.includes("#")) {
+      const commaIdx = raw.indexOf(",");
+      if (commaIdx !== -1) {
+        const payload = raw.slice(commaIdx + 1);
+        try {
+          const decoded = decodeURIComponent(payload);
+          return "data:image/svg+xml;charset=utf-8," + encodeURIComponent(decoded);
+        } catch {
+          return "data:image/svg+xml;charset=utf-8," + encodeURIComponent(payload);
+        }
+      }
+    }
+    if (!raw.startsWith("data:image/svg+xml;charset=utf-8,")) {
+      return raw.replace(/^data:image\/svg\+xml(?:;[a-z0-9=_-]+)*,/i, "data:image/svg+xml;charset=utf-8,");
+    }
+    return raw;
+  }
+
+  // If avatar_url is a local or uploaded asset (e.g. /assets/..., /uploads/...)
+  if (raw.startsWith("/") || raw.startsWith("./") || raw.startsWith("assets/") || raw.includes("/uploads/")) {
+    return (window.api && typeof window.api.resolveAssetUrl === "function")
+      ? window.api.resolveAssetUrl(raw)
+      : raw;
+  }
+
+  // If avatar_url is a DiceBear URL (which hangs or is blocked offline/in many networks)
+  // or empty, use the guaranteed instant illustrated anime SVG portrait!
+  if (!raw || raw.includes("api.dicebear.com")) {
+    return generateCharacterPortraitSVG(char);
+  }
+
+  return raw;
+}
+
+window.getCharacterPortraitURI = getCharacterPortraitURI;
+
 window.SORA_DEFAULT_CATALOG = [
   {
     "id": "char_chiyo_kasugai",
