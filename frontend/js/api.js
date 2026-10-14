@@ -417,10 +417,17 @@ class HaruEmochiAPI {
         // Fallback for standalone/offline APK: assemble prompt locally
         userMsgId = `user_${Date.now()}`;
         const tieDirective = payload.tie ? `\n[Relationship Bond: ${payload.tie.stage} (Level ${payload.tie.level}). Reflect this affinity naturally in dialogue tone.]` : "";
+        const memoriesDirective = payload.core_memories && payload.core_memories.length > 0
+          ? `\n[Core Memories (Pivotal facts/promises you must always remember):\n${payload.core_memories.map((m) => `- ${m}`).join("\n")}]`
+          : "";
+        const personaDirective = payload.user_persona
+          ? `\n[User Persona: ${payload.user_persona.name}${payload.user_persona.role ? ` (${payload.user_persona.role})` : ""}${payload.user_persona.description ? ` - ${payload.user_persona.description}` : ""}]`
+          : "";
+
         messages = payload.local_messages || [
           {
             role: "system",
-            content: `You are ${payload.character_name || "a character"} in an interactive creative fiction roleplay. Stay strictly in character. Write expressive, sensory, descriptive prose. ${payload.personality ? "Personality: " + payload.personality : ""} ${payload.scenario ? "Scenario: " + payload.scenario : ""}${tieDirective}`
+            content: `You are ${payload.character_name || "a character"} in an interactive creative fiction roleplay. Stay strictly in character. Write expressive, sensory, descriptive prose. ${payload.personality ? "Personality: " + payload.personality : ""} ${payload.scenario ? "Scenario: " + payload.scenario : ""}${tieDirective}${memoriesDirective}${personaDirective}`
           },
           { role: "user", content: payload.content || "" }
         ];
@@ -432,6 +439,12 @@ class HaruEmochiAPI {
         let extra = "";
         if (payload.tie && !messages[0].content.includes("[Relationship Bond:")) {
           extra += `\n[Relationship Bond: ${payload.tie.stage} (Level ${payload.tie.level}). Reflect this affinity naturally in dialogue tone.]`;
+        }
+        if (payload.core_memories && payload.core_memories.length > 0 && !messages[0].content.includes("[Core Memories")) {
+          extra += `\n[Core Memories:\n${payload.core_memories.map((m) => `- ${m}`).join("\n")}]`;
+        }
+        if (payload.user_persona && !messages[0].content.includes("[User Persona:")) {
+          extra += `\n[User Persona: ${payload.user_persona.name}${payload.user_persona.role ? ` (${payload.user_persona.role})` : ""}${payload.user_persona.description ? ` - ${payload.user_persona.description}` : ""}]`;
         }
         if (freeSpec.hint) {
           extra += `\n${freeSpec.hint}`;
@@ -626,6 +639,32 @@ class HaruEmochiAPI {
       }
     } catch (_) {}
     return true;
+  }
+
+  getCoreMemories(characterId) {
+    if (!characterId) return [];
+    try {
+      const raw = this.getSecureItem
+        ? this.getSecureItem(`sora_core_memories_${characterId}`, "[]")
+        : localStorage.getItem(`sora_core_memories_${characterId}`) || "[]";
+      return JSON.parse(raw || "[]");
+    } catch {
+      return [];
+    }
+  }
+
+  saveCoreMemories(characterId, memories) {
+    if (!characterId) return false;
+    try {
+      if (this.setSecureItem) {
+        this.setSecureItem(`sora_core_memories_${characterId}`, memories || []);
+      } else {
+        localStorage.setItem(`sora_core_memories_${characterId}`, JSON.stringify(memories || []));
+      }
+      return true;
+    } catch {
+      return false;
+    }
   }
 }
 

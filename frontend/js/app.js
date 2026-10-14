@@ -34,17 +34,62 @@ function getCharacterCulture(c) {
 
 function formatRoleplayHTML(rawText) {
   if (!rawText) return "";
-  const escaped = rawText
+
+  // 1. Extract and preserve code blocks
+  const codeBlocks = [];
+  let processed = rawText.replace(/```([a-zA-Z0-9_]*)\n?([\s\S]*?)```/g, (_, lang, code) => {
+    const idx = codeBlocks.length;
+    const escapedCode = code
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;");
+    codeBlocks.push(`<pre class="rp-code-block"><code>${escapedCode}</code></pre>`);
+    return `___CODE_BLOCK_${idx}___`;
+  });
+
+  // 2. Escape HTML
+  processed = processed
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;");
 
-  return escaped
-    .replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>")
-    .replace(/\*([^*\n]+)\*/g, '<span class="rp-action">*$1*</span>')
+  // 3. Inline code
+  processed = processed.replace(/`([^`\n]+)`/g, '<code class="rp-inline-code">$1</code>');
+
+  // 4. Bold and Bold-Italic
+  processed = processed
+    .replace(/\*\*\*([^*]+)\*\*\*/g, '<strong><em class="rp-action">$1</em></strong>')
+    .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+
+  // 5. Dialogue in Japanese corner quotes 「...」
+  processed = processed.replace(/「([^」\n]+)」/g, '<span class="rp-dialogue">「$1」</span>');
+
+  // 6. Dialogue in Double Quotes (curly or straight)
+  processed = processed
     .replace(/“([^”\n]+)”/g, '<span class="rp-dialogue">“$1”</span>')
-    .replace(/"([^"\n]+)"/g, '<span class="rp-dialogue">“$1”</span>')
-    .replace(/\n/g, "<br/>");
+    .replace(/"([^"\n]+)"/g, '<span class="rp-dialogue">“$1”</span>');
+
+  // 7. Roleplay Narration & Actions in Asterisks *...*
+  processed = processed.replace(/\*([^*\n]+)\*/g, '<span class="rp-action">*$1*</span>');
+
+  // 8. Paragraphs and Line Breaks
+  const paragraphs = processed.split(/\n\s*\n/);
+  if (paragraphs.length > 1) {
+    processed = paragraphs
+      .map((p) => p.trim())
+      .filter(Boolean)
+      .map((p) => `<p class="rp-para">${p.replace(/\n/g, "<br/>")}</p>`)
+      .join("");
+  } else {
+    processed = processed.replace(/\n/g, "<br/>");
+  }
+
+  // 9. Re-insert preserved code blocks
+  codeBlocks.forEach((block, idx) => {
+    processed = processed.replace(`___CODE_BLOCK_${idx}___`, block);
+  });
+
+  return processed;
 }
 
 function showToast(message) {
@@ -72,7 +117,40 @@ function stopSpeech() {
   state.isSpeaking = false;
 }
 
-function speakText(rawText, gender = "Female", triggerBtn = null) {
+function getCharacterVocalProfile(char) {
+  if (!char) return { pitch: 1.05, rate: 1.0, isFemale: true };
+  const name = char.name || "Character";
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) hash = (hash << 5) - hash + name.charCodeAt(i);
+  hash = Math.abs(hash);
+
+  const isFemale = (char.gender || "Female").toLowerCase() === "female";
+  const pers = (char.personality || "").toLowerCase();
+
+  let basePitch = isFemale ? 1.15 : 0.90;
+  if (pers.includes("shy") || pers.includes("soft") || pers.includes("gentle") || pers.includes("sweet")) {
+    basePitch += isFemale ? 0.08 : 0.05;
+  } else if (pers.includes("deep") || pers.includes("stoic") || pers.includes("commanding") || pers.includes("dominant") || pers.includes("fierce")) {
+    basePitch -= 0.12;
+  } else if (pers.includes("playful") || pers.includes("energetic") || pers.includes("cheerful")) {
+    basePitch += 0.10;
+  }
+  const microPitch = ((hash % 11) - 5) * 0.01;
+  const pitch = Math.max(0.75, Math.min(1.4, basePitch + microPitch));
+
+  let baseRate = 1.0;
+  if (pers.includes("fast") || pers.includes("energetic") || pers.includes("witty")) {
+    baseRate = 1.06;
+  } else if (pers.includes("calm") || pers.includes("stoic") || pers.includes("gentle") || pers.includes("mysterious")) {
+    baseRate = 0.94;
+  }
+  const microRate = (((hash >> 3) % 9) - 4) * 0.01;
+  const rate = Math.max(0.85, Math.min(1.18, baseRate + microRate));
+
+  return { pitch: parseFloat(pitch.toFixed(2)), rate: parseFloat(rate.toFixed(2)), isFemale };
+}
+
+function speakText(rawText, charOrGender = "Female", triggerBtn = null) {
   if (typeof window === "undefined" || !("speechSynthesis" in window)) {
     showToast("Voice narration not supported in this browser.");
     return;
@@ -85,11 +163,25 @@ function speakText(rawText, gender = "Female", triggerBtn = null) {
 
   stopSpeech();
 
-  let cleanText = (rawText || "")
-    .replace(/\*([^*]+)\*/g, " ")
-    .replace(/\[[^\]]+\]/g, " ")
-    .replace(/[#*_~`]/g, "")
-    .trim();
+  const char = typeof charOrGender === "object"
+    ? charOrGender
+    : state.activeSession?.character || { gender: charOrGender };
+  const profile = getCharacterVocalProfile(char);
+
+  // Extract spoken dialogue if available in quotes for immersive audio roleplay
+  const dialogueMatches = Array.from(rawText.matchAll(/“([^”]+)”|"([^"]+)"|「([^」]+)」/g))
+    .map((m) => m[1] || m[2] || m[3]);
+
+  let cleanText = "";
+  if (dialogueMatches.length > 0) {
+    cleanText = dialogueMatches.join(" ");
+  } else {
+    cleanText = (rawText || "")
+      .replace(/\*([^*]+)\*/g, " ")
+      .replace(/\[[^\]]+\]/g, " ")
+      .replace(/[#*_~`]/g, "")
+      .trim();
+  }
 
   if (!cleanText || cleanText.length < 3) {
     cleanText = (rawText || "").replace(/[#*_~`]/g, "").trim();
@@ -98,11 +190,10 @@ function speakText(rawText, gender = "Female", triggerBtn = null) {
 
   const utterance = new SpeechSynthesisUtterance(cleanText);
   const voices = window.speechSynthesis.getVoices() || [];
-  const isFemale = (gender || "").toLowerCase() === "female";
 
   if (voices.length > 0) {
     let matchedVoice = null;
-    if (isFemale) {
+    if (profile.isFemale) {
       matchedVoice = voices.find((v) =>
         /female|zira|samantha|victoria|karen|susan|moira|fiona|natural.*female/i.test(v.name)
       );
@@ -117,8 +208,8 @@ function speakText(rawText, gender = "Female", triggerBtn = null) {
     if (matchedVoice) utterance.voice = matchedVoice;
   }
 
-  utterance.rate = 1.0;
-  utterance.pitch = isFemale ? 1.14 : 0.92;
+  utterance.rate = profile.rate;
+  utterance.pitch = profile.pitch;
 
   if (triggerBtn) {
     currentSpeakingBtn = triggerBtn;
@@ -479,11 +570,25 @@ function renderTiesTab(filter = "all") {
       </div>
       <div class="tie-footer">
         <span>Active ${relTime}</span>
-        <button type="button" class="btn-glass btn-sm btn-open-tie" style="font-size:0.76rem;padding:0.35rem 0.65rem;">
-          Continue Story &rarr;
-        </button>
+        <div style="display:flex;gap:0.35rem;align-items:center;">
+          <button type="button" class="btn-xs btn-outline btn-tie-memories" data-tie-char-id="${tie.character_id}" title="View Character Core Memories" style="font-size:0.75rem;padding:0.25rem 0.45rem;">
+            📌
+          </button>
+          <button type="button" class="btn-glass btn-sm btn-open-tie" style="font-size:0.76rem;padding:0.35rem 0.65rem;">
+            Continue Story &rarr;
+          </button>
+        </div>
       </div>
     `;
+
+    const memBtn = card.querySelector(".btn-tie-memories");
+    if (memBtn) {
+      memBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        triggerHaptic(8);
+        openCoreMemoriesModal(tie.character_id);
+      });
+    }
 
     card.querySelector(".btn-open-tie").addEventListener("click", () => {
       triggerHaptic(8);
@@ -743,6 +848,201 @@ function updateAllCommentBadges(charId) {
     const mobCount = document.getElementById("chat-mobile-comments-count");
     if (mobCount) mobCount.textContent = count;
   }
+}
+
+// ==========================================================
+// DYNAMIC CHARACTER MOOD & EMOTIONAL AFFINITY ENGINE
+// ==========================================================
+function calculateCharacterMood(character, messages = [], tie = null) {
+  if (!character) return { emoji: "✨", label: "Curious", cssClass: "mood-curious" };
+
+  const recentText = messages
+    .slice(-4)
+    .map((m) => m.content || "")
+    .join(" ")
+    .toLowerCase();
+
+  const tieLevel = tie?.level || 1;
+
+  if (recentText.includes("blush") || recentText.includes("fluster") || recentText.includes("shy") || recentText.includes("embarrass") || recentText.includes("stutter")) {
+    return { emoji: "😳", label: "Flustered", cssClass: "mood-flustered" };
+  }
+  if (recentText.includes("love") || recentText.includes("kiss") || recentText.includes("cuddle") || recentText.includes("adore") || recentText.includes("heart") || tieLevel >= 4) {
+    return { emoji: "💗", label: "Affectionate", cssClass: "mood-affectionate" };
+  }
+  if (recentText.includes("fight") || recentText.includes("danger") || recentText.includes("blade") || recentText.includes("shield") || recentText.includes("protect") || recentText.includes("threat")) {
+    return { emoji: "🛡️", label: "Protective", cssClass: "mood-protective" };
+  }
+  if (recentText.includes("tears") || recentText.includes("cry") || recentText.includes("grief") || recentText.includes("pain") || recentText.includes("hurt") || recentText.includes("vulnerable")) {
+    return { emoji: "🥺", label: "Vulnerable", cssClass: "mood-vulnerable" };
+  }
+  if (recentText.includes("laugh") || recentText.includes("smile") || recentText.includes("giggle") || recentText.includes("tease") || recentText.includes("joke") || recentText.includes("wink")) {
+    return { emoji: "🌸", label: "Playful", cssClass: "mood-playful" };
+  }
+  if (recentText.includes("stare") || recentText.includes("breath") || recentText.includes("fierce") || recentText.includes("passion") || recentText.includes("pulse") || recentText.includes("intense")) {
+    return { emoji: "🔥", label: "Intense", cssClass: "mood-intense" };
+  }
+  if (recentText.includes("think") || recentText.includes("ponder") || recentText.includes("wonder") || recentText.includes("silence") || recentText.includes("gaze")) {
+    return { emoji: "💭", label: "Thoughtful", cssClass: "mood-thoughtful" };
+  }
+  if (recentText.includes("sleep") || recentText.includes("rest") || recentText.includes("calm") || recentText.includes("night") || recentText.includes("peace") || recentText.includes("breeze")) {
+    return { emoji: "🌙", label: "Calm", cssClass: "mood-calm" };
+  }
+
+  if (tieLevel === 5) return { emoji: "💎", label: "Soulbound", cssClass: "mood-affectionate" };
+  if (tieLevel >= 3) return { emoji: "✨", label: "Attuned", cssClass: "mood-curious" };
+  return { emoji: "✨", label: "Curious", cssClass: "mood-curious" };
+}
+
+function updateChatHeaderMood() {
+  const badge = document.getElementById("chat-mood-badge");
+  if (!badge || !state.activeSession) return;
+  const char = state.activeSession.character;
+  const tie = getTieForCharacter(char.id, char);
+  const mood = calculateCharacterMood(char, state.activeSession.messages || [], tie);
+
+  badge.className = `badge-mini chat-mood-badge ${mood.cssClass}`;
+  badge.textContent = `${mood.emoji} ${mood.label}`;
+}
+
+// ==========================================================
+// CHARACTER CORE MEMORIES ENGINE
+// ==========================================================
+state.activeMemoriesCharId = null;
+
+function getCharacterCoreMemories(charId) {
+  if (!charId) return [];
+  if (window.api?.getCoreMemories) {
+    return window.api.getCoreMemories(charId);
+  }
+  try {
+    return JSON.parse(localStorage.getItem(`sora_core_memories_${charId}`) || "[]");
+  } catch {
+    return [];
+  }
+}
+
+function saveCharacterCoreMemories(charId, memories) {
+  if (!charId) return;
+  if (window.api?.saveCoreMemories) {
+    window.api.saveCoreMemories(charId, memories);
+  } else {
+    try {
+      localStorage.setItem(`sora_core_memories_${charId}`, JSON.stringify(memories || []));
+    } catch (_) {}
+  }
+  updateCoreMemoriesBadges(charId);
+}
+
+function addCharacterCoreMemory(charId, text, fromMsgId = null) {
+  if (!charId || !text || !text.trim()) return false;
+  const clean = text.trim();
+  const existing = getCharacterCoreMemories(charId);
+  if (existing.some((m) => m.text.toLowerCase() === clean.toLowerCase())) {
+    showToast("Memory already recorded 📌");
+    return false;
+  }
+  const newMem = {
+    id: `mem_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
+    text: clean,
+    created_at: Date.now(),
+    from_msg_id: fromMsgId,
+  };
+  const updated = [newMem, ...existing].slice(0, 15);
+  saveCharacterCoreMemories(charId, updated);
+  showToast("Pinned to Core Memories 📌");
+  triggerHaptic(12);
+  return true;
+}
+
+function removeCharacterCoreMemory(charId, memoryId) {
+  if (!charId || !memoryId) return;
+  const existing = getCharacterCoreMemories(charId);
+  const updated = existing.filter((m) => m.id !== memoryId);
+  saveCharacterCoreMemories(charId, updated);
+  triggerHaptic(8);
+  showToast("Memory removed");
+}
+
+function updateCoreMemoriesBadges(charId) {
+  const mems = getCharacterCoreMemories(charId);
+  const count = mems.length;
+  const countBadge = document.getElementById("core-memories-count-badge");
+  if (countBadge) countBadge.textContent = count;
+  const mobCount = document.getElementById("chat-mobile-memories-count");
+  if (mobCount) mobCount.textContent = count;
+  const capLabel = document.getElementById("memories-capacity-label");
+  if (capLabel) capLabel.textContent = `${count} / 15 Memories`;
+}
+
+function openCoreMemoriesModal(charId) {
+  if (!charId) return;
+  state.activeMemoriesCharId = charId;
+  const modal = document.getElementById("core-memories-modal");
+  if (!modal) return;
+
+  const char = state.characters.find((x) => x.id === charId) ||
+               (window.SORA_DEFAULT_CATALOG && window.SORA_DEFAULT_CATALOG.find((x) => x.id === charId)) ||
+               state.activeSession?.character ||
+               { id: charId, name: "Character" };
+
+  const avatarEl = document.getElementById("memories-char-avatar");
+  const nameEl = document.getElementById("memories-char-name");
+  if (avatarEl) {
+    avatarEl.src = getCharacterAvatarUrl(char);
+    avatarEl.onerror = () => {
+      avatarEl.onerror = null;
+      avatarEl.src = getFallbackAvatar(char.name, char.gender, char.category);
+    };
+  }
+  if (nameEl) nameEl.textContent = `${char.name}'s Core Memories`;
+
+  renderCoreMemoriesList(charId);
+  modal.classList.remove("hidden");
+  if (window.history && window.history.state?.view !== "memories-modal") {
+    window.history.pushState({ view: "memories-modal" }, "");
+  }
+}
+
+function renderCoreMemoriesList(charId) {
+  const container = document.getElementById("core-memories-list");
+  if (!container) return;
+  const mems = getCharacterCoreMemories(charId);
+  updateCoreMemoriesBadges(charId);
+
+  container.innerHTML = "";
+  if (mems.length === 0) {
+    container.innerHTML = `
+      <div style="text-align:center;padding:2rem 1rem;color:var(--text-muted);">
+        <p style="font-size:0.9rem;margin-bottom:0.35rem;">No core memories pinned yet.</p>
+        <p style="font-size:0.78rem;">Pin promises, pivotal story reveals, or backstory facts above or with the 📌 button on chat messages.</p>
+      </div>
+    `;
+    return;
+  }
+
+  const frag = document.createDocumentFragment();
+  mems.forEach((m) => {
+    const item = document.createElement("div");
+    item.className = "core-memory-item";
+    const timeStr = formatRelativeTime(m.created_at);
+    item.innerHTML = `
+      <div class="core-memory-content">
+        <span class="core-memory-pin-icon">📌</span>
+        <div>
+          <div class="core-memory-text">${m.text}</div>
+          <div class="core-memory-date">${timeStr}</div>
+        </div>
+      </div>
+      <button type="button" class="core-memory-del-btn" data-del-mem-id="${m.id}" title="Delete memory">🗑️</button>
+    `;
+    item.querySelector(`[data-del-mem-id="${m.id}"]`).addEventListener("click", () => {
+      removeCharacterCoreMemory(charId, m.id);
+      renderCoreMemoriesList(charId);
+    });
+    frag.appendChild(item);
+  });
+  container.appendChild(frag);
 }
 
 function filterLocalCharacters() {
@@ -1757,6 +2057,9 @@ function mountChatDrawer(sessionData) {
   const mobileCommentBadge = document.getElementById("chat-mobile-comments-count");
   if (mobileCommentBadge) mobileCommentBadge.textContent = commentCount;
 
+  updateChatHeaderMood();
+  updateCoreMemoriesBadges(c.id);
+
   document.getElementById("chat-lore-personality").textContent = c.personality;
   document.getElementById("chat-lore-scenario").textContent = c.scenario ? `Setting: ${c.scenario}` : "Setting: Open World Interactive Roleplay";
   document.getElementById("chat-memory-input").value = sessionData.memory_notes || "";
@@ -1849,10 +2152,21 @@ function renderMessagesList() {
 }
 
 function createMessageDom(msgOrRole, content, modelUsed, charAvatar, userAvatar, msgId = null) {
-  const role = typeof msgOrRole === "object" ? msgOrRole.role : msgOrRole;
-  let text = typeof msgOrRole === "object" ? msgOrRole.content : content;
-  const model = typeof msgOrRole === "object" ? msgOrRole.model_used : modelUsed;
-  const id = typeof msgOrRole === "object" ? (msgOrRole.id || "") : (msgId || "");
+  const msgObj = typeof msgOrRole === "object" ? msgOrRole : { role: msgOrRole, content, model_used: modelUsed, id: msgId };
+  const role = msgObj.role;
+  let text = msgObj.content || content || "";
+  const model = msgObj.model_used || modelUsed;
+  const id = msgObj.id || msgId || "";
+
+  if (role === "assistant") {
+    if (!msgObj.variations || !Array.isArray(msgObj.variations) || msgObj.variations.length === 0) {
+      msgObj.variations = [text];
+    }
+    if (typeof msgObj.variation_index !== "number" || msgObj.variation_index >= msgObj.variations.length) {
+      msgObj.variation_index = msgObj.variations.length - 1;
+    }
+    text = msgObj.variations[msgObj.variation_index] || text;
+  }
 
   const row = document.createElement("div");
   row.className = `msg-row ${role} animate-in`;
@@ -1867,6 +2181,7 @@ function createMessageDom(msgOrRole, content, modelUsed, charAvatar, userAvatar,
   const fallbackMsgAvatar = role === "user"
     ? getFallbackAvatar(authorName, "Female", "User")
     : getFallbackAvatar(authorName, state.activeSession?.character?.gender, state.activeSession?.character?.category);
+
   row.innerHTML = `
     <img src="${avatar}" alt="${role}" class="msg-avatar" onerror="this.onerror=null; this.src='${fallbackMsgAvatar}';" />
     <div style="min-width:0;flex:1;">
@@ -1884,11 +2199,27 @@ function createMessageDom(msgOrRole, content, modelUsed, charAvatar, userAvatar,
           ${role === "assistant" && model ? `<span>· ${model}</span>` : ""}
         </div>
         <div class="msg-action-btns">
+          ${role === "assistant" ? `
+            <div class="msg-swipe-nav" title="Swipe between response variations">
+              <button type="button" class="btn-swipe-prev" ${msgObj.variation_index <= 0 ? "disabled" : ""} title="Previous variation">◀</button>
+              <span class="swipe-indicator">${msgObj.variation_index + 1}/${msgObj.variations.length}</span>
+              <button type="button" class="btn-swipe-next" ${msgObj.variation_index >= msgObj.variations.length - 1 ? "disabled" : ""} title="Next variation">▶</button>
+            </div>
+            <button type="button" class="msg-act-btn btn-regen-msg" title="Generate new variation (Swipe)" aria-label="Regenerate variation">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
+            </button>
+          ` : ""}
           <button type="button" class="msg-act-btn btn-copy-msg" title="Copy message" aria-label="Copy message">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
           </button>
-          <button type="button" class="msg-act-btn btn-tts-msg" title="Voice narration" aria-label="Voice narration">
+          <button type="button" class="msg-act-btn btn-tts-msg" title="Listen with character voice" aria-label="Voice narration">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg>
+          </button>
+          <button type="button" class="msg-act-btn btn-pin-memory-msg" title="Pin fact to Character Core Memories" aria-label="Pin to Core Memories">
+            <span style="font-size:0.75rem;">📌</span>
+          </button>
+          <button type="button" class="msg-act-btn btn-rewind-msg" title="Rewind conversation to this turn" aria-label="Rewind turn">
+            <span style="font-size:0.75rem;">⏪</span>
           </button>
           <button type="button" class="msg-act-btn btn-edit-msg" title="Edit turn" aria-label="Edit turn">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>
@@ -1905,6 +2236,150 @@ function createMessageDom(msgOrRole, content, modelUsed, charAvatar, userAvatar,
   const editBoxEl = row.querySelector(".msg-edit-box");
   const editInput = row.querySelector(".msg-inline-edit-input");
 
+  // Swipe Navigation
+  const prevBtn = row.querySelector(".btn-swipe-prev");
+  const nextBtn = row.querySelector(".btn-swipe-next");
+  const swipeInd = row.querySelector(".swipe-indicator");
+  if (prevBtn) {
+    prevBtn.addEventListener("click", () => {
+      if (msgObj.variation_index > 0) {
+        triggerHaptic(8);
+        msgObj.variation_index--;
+        const curText = msgObj.variations[msgObj.variation_index];
+        msgObj.content = curText;
+        row.dataset.rawText = curText;
+        bubbleEl.innerHTML = formatRoleplayHTML(curText);
+        swipeInd.textContent = `${msgObj.variation_index + 1}/${msgObj.variations.length}`;
+        prevBtn.disabled = msgObj.variation_index <= 0;
+        nextBtn.disabled = msgObj.variation_index >= msgObj.variations.length - 1;
+        saveLocalSessions(getLocalSessions().map((s) => (s.id === state.activeSession?.id ? state.activeSession : s)));
+        updateChatHeaderMood();
+      }
+    });
+  }
+  if (nextBtn) {
+    nextBtn.addEventListener("click", () => {
+      if (msgObj.variation_index < msgObj.variations.length - 1) {
+        triggerHaptic(8);
+        msgObj.variation_index++;
+        const curText = msgObj.variations[msgObj.variation_index];
+        msgObj.content = curText;
+        row.dataset.rawText = curText;
+        bubbleEl.innerHTML = formatRoleplayHTML(curText);
+        swipeInd.textContent = `${msgObj.variation_index + 1}/${msgObj.variations.length}`;
+        prevBtn.disabled = msgObj.variation_index <= 0;
+        nextBtn.disabled = msgObj.variation_index >= msgObj.variations.length - 1;
+        saveLocalSessions(getLocalSessions().map((s) => (s.id === state.activeSession?.id ? state.activeSession : s)));
+        updateChatHeaderMood();
+      }
+    });
+  }
+
+  // Regenerate Response Variation (Swipe)
+  const regenMsgBtn = row.querySelector(".btn-regen-msg");
+  if (regenMsgBtn) {
+    regenMsgBtn.addEventListener("click", async () => {
+      if (!state.activeSession) return;
+      triggerHaptic(12);
+      showToast("Generating response variation...");
+      regenMsgBtn.disabled = true;
+      try {
+        const char = state.activeSession.character;
+        const tie = getTieForCharacter(char.id, char);
+        const selectedModel = document.getElementById("chat-model-select")?.value || "haru-core";
+        const selectedPersona = document.getElementById("chat-persona-select")?.value;
+        const personaObj = (state.user?.personas || []).find((p) => p.id === selectedPersona) || null;
+        const coreMems = getCharacterCoreMemories(char.id).map((m) => m.text);
+
+        const targetIdx = state.activeSession.messages.findIndex((m) => m.id === id);
+        const sliceEnd = targetIdx >= 0 ? targetIdx : state.activeSession.messages.length - 1;
+        const historyBefore = state.activeSession.messages.slice(0, sliceEnd);
+
+        let newContent = "";
+        await window.api.streamMessage(
+          state.activeSession.id,
+          {
+            content: historyBefore[historyBefore.length - 1]?.content || "Continue the scene.",
+            model: selectedModel,
+            character_name: char.name,
+            personality: char.personality,
+            scenario: char.scenario,
+            tie: { level: tie.level, stage: tie.stage, xp: tie.xp },
+            core_memories: coreMems,
+            user_persona: personaObj ? { name: personaObj.name, description: personaObj.description } : null,
+            local_messages: historyBefore.map((m) => ({ role: m.role, content: m.content })),
+          },
+          {
+            onToken: (tok) => {
+              newContent += tok;
+              bubbleEl.innerHTML = formatRoleplayHTML(newContent);
+            },
+            onDone: (d) => {
+              const finalTxt = d.content || newContent;
+              msgObj.variations.push(finalTxt);
+              msgObj.variation_index = msgObj.variations.length - 1;
+              msgObj.content = finalTxt;
+              row.dataset.rawText = finalTxt;
+              bubbleEl.innerHTML = formatRoleplayHTML(finalTxt);
+              if (swipeInd) swipeInd.textContent = `${msgObj.variations.length}/${msgObj.variations.length}`;
+              if (prevBtn) prevBtn.disabled = false;
+              if (nextBtn) nextBtn.disabled = true;
+              saveLocalSessions(getLocalSessions().map((s) => (s.id === state.activeSession?.id ? state.activeSession : s)));
+              updateChatHeaderMood();
+              showToast(`New variation added (< ${msgObj.variations.length}/${msgObj.variations.length} >)`);
+            },
+            onError: (err) => {
+              showToast(`Variation error: ${err.message}`);
+            },
+          }
+        );
+      } catch (err) {
+        showToast(`Regeneration failed: ${err.message}`);
+      } finally {
+        regenMsgBtn.disabled = false;
+      }
+    });
+  }
+
+  // Rewind Conversation Button
+  const rewindBtn = row.querySelector(".btn-rewind-msg");
+  if (rewindBtn) {
+    rewindBtn.addEventListener("click", () => {
+      triggerHaptic(12);
+      if (!confirm("Rewind chat to this message? Subsequent responses will be cleared to allow you to branch the story.")) return;
+      const curId = row.dataset.msgId;
+      if (!curId || !state.activeSession) return;
+      const idx = state.activeSession.messages.findIndex((m) => m.id === curId);
+      if (idx >= 0) {
+        state.activeSession.messages = state.activeSession.messages.slice(0, idx + 1);
+        state.activeSession.last_message = (state.activeSession.messages[state.activeSession.messages.length - 1]?.content || "").slice(0, 80);
+        saveLocalSessions(getLocalSessions().map((s) => (s.id === state.activeSession.id ? state.activeSession : s)));
+        renderMessagesList();
+        updateChatHeaderMood();
+        triggerHaptic(14);
+        showToast("Conversation rewound ⏪");
+      }
+    });
+  }
+
+  // Pin Fact to Core Memories Button
+  const pinMemBtn = row.querySelector(".btn-pin-memory-msg");
+  if (pinMemBtn) {
+    pinMemBtn.addEventListener("click", () => {
+      triggerHaptic(10);
+      const charId = state.activeSession?.character?.id;
+      if (!charId) return;
+      const cur = row.dataset.rawText || text;
+      const dialogueMatches = Array.from(cur.matchAll(/“([^”]+)”|"([^"]+)"|「([^」]+)」/g))
+        .map((m) => m[1] || m[2] || m[3]);
+      const excerpt = (dialogueMatches.length > 0 ? dialogueMatches.join(" ") : cur).slice(0, 150).trim();
+      const custom = prompt("Pin key fact or promise to Core Memories:", excerpt);
+      if (custom && custom.trim()) {
+        addCharacterCoreMemory(charId, custom.trim(), row.dataset.msgId);
+      }
+    });
+  }
+
   // Copy button
   const copyBtn = row.querySelector(".btn-copy-msg");
   copyBtn.addEventListener("click", () => {
@@ -1919,13 +2394,13 @@ function createMessageDom(msgOrRole, content, modelUsed, charAvatar, userAvatar,
     }
   });
 
-  // TTS Voice button
+  // TTS Voice button with character vocal profile
   const ttsBtn = row.querySelector(".btn-tts-msg");
   ttsBtn.addEventListener("click", () => {
     triggerHaptic(10);
     const toSpeak = row.dataset.rawText || text;
-    const gender = role === "assistant" ? (state.activeSession?.character?.gender || "Female") : "Female";
-    speakText(toSpeak, gender, ttsBtn);
+    const char = role === "assistant" ? state.activeSession?.character : { gender: "Female" };
+    speakText(toSpeak, char, ttsBtn);
   });
 
   // Edit button
@@ -1960,6 +2435,7 @@ function createMessageDom(msgOrRole, content, modelUsed, charAvatar, userAvatar,
       bubbleEl.innerHTML = formatRoleplayHTML(updated);
       editBoxEl.classList.add("hidden");
       bubbleEl.classList.remove("hidden");
+      updateChatHeaderMood();
       return;
     }
     try {
@@ -1976,6 +2452,7 @@ function createMessageDom(msgOrRole, content, modelUsed, charAvatar, userAvatar,
       bubbleEl.innerHTML = formatRoleplayHTML(updated);
       editBoxEl.classList.add("hidden");
       bubbleEl.classList.remove("hidden");
+      updateChatHeaderMood();
       showToast("Message updated");
     } catch (err) {
       showToast(`Edit failed: ${err.message}`);
@@ -2003,6 +2480,7 @@ function createMessageDom(msgOrRole, content, modelUsed, charAvatar, userAvatar,
       }
     }
     row.remove();
+    updateChatHeaderMood();
     showToast("Turn deleted");
   });
 
@@ -3025,6 +3503,8 @@ function bindUIEvents() {
 
     const activeChar = state.activeSession.character;
     const currentTie = recordTieInteraction(activeChar.id, activeChar, 15);
+    const activePersona = (state.user?.personas || []).find((p) => p.id === selectedPersona) || null;
+    const coreMems = getCharacterCoreMemories(activeChar.id).map((m) => m.text);
 
     let accumulated = "";
     await window.api.streamMessage(
@@ -3033,14 +3513,16 @@ function bindUIEvents() {
         content,
         model: selectedModel,
         persona_id: selectedPersona || null,
-        character_name: state.activeSession.character?.name,
-        personality: state.activeSession.character?.personality,
-        scenario: state.activeSession.character?.scenario,
+        character_name: activeChar?.name,
+        personality: activeChar?.personality,
+        scenario: activeChar?.scenario,
         tie: {
           level: currentTie.level,
           stage: currentTie.stage,
           xp: currentTie.xp,
         },
+        core_memories: coreMems,
+        user_persona: activePersona ? { name: activePersona.name, description: activePersona.description } : null,
         local_messages: (state.activeSession.messages || []).map((m) => ({
           role: m.role,
           content: m.content,
@@ -3072,7 +3554,7 @@ function bindUIEvents() {
           statusEl.textContent = "";
           state.activeSession.messages.push(
             { id: userRow.dataset.msgId, role: "user", content, model_used: "user" },
-            { id: doneEvt.message_id, role: "assistant", content: finalContent, model_used: finalLabel }
+            { id: doneEvt.message_id, role: "assistant", content: finalContent, model_used: finalLabel, variations: [finalContent], variation_index: 0 }
           );
           state.activeSession.last_message = finalContent.slice(0, 80);
           const sessions = getLocalSessions();
@@ -3084,11 +3566,12 @@ function bindUIEvents() {
           if (state.activeSession?.character) {
             recordTieInteraction(state.activeSession.character.id, state.activeSession.character, 10);
           }
+          updateChatHeaderMood();
 
           // Auto-play voice narration if user enabled TTS toggle
           if (state.ttsAutoPlay) {
             const ttsBtn = aiRow.querySelector(".btn-tts-msg");
-            speakText(finalContent, state.activeSession.character.gender, ttsBtn);
+            speakText(finalContent, state.activeSession.character, ttsBtn);
           }
         },
         onError: (err) => {
@@ -3731,8 +4214,72 @@ function bindUIEvents() {
     });
   }
 
+  // --- Character Core Memories Event Wiring ---
+  const openMemoriesBtn = document.getElementById("open-core-memories-btn");
+  if (openMemoriesBtn) {
+    openMemoriesBtn.addEventListener("click", () => {
+      const charId = state.activeSession?.character?.id || state.activeSession?.character_id;
+      if (charId) openCoreMemoriesModal(charId);
+    });
+  }
+
+  const mobMemoriesBtn = document.getElementById("chat-mobile-memories-btn");
+  if (mobMemoriesBtn) {
+    mobMemoriesBtn.addEventListener("click", () => {
+      const charId = state.activeSession?.character?.id || state.activeSession?.character_id;
+      if (charId) openCoreMemoriesModal(charId);
+    });
+  }
+
+  const closeMemoriesBtn = document.getElementById("close-memories-modal");
+  const memModal = document.getElementById("core-memories-modal");
+  const closeMemModal = () => {
+    triggerHaptic(8);
+    if (window.history.state?.view === "memories-modal") {
+      window.history.back();
+    } else if (memModal) {
+      memModal.classList.add("hidden");
+    }
+  };
+  if (closeMemoriesBtn) closeMemoriesBtn.addEventListener("click", closeMemModal);
+  if (memModal) {
+    memModal.addEventListener("click", (e) => {
+      if (e.target === memModal) closeMemModal();
+    });
+  }
+
+  const addMemForm = document.getElementById("add-core-memory-form");
+  if (addMemForm) {
+    addMemForm.addEventListener("submit", (e) => {
+      e.preventDefault();
+      const input = document.getElementById("new-core-memory-input");
+      const val = input ? input.value.trim() : "";
+      if (!val || !state.activeMemoriesCharId) return;
+      addCharacterCoreMemory(state.activeMemoriesCharId, val);
+      if (input) input.value = "";
+      renderCoreMemoriesList(state.activeMemoriesCharId);
+    });
+  }
+
+  const clearAllMemBtn = document.getElementById("clear-all-memories-btn");
+  if (clearAllMemBtn) {
+    clearAllMemBtn.addEventListener("click", () => {
+      if (!state.activeMemoriesCharId) return;
+      if (!confirm("Clear all pinned core memories for this character?")) return;
+      triggerHaptic(12);
+      saveCharacterCoreMemories(state.activeMemoriesCharId, []);
+      renderCoreMemoriesList(state.activeMemoriesCharId);
+      showToast("All core memories cleared");
+    });
+  }
+
   // --- Hardware & Gesture Navigation (Android Back Button & Popstate) ---
   function handleHardwareBack() {
+    const coreMemoriesModal = document.getElementById("core-memories-modal");
+    if (coreMemoriesModal && !coreMemoriesModal.classList.contains("hidden")) {
+      coreMemoriesModal.classList.add("hidden");
+      return true;
+    }
     const commentsModal = document.getElementById("comments-modal");
     if (commentsModal && !commentsModal.classList.contains("hidden")) {
       commentsModal.classList.add("hidden");

@@ -529,6 +529,7 @@
                 <span id="chat-bond-label">Stranger Lv.1</span>
                 <span id="chat-bond-pct" class="chat-bond-pct">0%</span>
               </div>
+              <span id="chat-mood-badge" class="badge-mini chat-mood-badge" title="Character Live Mood">✨ Curious</span>
               <button type="button" id="chat-header-comments-btn" class="chat-comments-btn" title="View Character Community Comments">
                 <span>💬</span>
                 <span id="chat-comments-count">0</span>
@@ -542,14 +543,16 @@
         <div class="chat-header-controls desktop-controls">
           <select id="chat-model-select" class="select-pill select-sm model-dropdown-populate" title="Active Model"></select>
           <select id="chat-persona-select" class="select-pill select-sm" title="Active User Profile"></select>
+          <button type="button" id="open-core-memories-btn" class="icon-btn" title="View &amp; Manage Character Core Memories">📌 Memories (<span id="core-memories-count-badge">0</span>)</button>
           <button id="chat-tts-toggle-btn" class="icon-btn" title="Toggle Voice Narration">🔊 Voice Off</button>
           <button id="chat-new-branch-btn" class="icon-btn" title="Start fresh conversation with this character">➕ New Chat</button>
           <button id="chat-export-btn" class="icon-btn" title="Export roleplay conversation as Markdown">📥 Export</button>
           <button id="toggle-bg-btn" class="icon-btn" title="Customize Chat Background Image">Atmosphere</button>
-          <button id="toggle-lore-btn" class="icon-btn" title="Context &amp; Memory Notes">Memory</button>
+          <button id="toggle-lore-btn" class="icon-btn" title="Context &amp; Memory Notes">Notes</button>
         </div>
 
         <div class="chat-header-mobile-controls">
+          <button type="button" id="chat-mobile-memories-btn" class="icon-btn" style="padding:0.35rem 0.45rem;font-size:0.85rem;" title="Core Memories">📌 <span id="chat-mobile-memories-count">0</span></button>
           <button type="button" id="chat-mobile-comments-btn" class="icon-btn" style="padding:0.35rem 0.45rem;font-size:0.85rem;" title="Comments">💬 <span id="chat-mobile-comments-count">0</span></button>
           <button type="button" id="chat-mobile-fav-btn" class="icon-btn" style="padding:0.35rem 0.45rem;font-size:0.85rem;" title="Favorite">🤍</button>
           <button type="button" id="chat-mobile-tts-btn" class="icon-btn" style="padding:0.35rem 0.45rem;font-size:0.85rem;" title="Voice Narration">🔊</button>
@@ -1018,6 +1021,46 @@
         <!-- Comments Feed List -->
         <div id="comments-feed-list" class="comments-feed-list" style="overflow-y:auto;flex:1;padding-right:0.25rem;">
           <!-- Comments dynamically populated by app.js -->
+        </div>
+      </div>
+    </div>
+
+    <!-- Character Core Memories Modal -->
+    <div id="core-memories-modal" class="modal-backdrop hidden">
+      <div class="modal-card glass-card modal-card-wide core-memories-card" style="max-width:540px;max-height:86dvh;display:flex;flex-direction:column;">
+        <div class="modal-header">
+          <div style="display:flex;align-items:center;gap:0.75rem;">
+            <img id="memories-char-avatar" src="/assets/icon.svg" alt="Character" class="char-avatar-md" style="width:42px;height:42px;border-radius:12px;object-fit:cover;border:1px solid var(--border-subtle);" />
+            <div>
+              <h3 id="memories-char-name" style="margin:0;font-size:1.05rem;">Character Memories</h3>
+              <p class="muted-text" style="font-size:0.76rem;margin:0.15rem 0 0;">Pivotal facts, promises, and backstory locked in active memory</p>
+            </div>
+          </div>
+          <button type="button" id="close-memories-modal" class="icon-btn">Close</button>
+        </div>
+
+        <div style="padding:0.75rem 1rem;border-bottom:1px solid var(--border-subtle);background:rgba(255,255,255,0.02);">
+          <form id="add-core-memory-form" style="display:flex;gap:0.5rem;">
+            <input
+              type="text"
+              id="new-core-memory-input"
+              class="search-input"
+              style="flex:1;font-size:0.86rem;padding:0.45rem 0.75rem;"
+              placeholder="Add key fact (e.g. Promised to visit the Kyoto festival together)..."
+              maxlength="200"
+              required
+            />
+            <button type="submit" class="btn-primary btn-sm" style="white-space:nowrap;padding:0.45rem 0.85rem;">+ Pin</button>
+          </form>
+        </div>
+
+        <div id="core-memories-list" style="overflow-y:auto;flex:1;padding:0.85rem 1rem;display:flex;flex-direction:column;gap:0.55rem;">
+          <!-- Dynamically populated memories -->
+        </div>
+
+        <div class="modal-actions" style="padding:0.65rem 1rem;border-top:1px solid var(--border-subtle);display:flex;justify-content:space-between;align-items:center;">
+          <span id="memories-capacity-label" class="muted-text" style="font-size:0.78rem;">0 / 15 Memories</span>
+          <button type="button" id="clear-all-memories-btn" class="btn-xs btn-outline" style="color:#ef4444;border-color:rgba(239,68,68,0.3);">Clear All</button>
         </div>
       </div>
     </div>
