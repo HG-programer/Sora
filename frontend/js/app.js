@@ -296,6 +296,22 @@ document.addEventListener("DOMContentLoaded", async () => {
 });
 
 function registerServiceWorker() {
+  const isNative = Boolean(
+    window.Capacitor?.isNativePlatform?.() ||
+    window.location.protocol === "capacitor:" ||
+    (window.location.hostname === "localhost" && !window.location.port)
+  );
+
+  // In native Android APK, unregister any lingering service worker so WebView always loads fresh assets directly from APK
+  if (isNative) {
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.getRegistrations().then((registrations) => {
+        registrations.forEach((r) => r.unregister());
+      }).catch(() => {});
+    }
+    return;
+  }
+
   if ("serviceWorker" in navigator) {
     navigator.serviceWorker.register("/sw.js").catch(() => {});
   }
