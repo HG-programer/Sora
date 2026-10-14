@@ -186,13 +186,13 @@ function getCharacterPortraitURI(char) {
       : raw;
   }
 
-  // If avatar_url is a DiceBear URL (which hangs or is blocked offline/in many networks)
-  // or empty, use the guaranteed instant illustrated anime SVG portrait!
-  if (!raw || raw.includes("api.dicebear.com")) {
-    return generateCharacterPortraitSVG(char);
+  // If avatar_url is provided (including DiceBear Lorelei anime avatars or CDN), use it!
+  if (raw.length > 0) {
+    return raw;
   }
 
-  return raw;
+  // Fallback to offline SVG portrait generator
+  return generateCharacterPortraitSVG(char);
 }
 
 window.getCharacterPortraitURI = getCharacterPortraitURI;

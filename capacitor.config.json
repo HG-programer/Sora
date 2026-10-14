@@ -3,7 +3,7 @@
   "appName": "Sora",
   "webDir": "dist",
   "server": {
-    "androidScheme": "http",
+    "androidScheme": "https",
     "cleartext": true,
     "allowNavigation": ["*"]
   },

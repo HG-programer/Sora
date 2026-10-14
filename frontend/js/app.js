@@ -290,13 +290,14 @@ function getCharacterPortraitURI(char) {
       : raw;
   }
 
-  if (!raw || raw.includes("api.dicebear.com")) {
-    return typeof window.generateCharacterPortraitSVG === "function"
-      ? window.generateCharacterPortraitSVG(char)
-      : getFallbackAvatar(char.name, char.gender, char.category);
+  // If avatar_url is provided (including DiceBear Lorelei anime avatars or CDN), use it!
+  if (raw.length > 0) {
+    return raw;
   }
 
-  return raw;
+  return typeof window.generateCharacterPortraitSVG === "function"
+    ? window.generateCharacterPortraitSVG(char)
+    : getFallbackAvatar(char.name, char.gender, char.category);
 }
 window.getCharacterPortraitURI = getCharacterPortraitURI;
 
@@ -1172,11 +1173,16 @@ function isNativeContainer() {
 function registerServiceWorker() {
   const isNative = isNativeContainer();
 
-  // In native Android APK, unregister any lingering service worker so WebView always loads fresh assets directly from APK
+  // In native Android APK, unregister any lingering service worker and clear shell cache so WebView always loads fresh assets directly from APK
   if (isNative) {
     if ("serviceWorker" in navigator) {
       navigator.serviceWorker.getRegistrations().then((registrations) => {
         registrations.forEach((r) => r.unregister());
+      }).catch(() => {});
+    }
+    if ("caches" in window) {
+      caches.keys().then((keys) => {
+        keys.forEach((k) => caches.delete(k));
       }).catch(() => {});
     }
     return;
