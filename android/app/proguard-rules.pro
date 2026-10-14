@@ -10,3 +10,10 @@
 # Preserve Cordova compatibility plugins
 -keep class org.apache.cordova.** { *; }
 -dontwarn org.apache.cordova.**
+
+# Anti-Modding Obfuscation & Class Repackaging
+-repackageclasses 'o'
+-allowaccessmodification
+-keep class com.haru.sora.MainActivity { *; }
+-keep class com.haru.sora.BuildConfig { *; }
+

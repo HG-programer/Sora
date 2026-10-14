@@ -38,6 +38,11 @@
           <span class="nav-label">Sessions</span>
           <span id="chats-count-badge" class="nav-badge hidden">0</span>
         </button>
+        <button class="nav-item" data-tab="ties">
+          <svg class="nav-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+          <span class="nav-label">Ties</span>
+          <span id="ties-count-badge" class="nav-badge hidden">0</span>
+        </button>
         <button class="nav-item" data-tab="create">
           <svg class="nav-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
           <span class="nav-label">Create</span>
@@ -168,6 +173,35 @@
           <p class="muted-text">Persistent conversation threads associated with your account.</p>
         </div>
         <div id="sessions-list" class="sessions-list"></div>
+      </section>
+
+      <!-- TAB: CHARACTER TIES & BONDS -->
+      <section id="tab-ties" class="tab-panel">
+        <div class="page-Intro">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:1rem;flex-wrap:wrap;">
+            <div>
+              <h2>Character Ties &amp; Bonds</h2>
+              <p class="muted-text">Living connections, emotional affinity, and relationship tiers earned across your conversations.</p>
+            </div>
+            <div class="ties-filter-chips" style="display:flex;gap:0.4rem;align-items:center;">
+              <button type="button" class="cat-chip active tie-filter-chip" data-tie-filter="all">All Ties</button>
+              <button type="button" class="cat-chip tie-filter-chip" data-tie-filter="soulbound">💖 Soulbound</button>
+              <button type="button" class="cat-chip tie-filter-chip" data-tie-filter="close">💫 Close Bond</button>
+              <button type="button" class="cat-chip tie-filter-chip" data-tie-filter="recent">Recent</button>
+            </div>
+          </div>
+        </div>
+
+        <div id="ties-empty-state" class="empty-state-box hidden" style="margin-top:1.5rem;text-align:center;padding:3rem 1rem;">
+          <div style="font-size:2.5rem;margin-bottom:0.75rem;">🌿</div>
+          <h3 style="color:var(--text-main);margin-bottom:0.4rem;">No Active Character Ties Yet</h3>
+          <p class="muted-text" style="max-width:420px;margin:0 auto 1.25rem;font-size:0.85rem;line-height:1.5;">
+            Every conversation you have deepens your bond. Explore characters in the directory to establish your first connection!
+          </p>
+          <button type="button" class="btn-primary btn-sm" onclick="switchTab('discover')">Browse Characters</button>
+        </div>
+
+        <div id="ties-grid" class="ties-grid" style="display:grid;grid-template-columns:repeat(auto-fill, minmax(280px, 1fr));gap:1rem;margin-top:1rem;"></div>
       </section>
 
       <!-- TAB 3: CREATE CHARACTER -->
@@ -490,6 +524,11 @@
             <div class="chat-char-title-row">
               <h2 id="chat-char-name">Character</h2>
               <span id="chat-char-category" class="badge-mini badge-warm">Category</span>
+              <div id="chat-bond-pill" class="chat-bond-pill" title="Character Tie &amp; Bond Progression">
+                <span id="chat-bond-icon">🌿</span>
+                <span id="chat-bond-label">Stranger Lv.1</span>
+                <span id="chat-bond-pct" class="chat-bond-pct">0%</span>
+              </div>
               <button type="button" id="chat-favorite-btn" class="icon-btn-round" title="Save to Favorites" style="width:26px;height:26px;border-radius:50%;font-size:0.8rem;display:inline-flex;align-items:center;justify-content:center;padding:0;background:rgba(255,255,255,0.06);border:1px solid var(--border-subtle);cursor:pointer;">🤍</button>
             </div>
             <p id="chat-char-tagline" class="chat-char-tagline"></p>
@@ -845,7 +884,22 @@
             <button type="button" class="auth-tab" data-auth-mode="login">Sign In to Existing</button>
           </div>
 
-          <form id="auth-form" style="margin-top:0.8rem;">
+          <!-- Social Single Sign-On (Google & Facebook) -->
+          <div style="margin-top:0.75rem;">
+            <div style="display:flex;gap:0.5rem;">
+              <button type="button" id="google-auth-btn" class="btn-glass btn-sm" style="flex:1;display:inline-flex;align-items:center;justify-content:center;gap:0.45rem;padding:0.5rem 0.6rem;">
+                <svg width="15" height="15" viewBox="0 0 24 24"><path fill="#EA4335" d="M12 5c1.6 0 3 .6 4.1 1.6l3.1-3.1C17.3 1.7 14.8 1 12 1 7.5 1 3.7 3.6 1.9 7.3l3.7 2.9C6.5 7.4 9 5 12 5z"/><path fill="#4285F4" d="M23.5 12.3c0-.8-.1-1.7-.2-2.3H12v4.5h6.5c-.3 1.5-1.1 2.8-2.4 3.7l3.7 2.9c2.2-2 3.7-5 3.7-8.8z"/><path fill="#FBBC05" d="M5.6 14.8c-.2-.7-.4-1.5-.4-2.3 0-.8.2-1.6.4-2.3L1.9 7.3C.7 9.7 0 12.3 0 15s.7 5.3 1.9 7.7l3.7-2.9z"/><path fill="#34A853" d="M12 23c3.2 0 6-1.1 8-3l-3.7-2.9c-1.1.7-2.5 1.2-4.3 1.2-3 0-5.5-2.4-6.4-5.2L1.9 16C3.7 19.7 7.5 23 12 23z"/></svg>
+                <span>Google</span>
+              </button>
+              <button type="button" id="facebook-auth-btn" class="btn-glass btn-sm" style="flex:1;display:inline-flex;align-items:center;justify-content:center;gap:0.45rem;padding:0.5rem 0.6rem;">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="#1877F2"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+                <span>Facebook</span>
+              </button>
+            </div>
+            <div class="auth-divider" style="margin:0.75rem 0 0.35rem;"><span>or with email &amp; username</span></div>
+          </div>
+
+          <form id="auth-form" style="margin-top:0.6rem;">
             <div class="form-group">
               <label for="auth-username" id="auth-username-label">Username</label>
               <input type="text" id="auth-username" required minlength="3" placeholder="choose_a_username" />

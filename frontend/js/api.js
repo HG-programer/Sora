@@ -29,15 +29,68 @@ const HARU_FREE_MODELS = {
   "haru-rp-v1": { label: "Sora Core v2", temp: 0.82, hint: "" },
 };
 
+const SORA_SEC_SALT = "sora_sec_v6_98e1f5";
+
+function computeStateChecksum(key, dataStr) {
+  let hash = 0x811c9dc5;
+  const input = `${key}:${dataStr}:${SORA_SEC_SALT}`;
+  for (let i = 0; i < input.length; i++) {
+    hash ^= input.charCodeAt(i);
+    hash = (hash * 0x01000193) >>> 0;
+  }
+  return hash.toString(16).padStart(8, "0");
+}
+
+function setSecureItem(key, value) {
+  try {
+    const valStr = typeof value === "string" ? value : JSON.stringify(value);
+    const checksum = computeStateChecksum(key, valStr);
+    localStorage.setItem(key, valStr);
+    localStorage.setItem(`${key}_sig`, checksum);
+  } catch (_) {}
+}
+
+function getSecureItem(key, defaultValue = null) {
+  try {
+    const valStr = localStorage.getItem(key);
+    if (valStr === null) return defaultValue;
+    const sig = localStorage.getItem(`${key}_sig`);
+    if (!sig) {
+      const newSig = computeStateChecksum(key, valStr);
+      try { localStorage.setItem(`${key}_sig`, newSig); } catch (_) {}
+      return valStr;
+    }
+    const expectedSig = computeStateChecksum(key, valStr);
+    if (sig !== expectedSig) {
+      console.warn(`[Sora Security] Tamper detected on ${key}; rejecting modified state.`);
+      return defaultValue;
+    }
+    return valStr;
+  } catch (_) {
+    return defaultValue;
+  }
+}
+
 class HaruEmochiAPI {
   constructor() {
     this._inFlightRequests = new Map();
+    this.computeStateChecksum = computeStateChecksum;
+    this.setSecureItem = setSecureItem;
+    this.getSecureItem = getSecureItem;
   }
 
   getBaseUrl() {
     const saved = (localStorage.getItem(STORAGE_KEYS.SERVER_URL) || "").trim();
     if (saved) return saved.replace(/\/+$/, "");
     return "";
+  }
+
+  getOAuthUrl(provider, redirectScheme = "com.haru.sora://auth") {
+    const base = this.getBaseUrl();
+    if (base) {
+      return `${base}/api/v1/auth/oauth/${provider}?redirect_uri=${encodeURIComponent(redirectScheme)}`;
+    }
+    return null;
   }
 
   resolveAssetUrl(url) {
@@ -62,8 +115,11 @@ class HaruEmochiAPI {
 
   setToken(token) {
     try {
-      if (token) localStorage.setItem(STORAGE_KEYS.TOKEN, token);
-      else localStorage.removeItem(STORAGE_KEYS.TOKEN);
+      if (token) setSecureItem(STORAGE_KEYS.TOKEN, token);
+      else {
+        localStorage.removeItem(STORAGE_KEYS.TOKEN);
+        localStorage.removeItem(`${STORAGE_KEYS.TOKEN}_sig`);
+      }
     } catch (_) {}
   }
 
@@ -82,13 +138,16 @@ class HaruEmochiAPI {
   }
 
   hasPremiumPass() {
-    return localStorage.getItem(STORAGE_KEYS.PREMIUM_PASS) === "active";
+    return getSecureItem(STORAGE_KEYS.PREMIUM_PASS, "") === "active";
   }
 
   setPremiumPass(active) {
     try {
-      if (active) localStorage.setItem(STORAGE_KEYS.PREMIUM_PASS, "active");
-      else localStorage.removeItem(STORAGE_KEYS.PREMIUM_PASS);
+      if (active) setSecureItem(STORAGE_KEYS.PREMIUM_PASS, "active");
+      else {
+        localStorage.removeItem(STORAGE_KEYS.PREMIUM_PASS);
+        localStorage.removeItem(`${STORAGE_KEYS.PREMIUM_PASS}_sig`);
+      }
     } catch (_) {}
   }
 
@@ -357,10 +416,11 @@ class HaruEmochiAPI {
       } catch {
         // Fallback for standalone/offline APK: assemble prompt locally
         userMsgId = `user_${Date.now()}`;
+        const tieDirective = payload.tie ? `\n[Relationship Bond: ${payload.tie.stage} (Level ${payload.tie.level}). Reflect this affinity naturally in dialogue tone.]` : "";
         messages = payload.local_messages || [
           {
             role: "system",
-            content: `You are ${payload.character_name || "a character"} in an interactive creative fiction roleplay. Stay strictly in character. Write expressive, sensory, descriptive prose. ${payload.personality ? "Personality: " + payload.personality : ""} ${payload.scenario ? "Scenario: " + payload.scenario : ""}`
+            content: `You are ${payload.character_name || "a character"} in an interactive creative fiction roleplay. Stay strictly in character. Write expressive, sensory, descriptive prose. ${payload.personality ? "Personality: " + payload.personality : ""} ${payload.scenario ? "Scenario: " + payload.scenario : ""}${tieDirective}`
           },
           { role: "user", content: payload.content || "" }
         ];
@@ -368,11 +428,20 @@ class HaruEmochiAPI {
 
       if (onMeta) onMeta({ type: "meta", user_message_id: userMsgId, model: freeSpec.label });
 
-      if (freeSpec.hint && messages.length > 0 && messages[0].role === "system") {
-        messages[0] = {
-          role: "system",
-          content: `${messages[0].content}\n${freeSpec.hint}`,
-        };
+      if (messages.length > 0 && messages[0].role === "system") {
+        let extra = "";
+        if (payload.tie && !messages[0].content.includes("[Relationship Bond:")) {
+          extra += `\n[Relationship Bond: ${payload.tie.stage} (Level ${payload.tie.level}). Reflect this affinity naturally in dialogue tone.]`;
+        }
+        if (freeSpec.hint) {
+          extra += `\n${freeSpec.hint}`;
+        }
+        if (extra) {
+          messages[0] = {
+            role: "system",
+            content: `${messages[0].content}${extra}`,
+          };
+        }
       }
 
       try {

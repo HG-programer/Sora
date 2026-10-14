@@ -69,6 +69,7 @@ for (const mod of jsModules) {
       minify: true,
       target: ['es2020'],
       legalComments: 'none',
+      drop: ['console', 'debugger'],
     });
   }
 }
