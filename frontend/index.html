@@ -7,6 +7,16 @@
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Sora" />
+  <link rel="apple-touch-icon" href="/assets/icon.svg" />
+  <!-- OpenGraph & Social Metadata for Web & Store Crawlers -->
+  <meta property="og:title" content="Sora — Living Character AI &amp; Curated Roleplay" />
+  <meta property="og:description" content="Unfiltered stories, living characters, zero ads. Just pure immersion. Powered by Gemini, Claude, and local-first sovereign storage." />
+  <meta property="og:type" content="website" />
+  <meta property="og:image" content="/assets/icon.svg" />
+  <meta name="twitter:card" content="summary" />
+  <meta name="twitter:title" content="Sora — Living Character AI" />
+  <meta name="twitter:description" content="Unfiltered stories, living characters, zero ads. Just pure immersion." />
   <title>Sora — Unfiltered stories, living characters, zero ads. Just pure immersion.</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -70,6 +80,24 @@
 
     <!-- Main Content Viewport -->
     <main id="viewport">
+      <!-- Web Platform / Direct APK Banner (Auto-hidden in native Capacitor) -->
+      <div id="web-get-app-banner" class="web-install-banner hidden">
+        <div class="web-banner-content">
+          <span class="web-banner-badge">Android &amp; Web</span>
+          <span class="web-banner-text">Get Sora with native 60fps haptics and background voice.</span>
+        </div>
+        <div class="web-banner-actions">
+          <a id="banner-download-apk-link" href="https://github.com/HG-programer/Sora/releases/latest/download/app-release.apk" class="banner-action-btn banner-btn-apk" download>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            <span>Download APK</span>
+          </a>
+          <button type="button" id="banner-install-pwa-btn" class="banner-action-btn banner-btn-pwa hidden">
+            <span>Install PWA</span>
+          </button>
+          <button type="button" id="close-web-banner-btn" class="banner-close-btn" aria-label="Dismiss banner">✕</button>
+        </div>
+      </div>
+
       <!-- Top Bar -->
       <header class="top-bar">
         <div class="top-bar-left">
@@ -89,6 +117,10 @@
           <button id="open-premium-btn" class="btn-glass btn-sm" title="View Verified Flagship Models">
             Flagship Models
           </button>
+          <a id="get-app-btn" href="https://github.com/HG-programer/Sora/releases/latest/download/app-release.apk" class="btn-glass btn-sm hidden" title="Download Signed Android APK" download style="text-decoration:none;display:inline-flex;align-items:center;gap:0.35rem;">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            <span>Get APK</span>
+          </a>
           <button id="install-pwa-btn" class="btn-glass btn-sm hidden" title="Install Android Application">
             Install App
           </button>
@@ -496,6 +528,30 @@
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
                 <span>Import Backup File</span>
               </button>
+            </div>
+          </div>
+
+          <div class="glass-card" style="margin-top: 1rem;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.5rem;flex-wrap:wrap;gap:0.5rem;">
+              <div>
+                <h3>About Sora &amp; Compliance</h3>
+                <p class="muted-text">Zero advertising, local-first storage, transparent routing, and sovereign privacy.</p>
+              </div>
+              <span class="badge-mini badge-warm">v1.0.0-apk</span>
+            </div>
+            <div style="display:flex;gap:0.6rem;flex-wrap:wrap;margin-top:0.75rem;">
+              <a href="privacy.html" target="_blank" rel="noopener noreferrer" class="btn-glass btn-sm" style="display:inline-flex;align-items:center;gap:0.35rem;text-decoration:none;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                <span>Privacy Policy</span>
+              </a>
+              <a href="https://github.com/HG-programer/Sora" target="_blank" rel="noopener noreferrer" class="btn-glass btn-sm" style="display:inline-flex;align-items:center;gap:0.35rem;text-decoration:none;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/></svg>
+                <span>Source Repository</span>
+              </a>
+              <a href="https://github.com/HG-programer/Sora/releases/latest" target="_blank" rel="noopener noreferrer" class="btn-glass btn-sm" style="display:inline-flex;align-items:center;gap:0.35rem;text-decoration:none;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                <span>Check Updates (APK)</span>
+              </a>
             </div>
           </div>
         </div>
@@ -938,6 +994,11 @@
           <button type="button" id="new-guest-btn" class="btn-glass btn-sm" style="width:100%;">
             Switch to Fresh Guest Session
           </button>
+
+          <div class="auth-legal-footer" style="margin-top:0.85rem;text-align:center;font-size:0.75rem;color:var(--text-muted);line-height:1.4;">
+            By using Sora, you agree to local data sovereignty.
+            <a href="privacy.html" target="_blank" rel="noopener noreferrer" style="color:var(--accent-solid);text-decoration:underline;margin-left:0.25rem;">Privacy Policy</a>
+          </div>
         </div>
       </div>
     </div>

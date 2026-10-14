@@ -1,8 +1,10 @@
 {
+  "id": "/",
   "name": "Sora — Unfiltered stories, living characters, zero ads. Just pure immersion.",
   "short_name": "Sora",
-  "description": "Unfiltered stories, living characters, zero ads. Just pure immersion.",
+  "description": "Interactive creative fiction roleplay with living characters, dynamic ties, and persistent core memories.",
   "start_url": "/",
+  "scope": "/",
   "display": "standalone",
   "orientation": "portrait",
   "background_color": "#090A0F",

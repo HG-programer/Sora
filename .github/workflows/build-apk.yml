@@ -9,6 +9,8 @@ on:
 
 permissions:
   contents: write
+  pages: write
+  id-token: write
 
 jobs:
   build-apk:
@@ -38,6 +40,20 @@ jobs:
       - name: Build Web Assets (Minification)
         run: npm run build
 
+      - name: Package Itch.io Web Bundle (HTML5 Root Archive)
+        run: |
+          cd dist
+          zip -r ../itchio-web-bundle.zip .
+          cd ..
+
+      - name: Deploy PWA & Web Client to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./dist
+          publish_branch: gh-pages
+          force_orphan: true
+
       - name: Sync Capacitor Android Assets
         run: npx cap sync android
 
@@ -55,25 +71,33 @@ jobs:
           path: |
             android/app/build/outputs/apk/release/app-release.apk
             android/app/build/outputs/apk/debug/app-debug.apk
+            itchio-web-bundle.zip
           if-no-files-found: error
 
-      - name: Publish GitHub Release (Direct APK Download)
+      - name: Publish GitHub Release (Direct APK & Web Bundle)
         uses: softprops/action-gh-release@v2
         continue-on-error: true
         with:
           tag_name: "v1.0.0-apk"
-          name: "Sora v1.0.0 — Android APK Release"
+          name: "Sora v1.0.0 — Android APK & Web Release"
+          make_latest: true
           body: |
-            ### 📱 Sora — Android APK
+            ### 📱 Sora — Official Release (v1.0.0)
             **Unfiltered stories, living characters, zero ads. Just pure immersion.**
 
-            #### 📥 Direct Downloads:
-            - **`app-release.apk`**: R8-minified, resource-shrunk, single-DEX optimized build (Recommended).
-            - **`app-debug.apk`**: Standard debug build.
+            #### 📥 Direct Downloads & Packages:
+            - **`app-release.apk`**: R8-minified, resource-shrunk, deterministically signed Android APK (Universal compatibility).
+            - **`app-debug.apk`**: Development & debugging build.
+            - **`itchio-web-bundle.zip`**: Standalone HTML5 web archive ready to upload directly to [Itch.io](https://itch.io).
+
+            #### 🌐 Live Web & PWA:
+            - **Web Client**: [https://hg-programer.github.io/Sora/](https://hg-programer.github.io/Sora/)
+            - **Privacy Policy**: [https://hg-programer.github.io/Sora/privacy.html](https://hg-programer.github.io/Sora/privacy.html)
           draft: false
           prerelease: false
           files: |
             android/app/build/outputs/apk/release/app-release.apk
             android/app/build/outputs/apk/debug/app-debug.apk
+            itchio-web-bundle.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

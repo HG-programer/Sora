@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <meta name="theme-color" content="#090A0F" />
+  <title>Privacy Policy — Sora</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..600;1,6..72,400..500&amp;family=Plus+Jakarta+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet" />
+  <link rel="icon" type="image/svg+xml" href="/assets/icon.svg" />
+  <style>
+    :root {
+      --bg-base: #090A0F;
+      --bg-surface: #12141C;
+      --bg-elevated: #181B26;
+      --border-subtle: rgba(255, 255, 255, 0.08);
+      --border-hover: rgba(255, 255, 255, 0.16);
+      --text-main: #F3F4F6;
+      --text-secondary: #9CA3AF;
+      --text-muted: #64748B;
+      --accent: #6E7BF2;
+      --accent-soft: rgba(110, 123, 242, 0.15);
+      --font-sans: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+      --font-serif: 'Newsreader', Georgia, serif;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg-base);
+      color: var(--text-main);
+      font-family: var(--font-sans);
+      line-height: 1.65;
+      padding: 2rem 1.25rem 4rem;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .container {
+      max-width: 760px;
+      margin: 0 auto;
+    }
+
+    .header-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 2.5rem;
+      padding-bottom: 1.25rem;
+      border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .brand-wrap {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      text-decoration: none;
+      color: inherit;
+    }
+
+    .brand-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+    }
+
+    .brand-title {
+      font-size: 1.2rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+
+    .back-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      background: var(--bg-surface);
+      color: var(--text-secondary);
+      border: 1px solid var(--border-subtle);
+      border-radius: 9999px;
+      padding: 0.45rem 0.95rem;
+      font-size: 0.85rem;
+      font-weight: 500;
+      text-decoration: none;
+      transition: all 0.18s ease;
+    }
+
+    .back-btn:hover {
+      background: var(--bg-elevated);
+      color: #ffffff;
+      border-color: var(--border-hover);
+      transform: translateY(-1px);
+    }
+
+    .hero-title {
+      font-family: var(--font-serif);
+      font-size: 2.4rem;
+      font-weight: 600;
+      letter-spacing: -0.02em;
+      margin-bottom: 0.5rem;
+      color: #ffffff;
+    }
+
+    .last-updated {
+      color: var(--text-muted);
+      font-size: 0.86rem;
+      margin-bottom: 2rem;
+    }
+
+    .policy-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: 16px;
+      padding: 1.75rem;
+      margin-bottom: 1.5rem;
+    }
+
+    h2 {
+      font-family: var(--font-serif);
+      font-size: 1.4rem;
+      font-weight: 600;
+      letter-spacing: -0.01em;
+      color: #ffffff;
+      margin-bottom: 0.85rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    h3 {
+      font-size: 1.05rem;
+      font-weight: 600;
+      color: #E2E8F0;
+      margin: 1.2rem 0 0.4rem;
+    }
+
+    p {
+      color: var(--text-secondary);
+      font-size: 0.95rem;
+      margin-bottom: 0.85rem;
+    }
+
+    ul {
+      list-style-type: disc;
+      padding-left: 1.4rem;
+      color: var(--text-secondary);
+      font-size: 0.95rem;
+      margin-bottom: 0.85rem;
+    }
+
+    li {
+      margin-bottom: 0.45rem;
+    }
+
+    strong {
+      color: var(--text-main);
+    }
+
+    .badge {
+      display: inline-block;
+      background: var(--accent-soft);
+      color: #C7D2FE;
+      font-size: 0.76rem;
+      padding: 0.15rem 0.55rem;
+      border-radius: 6px;
+      border: 1px solid rgba(110, 123, 242, 0.3);
+      font-weight: 600;
+    }
+
+    .summary-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 1rem 0;
+      font-size: 0.9rem;
+    }
+
+    .summary-table th, .summary-table td {
+      border: 1px solid var(--border-subtle);
+      padding: 0.65rem 0.85rem;
+      text-align: left;
+    }
+
+    .summary-table th {
+      background: rgba(255, 255, 255, 0.04);
+      color: var(--text-main);
+      font-weight: 600;
+    }
+
+    .summary-table td {
+      color: var(--text-secondary);
+    }
+
+    .contact-box {
+      background: rgba(110, 123, 242, 0.08);
+      border: 1px solid rgba(110, 123, 242, 0.25);
+      border-radius: 12px;
+      padding: 1.25rem;
+      margin-top: 1rem;
+    }
+
+    a {
+      color: var(--accent);
+      text-decoration: none;
+    }
+
+    a:hover {
+      text-decoration: underline;
+    }
+
+    footer {
+      text-align: center;
+      margin-top: 3rem;
+      color: var(--text-muted);
+      font-size: 0.82rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header-bar">
+      <a href="/" class="brand-wrap">
+        <img src="/assets/icon.svg" alt="Sora" class="brand-icon" />
+        <span class="brand-title">Sora</span>
+      </a>
+      <a href="/" class="back-btn">&larr; Return to App</a>
+    </div>
+
+    <h1 class="hero-title">Privacy Policy</h1>
+    <p class="last-updated">Effective Date: October 14, 2026 &middot; App Version: v1.0.0 &middot; Package: <code>com.haru.sora</code></p>
+
+    <div class="policy-card">
+      <h2>1. Overview &amp; Local-First Philosophy</h2>
+      <p>
+        <strong>Sora</strong> is an offline-capable, interactive creative fiction and character storytelling application built by Harshit Gupta. We believe that creative roleplay is personal, intimate, and sacred.
+      </p>
+      <p>
+        Sora operates on a <strong>Local-First Principle</strong>: your chat logs, created characters, story branches, character ties/bonds, and custom persona details are stored directly on your physical device via private app storage and sandboxed IndexedDB/LocalStorage. We do not sell, rent, monetize, or harvest your personal creative fiction data.
+      </p>
+    </div>
+
+    <div class="policy-card">
+      <h2>2. Summary of Data Practices</h2>
+      <table class="summary-table">
+        <thead>
+          <tr>
+            <th>Category</th>
+            <th>Collected?</th>
+            <th>Purpose</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Personal Identity (Name, Email)</strong></td>
+            <td>Optional</td>
+            <td>Only when you optionally register or sign in via Google/Facebook SSO for cloud synchronization. Guest mode requires zero personal info.</td>
+          </tr>
+          <tr>
+            <td><strong>Chat Messages &amp; Stories</strong></td>
+            <td>Stored Locally</td>
+            <td>Your roleplay dialogue and scenarios are saved on your device. Only active turns are transmitted to the selected AI inference engine to produce the character's reply.</td>
+          </tr>
+          <tr>
+            <td><strong>Third-Party Ad Trackers</strong></td>
+            <td><strong>NO (Zero)</strong></td>
+            <td>Sora contains absolutely zero third-party advertising SDKs, zero telemetry brokers, and zero tracking pixels.</td>
+          </tr>
+          <tr>
+            <td><strong>Payment / Financial Data</strong></td>
+            <td><strong>NO</strong></td>
+            <td>Sora is free and does not collect or store credit card, billing, or banking details.</td>
+          </tr>
+          <tr>
+            <td><strong>Device Hardware &amp; Permissions</strong></td>
+            <td>Minimal</td>
+            <td>Audio playback for text-to-speech, vibration for tactile physics, network access for model inference.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="policy-card">
+      <h2>3. Information We Collect &amp; How It Is Used</h2>
+      <h3>A. Local Creative Fiction Content</h3>
+      <p>
+        Your conversations, customized lore notes, pinned Core Memories, user personas, and custom avatars reside in your local app storage. You maintain 100% ownership and control over this content.
+      </p>
+
+      <h3>B. AI Inference &amp; Bring-Your-Own-Key (BYOK)</h3>
+      <p>
+        When you send a message to a character:
+      </p>
+      <ul>
+        <li>The conversation context is transmitted over encrypted TLS (HTTPS) to the selected model provider (e.g., Sora Core, OpenRouter, Groq, or Gemini).</li>
+        <li>If you choose to use your own API keys (BYOK), your keys are stored strictly in client-side secure storage and are never logged on our servers.</li>
+        <li>We explicitly configure upstream API calls with zero-data-retention flags where supported.</li>
+      </ul>
+
+      <h3>C. Social Single Sign-On (Google &amp; Facebook)</h3>
+      <p>
+        If you voluntarily choose to sign in with Google or Facebook SSO:
+      </p>
+      <ul>
+        <li>We collect your basic public profile information (Display Name, Email Address, and Avatar URL) solely to identify your account across app installations.</li>
+        <li>We do not request permissions to access your friends list, timeline, or contacts.</li>
+      </ul>
+    </div>
+
+    <div class="policy-card">
+      <h2>4. App Permissions &amp; Hardware Usage</h2>
+      <p>Sora requests only the minimal system permissions necessary to deliver roleplay immersion:</p>
+      <ul>
+        <li><strong>Internet Access (<code>android.permission.INTERNET</code>)</strong>: Required to communicate with AI inference gateways and fetch community character updates.</li>
+        <li><strong>Vibration (<code>android.permission.VIBRATE</code>)</strong>: Used for subtle 8–15ms tactile feedback when pressing buttons, sending messages, or leveling up character ties.</li>
+        <li><strong>Audio Output</strong>: Uses the device's native Speech Synthesis engine (TTS) to vocalize character dialogue on demand.</li>
+        <li><strong>Photo Library / File Access</strong>: Only accessed when you explicitly tap to upload a custom character portrait, scene background, or import a JSON backup file.</li>
+      </ul>
+    </div>
+
+    <div class="policy-card">
+      <h2>5. Your Data Rights, Portability &amp; Complete Deletion</h2>
+      <p>You have absolute control over your information in Sora:</p>
+      <ul>
+        <li><strong>1-Click Backup Export</strong>: Export all your characters, sessions, personas, and ties as an unencrypted, portable JSON file at any time from the Account Settings menu.</li>
+        <li><strong>1-Click Backup Restore</strong>: Import your backup on any new device or web browser.</li>
+        <li><strong>Immediate Deletion</strong>: You can delete individual chats, characters, or purge the entire local cache by clicking "Clear All Data" in Account Settings or clearing the app storage via Android Settings.</li>
+        <li><strong>Account Deletion</strong>: To delete your cloud account and associated email, tap "Delete Account" in the Account profile modal or email us at the address below.</li>
+      </ul>
+    </div>
+
+    <div class="policy-card">
+      <h2>6. Children's Privacy (COPPA Compliance)</h2>
+      <p>
+        Sora is designed for creative writers, roleplayers, and interactive fiction enthusiasts. It is not directed at children under the age of 13. We do not knowingly collect personal data from children under 13 years of age. If you believe a child has provided us with personal information, please contact us immediately for prompt deletion.
+      </p>
+    </div>
+
+    <div class="policy-card">
+      <h2>7. Security &amp; Anti-Modding Protection</h2>
+      <p>
+        Sora employs state cryptographic checksum validation and packaged asset verification to protect users against malicious tampered APKs distributed by unofficial third-party mod websites. All network communications are enforced via HTTPS/TLS 1.3.
+      </p>
+    </div>
+
+    <div class="policy-card">
+      <h2>8. Developer Contact &amp; Grievance Redressal</h2>
+      <p>If you have questions, feedback, or data privacy requests regarding Sora, please contact the developer:</p>
+      <div class="contact-box">
+        <p><strong>Developer:</strong> Harshit Gupta</p>
+        <p><strong>Email:</strong> <a href="mailto:harshitg933@gmail.com">harshitg933@gmail.com</a></p>
+        <p><strong>Application:</strong> Sora (<code>com.haru.sora</code>)</p>
+        <p><strong>Repository:</strong> <a href="https://github.com/HG-programer/Sora" target="_blank" rel="noopener">github.com/HG-programer/Sora</a></p>
+      </div>
+    </div>
+
+    <footer>
+      &copy; 2026 Sora &middot; Harshit Gupta. All rights reserved.
+    </footer>
+  </div>
+</body>
+</html>

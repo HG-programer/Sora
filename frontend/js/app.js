@@ -1117,12 +1117,16 @@ document.addEventListener("DOMContentLoaded", async () => {
   updateTiesNavBadge();
 });
 
-function registerServiceWorker() {
-  const isNative = Boolean(
+function isNativeContainer() {
+  return Boolean(
     window.Capacitor?.isNativePlatform?.() ||
     window.location.protocol === "capacitor:" ||
     (window.location.hostname === "localhost" && !window.location.port)
   );
+}
+
+function registerServiceWorker() {
+  const isNative = isNativeContainer();
 
   // In native Android APK, unregister any lingering service worker so WebView always loads fresh assets directly from APK
   if (isNative) {
@@ -1142,7 +1146,62 @@ function registerServiceWorker() {
     state.deferredPwaPrompt = e;
     const btn = document.getElementById("install-pwa-btn");
     if (btn) btn.classList.remove("hidden");
+    const bannerBtn = document.getElementById("banner-install-pwa-btn");
+    if (bannerBtn) bannerBtn.classList.remove("hidden");
   });
+}
+
+function initPlatformBanner() {
+  const isNative = isNativeContainer();
+  const banner = document.getElementById("web-get-app-banner");
+  const getAppBtn = document.getElementById("get-app-btn");
+  const closeBannerBtn = document.getElementById("close-web-banner-btn");
+  const bannerPwaBtn = document.getElementById("banner-install-pwa-btn");
+  const installPwaBtn = document.getElementById("install-pwa-btn");
+
+  if (isNative) {
+    if (banner) banner.classList.add("hidden");
+    if (getAppBtn) getAppBtn.classList.add("hidden");
+    if (installPwaBtn) installPwaBtn.classList.add("hidden");
+    return;
+  }
+
+  // Web environment: Reveal Get APK button in top bar
+  if (getAppBtn) getAppBtn.classList.remove("hidden");
+
+  // Show web install banner if not dismissed this session
+  if (banner && !sessionStorage.getItem("sora_dismiss_web_banner")) {
+    banner.classList.remove("hidden");
+  }
+
+  if (closeBannerBtn && banner) {
+    closeBannerBtn.addEventListener("click", () => {
+      banner.classList.add("hidden");
+      sessionStorage.setItem("sora_dismiss_web_banner", "1");
+    });
+  }
+
+  const triggerPwaInstall = async () => {
+    if (!state.deferredPwaPrompt) return;
+    try {
+      state.deferredPwaPrompt.prompt();
+      const choice = await state.deferredPwaPrompt.userChoice;
+      if (choice && choice.outcome === "accepted") {
+        state.deferredPwaPrompt = null;
+        if (installPwaBtn) installPwaBtn.classList.add("hidden");
+        if (bannerPwaBtn) bannerPwaBtn.classList.add("hidden");
+      }
+    } catch (err) {
+      console.warn("PWA prompt error:", err);
+    }
+  };
+
+  if (bannerPwaBtn) {
+    bannerPwaBtn.addEventListener("click", triggerPwaInstall);
+  }
+  if (installPwaBtn) {
+    installPwaBtn.addEventListener("click", triggerPwaInstall);
+  }
 }
 
 async function ensureAuthenticatedUser() {
@@ -2865,6 +2924,8 @@ async function importSoraBackup(file) {
 }
 
 function bindUIEvents() {
+  initPlatformBanner();
+
   document.querySelectorAll(".nav-item").forEach((btn) => {
     btn.addEventListener("click", () => switchTab(btn.dataset.tab));
   });
@@ -4098,17 +4159,6 @@ function bindUIEvents() {
   if (importBackupBtn) importBackupBtn.addEventListener("click", () => backupFileInput?.click());
   const cfgImportBackupBtn = document.getElementById("cfg-import-backup-btn");
   if (cfgImportBackupBtn) cfgImportBackupBtn.addEventListener("click", () => backupFileInput?.click());
-
-  const installPwaBtn = document.getElementById("install-pwa-btn");
-  if (installPwaBtn) {
-    installPwaBtn.addEventListener("click", async () => {
-      if (!state.deferredPwaPrompt) return;
-      state.deferredPwaPrompt.prompt();
-      await state.deferredPwaPrompt.userChoice;
-      state.deferredPwaPrompt = null;
-      installPwaBtn.classList.add("hidden");
-    });
-  }
 
   // --- Character Comments Section Event Wiring ---
   const commentsModal = document.getElementById("comments-modal");

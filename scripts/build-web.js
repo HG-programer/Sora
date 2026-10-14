@@ -83,6 +83,17 @@ html = html
   .replace(/^\s+/gm, ' ');
 fs.writeFileSync(path.join(DIST_DIR, 'index.html'), html, 'utf-8');
 
+// 4b. Process privacy.html
+if (fs.existsSync(path.join(SRC_DIR, 'privacy.html'))) {
+  console.log('📄 [Sora Build] Processing privacy.html...');
+  let privHtml = fs.readFileSync(path.join(SRC_DIR, 'privacy.html'), 'utf-8');
+  privHtml = privHtml
+    .replace(/<!--[\s\S]*?-->/g, '')
+    .replace(/\n\s*\n/g, '\n')
+    .replace(/^\s+/gm, ' ');
+  fs.writeFileSync(path.join(DIST_DIR, 'privacy.html'), privHtml, 'utf-8');
+}
+
 // Summary report
 function getFileSize(filePath) {
   return (fs.statSync(filePath).size / 1024).toFixed(1);
