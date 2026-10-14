@@ -2,6 +2,155 @@
  * Sora Default Bundled Character Catalog
  * Auto-generated 210 curated characters for instant offline & standalone APK loading.
  */
+
+// Guaranteed Offline Illustrated Anime SVG Portrait Generator
+function generateCharacterPortraitSVG(char = {}) {
+  const name = (typeof char === "string" ? char : char?.name) || "Character";
+  const gender = ((typeof char === "object" ? char?.gender : "") || "Female").toLowerCase();
+  const category = ((typeof char === "object" ? char?.category : "") || "Romance").toLowerCase();
+  const customAccent = typeof char === "object" ? char?.accent_color : null;
+
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) {
+    hash = (hash << 5) - hash + name.charCodeAt(i);
+    hash |= 0;
+  }
+  hash = Math.abs(hash);
+
+  const clean = name.replace(/[^a-zA-Z0-9\s]/g, "").trim();
+  const initials = (clean.split(/\s+/).slice(0, 2).map((w) => w[0]).join("") || "S").toUpperCase();
+
+  const palettes = {
+    romance: [
+      { bg1: "#1C0D15", bg2: "#3F1528", aura: "#F472B6", hair: "#FDE2EC", hairDark: "#9D174D", cloth: "#4A1527", accent: "#FB7185", eye: "#F43F5E" },
+      { bg1: "#150D1E", bg2: "#33154A", aura: "#C084FC", hair: "#F3E8FF", hairDark: "#6B21A8", cloth: "#3C1650", accent: "#E879F9", eye: "#A855F7" },
+      { bg1: "#1A0E0B", bg2: "#3F1F15", aura: "#FB923C", hair: "#FFEDD5", hairDark: "#9A3412", cloth: "#4E2016", accent: "#F472B6", eye: "#EA580C" },
+    ],
+    fantasy: [
+      { bg1: "#0B132B", bg2: "#1C2541", aura: "#38BDF8", hair: "#E0F2FE", hairDark: "#0369A1", cloth: "#1E293B", accent: "#67E8F9", eye: "#0284C7" },
+      { bg1: "#120924", bg2: "#28134F", aura: "#A855F7", hair: "#F3E8FF", hairDark: "#581C87", cloth: "#341459", accent: "#C084FC", eye: "#9333EA" },
+      { bg1: "#071A16", bg2: "#11352D", aura: "#34D399", hair: "#D1FAE5", hairDark: "#065F46", cloth: "#13392E", accent: "#6EE7B7", eye: "#059669" },
+    ],
+    scifi: [
+      { bg1: "#071626", bg2: "#0D2D4D", aura: "#06B6D4", hair: "#E0F2FE", hairDark: "#0E7490", cloth: "#15324E", accent: "#22D3EE", eye: "#0891B2" },
+      { bg1: "#1A0A26", bg2: "#36114F", aura: "#F43F5E", hair: "#FFE4E6", hairDark: "#9F1239", cloth: "#3E1552", accent: "#FB7185", eye: "#E11D48" },
+      { bg1: "#0A1C16", bg2: "#123D32", aura: "#10B981", hair: "#D1FAE5", hairDark: "#047857", cloth: "#184236", accent: "#34D399", eye: "#059669" },
+    ],
+    action: [
+      { bg1: "#1C0B08", bg2: "#3A140E", aura: "#EF4444", hair: "#FEE2E2", hairDark: "#991B1B", cloth: "#451710", accent: "#F87171", eye: "#DC2626" },
+      { bg1: "#1A1207", bg2: "#38250C", aura: "#F59E0B", hair: "#FEF3C7", hairDark: "#92400E", cloth: "#442C10", accent: "#FBBF24", eye: "#D97706" },
+      { bg1: "#140E24", bg2: "#281A4A", aura: "#8B5CF6", hair: "#EDE9FE", hairDark: "#4C1D95", cloth: "#322055", accent: "#A78BFA", eye: "#7C3AED" },
+    ],
+    default: [
+      { bg1: "#090A0F", bg2: "#181B26", aura: "#6E7BF2", hair: "#EEF2FF", hairDark: "#3730A3", cloth: "#232738", accent: "#818CF8", eye: "#4F46E5" },
+      { bg1: "#141210", bg2: "#29221D", aura: "#D97757", hair: "#FFEDD5", hairDark: "#7C2D12", cloth: "#3B2F29", accent: "#FB923C", eye: "#C2410C" },
+    ],
+  };
+
+  const catKey = category.includes("roman") ? "romance" :
+                 category.includes("fantas") || category.includes("super") ? "fantasy" :
+                 category.includes("sci") || category.includes("cyber") ? "scifi" :
+                 category.includes("act") || category.includes("thrill") ? "action" : "default";
+
+  const themeList = palettes[catKey] || palettes.default;
+  const t = { ...themeList[hash % themeList.length] };
+  if (customAccent && /^#[0-9a-f]{3,6}$/i.test(customAccent)) {
+    t.accent = customAccent;
+    t.aura = customAccent;
+  }
+
+  const isMale = gender === "male";
+  const hairStyle = hash % 3;
+
+  let backHair = "";
+  let frontHair = "";
+
+  if (isMale) {
+    if (hairStyle === 0) {
+      backHair = `<path d="M 90 140 Q 75 190, 70 240 L 105 240 Q 105 180, 115 150 Z M 230 140 Q 245 190, 250 240 L 215 240 Q 215 180, 205 150 Z" fill="${t.hairDark}"/>`;
+      frontHair = `<path d="M 95 130 Q 105 68, 160 68 Q 215 68, 225 130 Q 210 105, 195 120 Q 180 90, 160 115 Q 140 90, 125 120 Q 110 105, 95 130 Z" fill="${t.hair}"/>`;
+    } else {
+      backHair = `<path d="M 100 135 L 95 210 L 120 210 Z M 220 135 L 225 210 L 200 210 Z" fill="${t.hairDark}"/>`;
+      frontHair = `<path d="M 100 130 Q 110 72, 160 72 Q 210 72, 220 130 Q 200 95, 180 130 Q 165 100, 160 120 Q 155 100, 140 130 Q 120 95, 100 130 Z" fill="${t.hair}"/>`;
+    }
+  } else {
+    if (hairStyle === 0) {
+      backHair = `<path d="M 85 120 Q 45 180, 50 280 Q 75 280, 95 230 Q 100 180, 110 150 Z M 235 120 Q 275 180, 270 280 Q 245 280, 225 230 Q 220 180, 210 150 Z" fill="${t.hairDark}"/>`;
+      frontHair = `<path d="M 95 130 Q 105 68, 160 68 Q 215 68, 225 130 Q 215 140, 205 170 Q 195 135, 180 140 Q 160 112, 140 140 Q 125 135, 115 170 Q 105 140, 95 130 Z" fill="${t.hair}"/>`;
+    } else if (hairStyle === 1) {
+      backHair = `<path d="M 95 130 Q 80 190, 105 240 Q 120 240, 125 190 Z M 225 130 Q 240 190, 215 240 Q 200 240, 195 190 Z" fill="${t.hairDark}"/>`;
+      frontHair = `<path d="M 95 130 Q 105 70, 160 70 Q 215 70, 225 130 Q 220 180, 205 195 Q 195 130, 175 140 Q 160 118, 145 140 Q 125 130, 115 195 Q 100 180, 95 130 Z" fill="${t.hair}"/>`;
+    } else {
+      backHair = `<path d="M 80 130 Q 55 210, 75 300 Q 110 300, 115 220 Z M 240 130 Q 265 210, 245 300 Q 210 300, 205 220 Z" fill="${t.hairDark}"/>`;
+      frontHair = `<path d="M 95 130 Q 105 66, 160 66 Q 215 66, 225 130 Q 210 160, 200 190 Q 190 135, 175 142 Q 160 115, 145 142 Q 130 135, 120 190 Q 110 160, 95 130 Z" fill="${t.hair}"/>`;
+    }
+  }
+
+  const particleColor = t.accent;
+  const particles = `
+    <circle cx="60" cy="70" r="2.5" fill="${particleColor}" opacity="0.5"/>
+    <circle cx="260" cy="85" r="3.5" fill="${particleColor}" opacity="0.6"/>
+    <circle cx="45" cy="180" r="2" fill="${particleColor}" opacity="0.4"/>
+    <circle cx="275" cy="195" r="2" fill="${particleColor}" opacity="0.45"/>
+    <circle cx="160" cy="40" r="3" fill="${particleColor}" opacity="0.7"/>
+  `;
+
+  const svg = [
+    '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 320" width="100%" height="100%">',
+    '<defs>',
+    `  <linearGradient id="bg_${hash}" x1="0" y1="0" x2="0" y2="1">`,
+    `    <stop offset="0%" stop-color="${t.bg2}"/>`,
+    `    <stop offset="100%" stop-color="${t.bg1}"/>`,
+    '  </linearGradient>',
+    `  <radialGradient id="aura_${hash}" cx="50%" cy="45%" r="60%">`,
+    `    <stop offset="0%" stop-color="${t.aura}" stop-opacity="0.75"/>`,
+    `    <stop offset="60%" stop-color="${t.aura}" stop-opacity="0.15"/>`,
+    `    <stop offset="100%" stop-color="${t.aura}" stop-opacity="0"/>`,
+    '  </radialGradient>',
+    `  <linearGradient id="skin_${hash}" x1="0" y1="0" x2="0" y2="1">`,
+    '    <stop offset="0%" stop-color="#FFF1EB"/>',
+    '    <stop offset="100%" stop-color="#F5D0C2"/>',
+    '  </linearGradient>',
+    `  <linearGradient id="cloth_${hash}" x1="0" y1="0" x2="0" y2="1">`,
+    `    <stop offset="0%" stop-color="${t.cloth}"/>`,
+    '    <stop offset="100%" stop-color="#0C0A10"/>',
+    '  </linearGradient>',
+    '</defs>',
+    `<rect width="320" height="320" fill="url(#bg_${hash})"/>`,
+    `<circle cx="160" cy="145" r="115" fill="url(#aura_${hash})"/>`,
+    particles,
+    backHair,
+    `<path d="M 60 320 Q 80 245, 112 225 Q 160 245, 208 225 Q 240 245, 260 320 Z" fill="url(#cloth_${hash})"/>`,
+    '<path d="M 130 225 L 160 270 L 190 225 Z" fill="#08070B" opacity="0.6"/>',
+    `<path d="M 125 225 L 160 272 L 195 225" stroke="${t.accent}" stroke-width="2.2" fill="none" opacity="0.85"/>`,
+    '<path d="M 144 190 L 144 235 Q 160 242, 176 235 L 176 190 Z" fill="#E5BCAE"/>',
+    `<path d="M 118 135 Q 118 195, 160 215 Q 202 195, 202 135 Q 202 95, 160 95 Q 118 95, 118 135 Z" fill="url(#skin_${hash})"/>`,
+    `<ellipse cx="133" cy="168" rx="10" ry="4" fill="${t.accent}" opacity="0.35"/>`,
+    `<ellipse cx="187" cy="168" rx="10" ry="4" fill="${t.accent}" opacity="0.35"/>`,
+    '<path d="M 126 150 Q 138 143, 148 150 Q 138 158, 126 150 Z" fill="#16121E"/>',
+    `<circle cx="137" cy="150" r="4.5" fill="${t.eye}"/>`,
+    '<circle cx="139" cy="148" r="1.5" fill="#FFFFFF"/>',
+    '<path d="M 124 147 Q 138 140, 149 147" stroke="#1F1826" stroke-width="2.4" stroke-linecap="round" fill="none"/>',
+    '<path d="M 172 150 Q 182 143, 194 150 Q 182 158, 172 150 Z" fill="#16121E"/>',
+    `<circle cx="183" cy="150" r="4.5" fill="${t.eye}"/>`,
+    '<circle cx="185" cy="148" r="1.5" fill="#FFFFFF"/>',
+    '<path d="M 171 147 Q 182 140, 196 147" stroke="#1F1826" stroke-width="2.4" stroke-linecap="round" fill="none"/>',
+    '<circle cx="160" cy="174" r="1.3" fill="#CFA496"/>',
+    '<path d="M 154 187 Q 160 191, 166 187" stroke="#B86B7E" stroke-width="1.8" stroke-linecap="round" fill="none"/>',
+    frontHair,
+    `<rect x="0" y="265" width="320" height="55" fill="url(#bg_${hash})" opacity="0.7"/>`,
+    '<g transform="translate(268, 276)">',
+    `  <rect width="36" height="28" rx="7" fill="rgba(15,18,26,0.85)" stroke="${t.accent}" stroke-width="1.2"/>`,
+    `  <text x="18" y="19" text-anchor="middle" font-family="system-ui, -apple-system, sans-serif" font-size="11" font-weight="700" fill="${t.accent}">${initials}</text>`,
+    '</g>',
+    '</svg>'
+  ].join('');
+
+  return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
+}
+
+window.generateCharacterPortraitSVG = generateCharacterPortraitSVG;
+
 window.SORA_DEFAULT_CATALOG = [
   {
     "id": "char_chiyo_kasugai",

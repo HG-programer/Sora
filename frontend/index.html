@@ -529,6 +529,10 @@
                 <span id="chat-bond-label">Stranger Lv.1</span>
                 <span id="chat-bond-pct" class="chat-bond-pct">0%</span>
               </div>
+              <button type="button" id="chat-header-comments-btn" class="chat-comments-btn" title="View Character Community Comments">
+                <span>💬</span>
+                <span id="chat-comments-count">0</span>
+              </button>
               <button type="button" id="chat-favorite-btn" class="icon-btn-round" title="Save to Favorites" style="width:26px;height:26px;border-radius:50%;font-size:0.8rem;display:inline-flex;align-items:center;justify-content:center;padding:0;background:rgba(255,255,255,0.06);border:1px solid var(--border-subtle);cursor:pointer;">🤍</button>
             </div>
             <p id="chat-char-tagline" class="chat-char-tagline"></p>
@@ -546,6 +550,7 @@
         </div>
 
         <div class="chat-header-mobile-controls">
+          <button type="button" id="chat-mobile-comments-btn" class="icon-btn" style="padding:0.35rem 0.45rem;font-size:0.85rem;" title="Comments">💬 <span id="chat-mobile-comments-count">0</span></button>
           <button type="button" id="chat-mobile-fav-btn" class="icon-btn" style="padding:0.35rem 0.45rem;font-size:0.85rem;" title="Favorite">🤍</button>
           <button type="button" id="chat-mobile-tts-btn" class="icon-btn" style="padding:0.35rem 0.45rem;font-size:0.85rem;" title="Voice Narration">🔊</button>
           <button type="button" id="chat-mobile-model-btn" class="mobile-chip-pill" title="Active Engine">
@@ -956,6 +961,63 @@
         <div class="modal-actions-row">
           <button id="close-premium-continue-free" class="btn-glass">Continue with Included Sora Models</button>
           <button id="activate-premium-btn" class="btn-primary">Unlock Flagship Access ($9/mo)</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==========================================================
+         CHARACTER COMMENTS MODAL & COMMUNITY REFLECTIONS
+         ========================================================== -->
+    <div id="comments-modal" class="modal-backdrop hidden">
+      <div class="modal-card glass-card modal-card-wide comments-modal-card" style="max-width:580px;max-height:88dvh;display:flex;flex-direction:column;">
+        <div class="modal-header comments-modal-header">
+          <div class="comments-header-char-info">
+            <img id="comment-char-avatar" src="/assets/icon.svg" alt="Character" class="char-avatar-lg" />
+            <div class="comments-char-meta">
+              <div class="comments-title-row">
+                <h3 id="comment-char-name">Character Name</h3>
+                <span id="comment-char-rating" class="badge-mini badge-warm">★ 4.9</span>
+                <span id="comment-modal-count" class="badge-mini">0 comments</span>
+              </div>
+              <p id="comment-char-tagline" class="muted-text" style="font-size:0.8rem;margin-top:0.15rem;display:-webkit-box;-webkit-line-clamp:1;-webkit-box-orient:vertical;overflow:hidden;"></p>
+            </div>
+          </div>
+          <button type="button" id="close-comments-modal" class="icon-btn">Close</button>
+        </div>
+
+        <!-- Add Comment Form -->
+        <div class="comment-composer-box">
+          <form id="comment-compose-form">
+            <textarea
+              id="comment-input-text"
+              rows="2"
+              placeholder="Share your thoughts, scenario highlights, or chemistry with this character..."
+              required
+            ></textarea>
+            <div class="comment-composer-actions">
+              <div class="reaction-tag-selector" id="reaction-tag-selector">
+                <button type="button" class="reaction-chip active" data-reaction-tag="Peak">🔥 Peak</button>
+                <button type="button" class="reaction-chip" data-reaction-tag="Wholesome">❤️ Wholesome</button>
+                <button type="button" class="reaction-chip" data-reaction-tag="In-Character">🎭 In-Character</button>
+                <button type="button" class="reaction-chip" data-reaction-tag="Emotional">😭 Emotional</button>
+              </div>
+              <button type="submit" id="comment-submit-btn" class="btn-primary btn-sm">Post</button>
+            </div>
+          </form>
+        </div>
+
+        <!-- Sort Bar & Feed Header -->
+        <div class="comments-subbar">
+          <span class="comments-feed-title">Community Reflections</span>
+          <div class="comments-sort-tabs">
+            <button type="button" class="comment-sort-tab active" data-comment-sort="top">Top</button>
+            <button type="button" class="comment-sort-tab" data-comment-sort="newest">Newest</button>
+          </div>
+        </div>
+
+        <!-- Comments Feed List -->
+        <div id="comments-feed-list" class="comments-feed-list" style="overflow-y:auto;flex:1;padding-right:0.25rem;">
+          <!-- Comments dynamically populated by app.js -->
         </div>
       </div>
     </div>

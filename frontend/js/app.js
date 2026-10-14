@@ -151,36 +151,27 @@ function copyFallback(text) {
   ta.remove();
 }
 
-function getFallbackAvatar(name = "Character", gender = "Female") {
+function getFallbackAvatar(name = "Character", gender = "Female", category = "Romance") {
+  if (typeof window.generateCharacterPortraitSVG === "function") {
+    return window.generateCharacterPortraitSVG({ name, gender, category });
+  }
   const clean = (name || "").replace(/[^a-zA-Z0-9\s]/g, "").trim();
   const initials = (clean.split(/\s+/).slice(0, 2).map((w) => w[0]).join("") || "S").toUpperCase();
-  const isMale = (gender || "").toLowerCase() === "male";
-  const hash = (name || "").split("").reduce((acc, c) => acc + c.charCodeAt(0), 0);
-  const palettes = [
-    ["#2b231c", "#d97757", "#f7f2eb"],
-    ["#331c26", "#e07a90", "#fff0f3"],
-    ["#1c2826", "#58b09c", "#eefaf6"],
-    ["#2a1f33", "#b085f5", "#f7f0ff"],
-    ["#33281c", "#e0a458", "#fff8f0"],
-    ["#1c2633", "#64b5f6", "#f0f8ff"],
-  ];
-  const [c1, c2, cText] = palettes[hash % palettes.length];
-  const safeId = `g_${clean.replace(/\s+/g, "_") || "init"}_${hash}`;
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120">
-    <defs>
-      <linearGradient id="${safeId}" x1="0" y1="0" x2="1" y2="1">
-        <stop offset="0%" stop-color="${c1}"/>
-        <stop offset="100%" stop-color="#120e0c"/>
-      </linearGradient>
-    </defs>
-    <rect width="120" height="120" rx="22" fill="url(#${safeId})"/>
-    <circle cx="60" cy="60" r="46" fill="none" stroke="${c2}" stroke-width="1.8" stroke-dasharray="2 3" opacity="0.4"/>
-    <rect x="4" y="4" width="112" height="112" rx="18" fill="none" stroke="${c2}" stroke-width="1.5" stroke-opacity="0.5"/>
-    <text x="60" y="66" font-family="'Newsreader', Georgia, serif" font-size="44" font-weight="600" fill="${cText}" text-anchor="middle" dominant-baseline="central">${initials}</text>
-  </svg>`;
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120"><rect width="120" height="120" rx="22" fill="#181B26"/><text x="60" y="66" font-family="sans-serif" font-size="40" font-weight="700" fill="#6E7BF2" text-anchor="middle" dominant-baseline="central">${initials}</text></svg>`;
   return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
 }
 window.getFallbackAvatar = getFallbackAvatar;
+
+function getCharacterAvatarUrl(char) {
+  if (!char) return getFallbackAvatar();
+  if (char.avatar_url && typeof char.avatar_url === "string" && char.avatar_url.trim().length > 0) {
+    return window.api?.resolveAssetUrl ? window.api.resolveAssetUrl(char.avatar_url) : char.avatar_url;
+  }
+  return typeof window.generateCharacterPortraitSVG === "function"
+    ? window.generateCharacterPortraitSVG(char)
+    : getFallbackAvatar(char.name, char.gender, char.category);
+}
+window.getCharacterAvatarUrl = getCharacterAvatarUrl;
 
 // Offline Storage & State Helpers
 function getLocalSessions() {
@@ -359,6 +350,7 @@ function recordTieInteraction(charId, charMeta = null, xpAdd = 15) {
   saveCharacterTies(ties);
 
   updateChatHeaderBondPill(newStage);
+  animateBondXpFloat(xpAdd);
 
   if (newStage.level > oldStage.level) {
     triggerHaptic(20);
@@ -372,6 +364,17 @@ function recordTieInteraction(charId, charMeta = null, xpAdd = 15) {
   }
 
   return { ...existing, ...newStage };
+}
+
+function animateBondXpFloat(amount = 15) {
+  const bondPill = document.getElementById("chat-bond-pill");
+  if (!bondPill) return;
+  const floatEl = document.createElement("div");
+  floatEl.className = "bond-xp-float";
+  floatEl.textContent = `+${amount} Bond XP`;
+  bondPill.style.position = "relative";
+  bondPill.appendChild(floatEl);
+  setTimeout(() => floatEl.remove(), 1500);
 }
 
 function updateChatHeaderBondPill(stageInfo) {
@@ -445,15 +448,18 @@ function renderTiesTab(filter = "all") {
   emptyState.classList.add("hidden");
   const frag = document.createDocumentFragment();
 
-  tiesList.forEach((tie) => {
+  tiesList.forEach((tie, index) => {
     const card = document.createElement("div");
     card.className = "tie-card";
-    const avatarUrl = window.api.resolveAssetUrl(tie.avatar_url);
+    card.style.setProperty("--i", index);
+    const safeName = (tie.character_name || "Character").replace(/'/g, "\\'");
+    const safeCategory = (tie.category || "Romance").replace(/'/g, "\\'");
+    const avatarUrl = getCharacterAvatarUrl(tie);
     const relTime = formatRelativeTime(tie.last_interaction);
 
     card.innerHTML = `
       <div class="tie-card-header">
-        <img src="${avatarUrl}" alt="${tie.character_name}" class="tie-avatar" loading="lazy" decoding="async" />
+        <img src="${avatarUrl}" alt="${tie.character_name}" class="tie-avatar" loading="lazy" decoding="async" onerror="this.onerror=null; this.src=getFallbackAvatar('${safeName}', 'Female', '${safeCategory}');" />
         <div class="tie-meta">
           <div class="tie-char-name">${tie.character_name}</div>
           <div class="tie-badge-row">
@@ -489,6 +495,254 @@ function renderTiesTab(filter = "all") {
 
   grid.innerHTML = "";
   grid.appendChild(frag);
+}
+
+// ==========================================================
+// CHARACTER COMMUNITY COMMENTS & REFLECTIONS ENGINE
+// ==========================================================
+state.activeCommentsCharId = null;
+state.activeCommentSort = "top";
+state.activeCommentReaction = "Peak";
+
+function getCharacterCommentsSync(charId) {
+  try {
+    const all = JSON.parse(localStorage.getItem("sora_character_comments_v1") || "{}");
+    if (all[charId] && all[charId].length) return all[charId];
+  } catch (_) {}
+
+  const char = state.characters.find((x) => x.id === charId) ||
+               (window.SORA_DEFAULT_CATALOG && window.SORA_DEFAULT_CATALOG.find((x) => x.id === charId)) ||
+               { id: charId, name: "Character", category: "Romance" };
+
+  const name = char.name || "this character";
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) hash = (hash << 5) - hash + name.charCodeAt(i);
+  hash = Math.abs(hash);
+
+  const authors = [
+    ["Kaito_R", "SakuraBreeze", "VesperNine"],
+    ["AetherDrifter", "LunaStarlight", "ChronosKeeper"],
+    ["VelvetNovelist", "EchoBlade", "TeaMasterKen"],
+    ["MidnightMuse", "SolarisBlade", "Cipher_X"]
+  ][hash % 4];
+
+  const seeded = [
+    {
+      id: `seed_${charId}_1`,
+      character_id: charId,
+      author_name: authors[0],
+      author_avatar: "",
+      author_tie: { level: 4, stage: "Close Bond", badgeClass: "badge-close", icon: "✨" },
+      reaction_tag: "Peak",
+      text: `The dialogue nuance here is phenomenal. Reached Close Bond and the emotional depth and subtle callbacks felt so naturally human.`,
+      likes: 38 + (hash % 45),
+      liked_by_me: false,
+      is_mine: false,
+      created_at: Date.now() - (3600000 * (4 + (hash % 16))),
+    },
+    {
+      id: `seed_${charId}_2`,
+      character_id: charId,
+      author_name: authors[1],
+      author_avatar: "",
+      author_tie: { level: 3, stage: "Friend", badgeClass: "badge-friend", icon: "🤝" },
+      reaction_tag: "In-Character",
+      text: `Stays impeccably true to the persona lore. Every response in this scene setting has rich sensory pacing.`,
+      likes: 24 + (hash % 26),
+      liked_by_me: false,
+      is_mine: false,
+      created_at: Date.now() - (3600000 * (26 + (hash % 30))),
+    },
+    {
+      id: `seed_${charId}_3`,
+      character_id: charId,
+      author_name: authors[2],
+      author_avatar: "",
+      author_tie: { level: 5, stage: "Soulbound", badgeClass: "badge-soulbound", icon: "💎" },
+      reaction_tag: "Wholesome",
+      text: `One of my favorite characters on Sora. Uncensored chemistry and emotional resonance are on another level.`,
+      likes: 49 + (hash % 50),
+      liked_by_me: false,
+      is_mine: false,
+      created_at: Date.now() - (3600000 * (54 + (hash % 60))),
+    }
+  ];
+
+  try {
+    const all = JSON.parse(localStorage.getItem("sora_character_comments_v1") || "{}");
+    all[charId] = seeded;
+    localStorage.setItem("sora_character_comments_v1", JSON.stringify(all));
+  } catch (_) {}
+
+  return seeded;
+}
+
+function getCharacterCommentCount(charId) {
+  try {
+    const all = JSON.parse(localStorage.getItem("sora_character_comments_v1") || "{}");
+    if (all[charId]) return all[charId].length;
+  } catch (_) {}
+  return 3;
+}
+
+function openCharacterComments(charId) {
+  if (!charId) return;
+  state.activeCommentsCharId = charId;
+  const modal = document.getElementById("comments-modal");
+  if (!modal) return;
+
+  const char = state.characters.find((x) => x.id === charId) ||
+               (window.SORA_DEFAULT_CATALOG && window.SORA_DEFAULT_CATALOG.find((x) => x.id === charId)) ||
+               { id: charId, name: "Character" };
+
+  const avatarEl = document.getElementById("comment-char-avatar");
+  const nameEl = document.getElementById("comment-char-name");
+  const taglineEl = document.getElementById("comment-char-tagline");
+
+  if (avatarEl) {
+    const safeName = (char.name || "Character").replace(/'/g, "\\'");
+    avatarEl.src = getCharacterAvatarUrl(char);
+    avatarEl.onerror = () => {
+      avatarEl.onerror = null;
+      avatarEl.src = getFallbackAvatar(safeName, char.gender || "Female", char.category || "Romance");
+    };
+  }
+  if (nameEl) nameEl.textContent = char.name;
+  if (taglineEl) taglineEl.textContent = char.tagline || "";
+
+  renderCommentsFeed(charId, state.activeCommentSort || "top");
+
+  modal.classList.remove("hidden");
+  if (window.history && window.history.state?.view !== "comments-modal") {
+    window.history.pushState({ view: "comments-modal" }, "");
+  }
+}
+
+function renderCommentsFeed(charId, sortMode = "top") {
+  state.activeCommentSort = sortMode;
+  const feed = document.getElementById("comments-feed-list");
+  const countEl = document.getElementById("comment-modal-count");
+  if (!feed) return;
+
+  const comments = getCharacterCommentsSync(charId);
+  if (countEl) countEl.textContent = `${comments.length} comment${comments.length === 1 ? "" : "s"}`;
+
+  document.querySelectorAll(".comment-sort-tab").forEach((tab) => {
+    tab.classList.toggle("active", tab.dataset.commentSort === sortMode);
+  });
+
+  let sorted = [...comments];
+  if (sortMode === "top") {
+    sorted.sort((a, b) => (b.likes || 0) - (a.likes || 0));
+  } else {
+    sorted.sort((a, b) => (b.created_at || 0) - (a.created_at || 0));
+  }
+
+  feed.innerHTML = "";
+  if (sorted.length === 0) {
+    feed.innerHTML = `
+      <div style="text-align:center;padding:2rem 1rem;color:var(--text-muted);">
+        <p style="font-size:0.95rem;">No comments yet. Share your experience with this character below!</p>
+      </div>
+    `;
+    return;
+  }
+
+  const frag = document.createDocumentFragment();
+  sorted.forEach((comm, idx) => {
+    const card = document.createElement("div");
+    card.className = "comment-card";
+    card.style.setProperty("--i", idx);
+
+    const isMine = comm.is_mine || (state.user && comm.author_name === state.user.display_name);
+    const tieInfo = comm.author_tie || { level: 1, stage: "Stranger", badgeClass: "badge-stranger", icon: "🌿" };
+    const timeStr = formatRelativeTime(comm.created_at);
+
+    const tagEmoji =
+      comm.reaction_tag === "Peak" ? "🔥" :
+      comm.reaction_tag === "Wholesome" ? "❤️" :
+      comm.reaction_tag === "In-Character" ? "🎭" :
+      comm.reaction_tag === "Emotional" ? "😭" : "✦";
+
+    const authorAvatar = comm.author_avatar || getFallbackAvatar(comm.author_name, "Female", "Romance");
+
+    card.innerHTML = `
+      <div class="comment-card-top">
+        <div class="comment-author-wrap">
+          <img src="${authorAvatar}" alt="${comm.author_name}" class="comment-author-avatar" loading="lazy" />
+          <div>
+            <div style="display:flex;align-items:center;gap:0.4rem;flex-wrap:wrap;">
+              <span class="comment-author-name">${comm.author_name}</span>
+              <span class="badge-mini ${tieInfo.badgeClass || "badge-friend"}" style="font-size:0.68rem;padding:0.12rem 0.4rem;">
+                ${tieInfo.icon || "✨"} ${tieInfo.stage} Lv.${tieInfo.level}
+              </span>
+            </div>
+            <span class="muted-text" style="font-size:0.74rem;">${timeStr}</span>
+          </div>
+        </div>
+        <span class="reaction-chip active" style="font-size:0.72rem;padding:0.15rem 0.5rem;pointer-events:none;">
+          ${tagEmoji} ${comm.reaction_tag || "Peak"}
+        </span>
+      </div>
+      <div class="comment-card-body">${comm.text}</div>
+      <div class="comment-card-bottom">
+        <button type="button" class="comment-like-btn ${comm.liked_by_me ? "liked" : ""}" data-like-comm-id="${comm.id}">
+          <span>${comm.liked_by_me ? "♥" : "♡"}</span>
+          <span>${comm.likes || 0}</span>
+        </button>
+        ${isMine ? `<button type="button" class="comment-del-btn" data-del-comm-id="${comm.id}" title="Delete comment">Delete</button>` : ""}
+      </div>
+    `;
+
+    const likeBtn = card.querySelector(`[data-like-comm-id="${comm.id}"]`);
+    if (likeBtn) {
+      likeBtn.addEventListener("click", () => {
+        triggerHaptic(12);
+        toggleCommentLikeUI(charId, comm.id);
+      });
+    }
+
+    const delBtn = card.querySelector(`[data-del-comm-id="${comm.id}"]`);
+    if (delBtn) {
+      delBtn.addEventListener("click", () => {
+        triggerHaptic(10);
+        deleteCommentUI(charId, comm.id);
+      });
+    }
+
+    frag.appendChild(card);
+  });
+
+  feed.appendChild(frag);
+}
+
+async function toggleCommentLikeUI(charId, commentId) {
+  if (window.api?.toggleCommentLike) {
+    await window.api.toggleCommentLike(charId, commentId);
+    renderCommentsFeed(charId, state.activeCommentSort || "top");
+  }
+}
+
+async function deleteCommentUI(charId, commentId) {
+  if (window.api?.deleteCharacterComment) {
+    await window.api.deleteCharacterComment(charId, commentId);
+    renderCommentsFeed(charId, state.activeCommentSort || "top");
+    updateAllCommentBadges(charId);
+    showToast("Comment deleted");
+  }
+}
+
+function updateAllCommentBadges(charId) {
+  const count = getCharacterCommentCount(charId);
+  document.querySelectorAll(`[data-comments-id="${charId}"] .comment-count-pill`).forEach((el) => {
+    el.textContent = count;
+  });
+  if (state.activeSession?.character?.id === charId) {
+    const chatCount = document.getElementById("chat-comments-count");
+    if (chatCount) chatCount.textContent = count;
+    const mobCount = document.getElementById("chat-mobile-comments-count");
+    if (mobCount) mobCount.textContent = count;
+  }
 }
 
 function filterLocalCharacters() {
@@ -1045,10 +1299,11 @@ function renderCharacterGrid() {
 
   const fragment = document.createDocumentFragment();
 
-  state.characters.forEach((c) => {
+  state.characters.forEach((c, index) => {
     const card = document.createElement("article");
     card.className = "char-card";
-    const avatarSrc = window.api.resolveAssetUrl(c.avatar_url);
+    card.style.setProperty("--i", index);
+    const avatarSrc = getCharacterAvatarUrl(c);
 
     const tagsHtml = (c.tags || [])
       .slice(0, 5)
@@ -1058,10 +1313,13 @@ function renderCharacterGrid() {
     const previewSnippet = (c.scenario || c.greeting || "").replace(/\*/g, "").slice(0, 110);
     const charGender = c.gender || "Female";
     const culture = getCharacterCulture(c);
+    const safeName = (c.name || "Character").replace(/'/g, "\\'");
+    const safeCategory = (c.category || "Romance").replace(/'/g, "\\'");
+    const commentCount = getCharacterCommentCount(c.id);
 
     card.innerHTML = `
       <div class="char-tile-media">
-        <img src="${avatarSrc}" alt="${c.name}" class="char-tile-img" loading="lazy" decoding="async" onerror="this.onerror=null; this.src=getFallbackAvatar('${c.name.replace(/'/g, "\\'")}', '${charGender}');" />
+        <img src="${avatarSrc}" alt="${c.name}" class="char-tile-img" loading="lazy" decoding="async" onerror="this.onerror=null; this.src=getFallbackAvatar('${safeName}', '${charGender}', '${safeCategory}');" />
         <div class="char-tile-scrim"></div>
         <div class="char-tile-badges">
           <span class="badge-mini badge-gender">${charGender}</span>
@@ -1082,6 +1340,9 @@ function renderCharacterGrid() {
         <div class="char-card-footer">
           <span class="char-footer-stats">${c.chat_count.toLocaleString()} sessions</span>
           <div class="char-footer-actions">
+            <button type="button" class="card-comment-btn" data-comments-id="${c.id}" title="View Community Reflections">
+              <span>💬</span> <span class="comment-count-pill">${commentCount}</span>
+            </button>
             <button class="like-btn ${c.liked_by_me ? "liked" : ""}" data-like-id="${c.id}">
               <span>${c.liked_by_me ? "Saved" : "Save"}</span> · <span>${c.like_count}</span>
             </button>
@@ -1092,7 +1353,7 @@ function renderCharacterGrid() {
     `;
 
     card.addEventListener("click", (e) => {
-      if (e.target.closest("[data-like-id]")) return;
+      if (e.target.closest("[data-like-id]") || e.target.closest("[data-comments-id]")) return;
       const clickedTag = e.target.closest("[data-filter-tag]");
       if (clickedTag) {
         e.stopPropagation();
@@ -1115,6 +1376,15 @@ function renderCharacterGrid() {
       triggerHaptic(14);
       openCharacterChat(c.id, false);
     });
+
+    const commBtn = card.querySelector(`[data-comments-id="${c.id}"]`);
+    if (commBtn) {
+      commBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        triggerHaptic(12);
+        openCharacterComments(c.id);
+      });
+    }
 
     card.querySelector(`[data-like-id="${c.id}"]`).addEventListener("click", async (e) => {
       e.stopPropagation();
@@ -1470,9 +1740,9 @@ function mountChatDrawer(sessionData) {
   if (charAvatarEl) {
     charAvatarEl.onerror = () => {
       charAvatarEl.onerror = null;
-      charAvatarEl.src = getFallbackAvatar(c.name, c.gender);
+      charAvatarEl.src = getFallbackAvatar(c.name, c.gender, c.category);
     };
-    charAvatarEl.src = window.api.resolveAssetUrl(c.avatar_url);
+    charAvatarEl.src = getCharacterAvatarUrl(c);
   }
   document.getElementById("chat-char-name").textContent = c.name;
   document.getElementById("chat-char-category").textContent = c.category;
@@ -1480,6 +1750,12 @@ function mountChatDrawer(sessionData) {
 
   const currentTie = getTieForCharacter(c.id, c);
   updateChatHeaderBondPill(currentTie);
+
+  const commentCount = getCharacterCommentCount(c.id);
+  const chatCommentBadge = document.getElementById("chat-comments-count");
+  if (chatCommentBadge) chatCommentBadge.textContent = commentCount;
+  const mobileCommentBadge = document.getElementById("chat-mobile-comments-count");
+  if (mobileCommentBadge) mobileCommentBadge.textContent = commentCount;
 
   document.getElementById("chat-lore-personality").textContent = c.personality;
   document.getElementById("chat-lore-scenario").textContent = c.scenario ? `Setting: ${c.scenario}` : "Setting: Open World Interactive Roleplay";
@@ -1532,8 +1808,8 @@ function mountChatDrawer(sessionData) {
 function renderStoryPrologue(c) {
   const div = document.createElement("div");
   div.className = "story-prologue-card";
-  const avatar = window.api.resolveAssetUrl(c.avatar_url);
-  const fallbackImg = getFallbackAvatar(c.name, c.gender);
+  const avatar = getCharacterAvatarUrl(c);
+  const fallbackImg = getFallbackAvatar(c.name, c.gender, c.category);
   const culture = getCharacterCulture(c);
   div.innerHTML = `
     <div class="prologue-banner" style="background-image: url('${avatar}')"></div>
@@ -1563,7 +1839,7 @@ function renderMessagesList() {
   const c = state.activeSession.character;
   container.appendChild(renderStoryPrologue(c));
 
-  const charAvatar = window.api.resolveAssetUrl(c.avatar_url);
+  const charAvatar = getCharacterAvatarUrl(c);
   const userAvatar = window.api.resolveAssetUrl(state.user?.avatar_url);
 
   state.activeSession.messages.forEach((m) => {
@@ -1579,7 +1855,7 @@ function createMessageDom(msgOrRole, content, modelUsed, charAvatar, userAvatar,
   const id = typeof msgOrRole === "object" ? (msgOrRole.id || "") : (msgId || "");
 
   const row = document.createElement("div");
-  row.className = `msg-row ${role}`;
+  row.className = `msg-row ${role} animate-in`;
   if (id) row.dataset.msgId = id;
   row.dataset.rawText = text;
   const avatar = role === "user" ? userAvatar : charAvatar;
@@ -1588,7 +1864,9 @@ function createMessageDom(msgOrRole, content, modelUsed, charAvatar, userAvatar,
     ? (state.user?.display_name || "You")
     : (state.activeSession?.character?.name || "Character");
 
-  const fallbackMsgAvatar = getFallbackAvatar(authorName);
+  const fallbackMsgAvatar = role === "user"
+    ? getFallbackAvatar(authorName, "Female", "User")
+    : getFallbackAvatar(authorName, state.activeSession?.character?.gender, state.activeSession?.character?.category);
   row.innerHTML = `
     <img src="${avatar}" alt="${role}" class="msg-avatar" onerror="this.onerror=null; this.src='${fallbackMsgAvatar}';" />
     <div style="min-width:0;flex:1;">
@@ -3349,8 +3627,117 @@ function bindUIEvents() {
     });
   }
 
+  // --- Character Comments Section Event Wiring ---
+  const commentsModal = document.getElementById("comments-modal");
+  const closeCommentsModal = () => {
+    triggerHaptic(8);
+    if (window.history.state?.view === "comments-modal") {
+      window.history.back();
+    } else if (commentsModal) {
+      commentsModal.classList.add("hidden");
+    }
+  };
+
+  const closeCommentsBtn = document.getElementById("close-comments-modal");
+  if (closeCommentsBtn) {
+    closeCommentsBtn.addEventListener("click", closeCommentsModal);
+  }
+  if (commentsModal) {
+    commentsModal.addEventListener("click", (e) => {
+      if (e.target === commentsModal) closeCommentsModal();
+    });
+  }
+
+  const chatCommentsBtn = document.getElementById("chat-header-comments-btn");
+  if (chatCommentsBtn) {
+    chatCommentsBtn.addEventListener("click", () => {
+      const charId = state.activeSession?.character?.id || state.activeSession?.character_id;
+      if (charId) openCharacterComments(charId);
+    });
+  }
+
+  const chatMobCommentsBtn = document.getElementById("chat-mobile-comments-btn");
+  if (chatMobCommentsBtn) {
+    chatMobCommentsBtn.addEventListener("click", () => {
+      const charId = state.activeSession?.character?.id || state.activeSession?.character_id;
+      if (charId) openCharacterComments(charId);
+    });
+  }
+
+  document.querySelectorAll("#reaction-tag-selector .reaction-chip").forEach((chip) => {
+    chip.addEventListener("click", () => {
+      triggerHaptic(8);
+      document.querySelectorAll("#reaction-tag-selector .reaction-chip").forEach((c) => c.classList.remove("active"));
+      chip.classList.add("active");
+    });
+  });
+
+  document.querySelectorAll(".comment-sort-tab").forEach((tab) => {
+    tab.addEventListener("click", () => {
+      triggerHaptic(8);
+      const sort = tab.dataset.commentSort || "top";
+      if (state.activeCommentsCharId) {
+        renderCommentsFeed(state.activeCommentsCharId, sort);
+      }
+    });
+  });
+
+  const commentForm = document.getElementById("comment-compose-form");
+  if (commentForm) {
+    commentForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const charId = state.activeCommentsCharId;
+      if (!charId) return;
+
+      const input = document.getElementById("comment-input-text");
+      const text = input ? input.value.trim() : "";
+      if (!text) return;
+
+      const activeReactionChip = document.querySelector("#reaction-tag-selector .reaction-chip.active");
+      const reactionTag = activeReactionChip ? activeReactionChip.dataset.reactionTag || "Peak" : "Peak";
+
+      const tie = getTieForCharacter(charId);
+      const tieInfo = {
+        level: tie.level,
+        stage: tie.stage,
+        badgeClass: tie.badgeClass,
+        icon: tie.icon,
+      };
+
+      const authorName = state.user?.display_name || "You";
+      const authorAvatar = state.user?.avatar_url
+        ? window.api.resolveAssetUrl(state.user.avatar_url)
+        : getFallbackAvatar(authorName, "Female", "User");
+
+      triggerHaptic(12);
+      try {
+        if (window.api?.postCharacterComment) {
+          await window.api.postCharacterComment(charId, {
+            author_name: authorName,
+            author_avatar: authorAvatar,
+            author_tie: tieInfo,
+            reaction_tag: reactionTag,
+            text,
+            is_mine: true,
+          });
+        }
+        if (input) input.value = "";
+        renderCommentsFeed(charId, state.activeCommentSort || "top");
+        updateAllCommentBadges(charId);
+        showToast("Comment posted 💬");
+      } catch (err) {
+        showToast(`Could not post comment: ${err.message}`);
+      }
+    });
+  }
+
   // --- Hardware & Gesture Navigation (Android Back Button & Popstate) ---
   function handleHardwareBack() {
+    const commentsModal = document.getElementById("comments-modal");
+    if (commentsModal && !commentsModal.classList.contains("hidden")) {
+      commentsModal.classList.add("hidden");
+      return true;
+    }
     const mobileSheet = document.getElementById("chat-mobile-sheet");
     if (mobileSheet && !mobileSheet.classList.contains("hidden")) {
       mobileSheet.classList.add("hidden");

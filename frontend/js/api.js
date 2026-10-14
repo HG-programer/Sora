@@ -533,6 +533,100 @@ class HaruEmochiAPI {
       if (onError) onError(err);
     }
   }
+
+  // --- Character Community Comments API & Offline Storage ---
+  async getCharacterComments(characterId) {
+    try {
+      const res = await this.request(`/api/v1/characters/${characterId}/comments`, { timeout: 2000 });
+      if (Array.isArray(res)) return res;
+    } catch (_) {}
+    try {
+      const all = JSON.parse(localStorage.getItem("sora_character_comments_v1") || "{}");
+      return all[characterId] || [];
+    } catch (_) {
+      return [];
+    }
+  }
+
+  async postCharacterComment(characterId, commentData) {
+    let savedComment = null;
+    try {
+      savedComment = await this.request(`/api/v1/characters/${characterId}/comments`, {
+        method: "POST",
+        body: JSON.stringify(commentData),
+        timeout: 2500,
+      });
+    } catch (_) {}
+
+    if (!savedComment) {
+      savedComment = {
+        id: `comm_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
+        character_id: characterId,
+        ...commentData,
+        likes: 0,
+        liked_by_me: false,
+        is_mine: true,
+        created_at: Date.now(),
+      };
+    }
+
+    try {
+      const all = JSON.parse(localStorage.getItem("sora_character_comments_v1") || "{}");
+      if (!all[characterId]) all[characterId] = [];
+      all[characterId].unshift(savedComment);
+      localStorage.setItem("sora_character_comments_v1", JSON.stringify(all));
+    } catch (_) {}
+
+    return savedComment;
+  }
+
+  async toggleCommentLike(characterId, commentId) {
+    try {
+      this.request(`/api/v1/characters/${characterId}/comments/${commentId}/like`, {
+        method: "POST",
+        timeout: 1500,
+      }).catch(() => {});
+    } catch (_) {}
+
+    try {
+      const likedMap = JSON.parse(localStorage.getItem("sora_liked_comments_v1") || "{}");
+      const isLiked = Boolean(likedMap[commentId]);
+      likedMap[commentId] = !isLiked;
+      localStorage.setItem("sora_liked_comments_v1", JSON.stringify(likedMap));
+
+      const all = JSON.parse(localStorage.getItem("sora_character_comments_v1") || "{}");
+      if (all[characterId]) {
+        const c = all[characterId].find((x) => x.id === commentId);
+        if (c) {
+          c.likes = Math.max(0, (c.likes || 0) + (isLiked ? -1 : 1));
+          c.liked_by_me = !isLiked;
+          localStorage.setItem("sora_character_comments_v1", JSON.stringify(all));
+          return { likes: c.likes, liked_by_me: c.liked_by_me };
+        }
+      }
+      return { liked_by_me: !isLiked };
+    } catch (_) {
+      return { liked_by_me: true };
+    }
+  }
+
+  async deleteCharacterComment(characterId, commentId) {
+    try {
+      this.request(`/api/v1/characters/${characterId}/comments/${commentId}`, {
+        method: "DELETE",
+        timeout: 1500,
+      }).catch(() => {});
+    } catch (_) {}
+
+    try {
+      const all = JSON.parse(localStorage.getItem("sora_character_comments_v1") || "{}");
+      if (all[characterId]) {
+        all[characterId] = all[characterId].filter((x) => x.id !== commentId);
+        localStorage.setItem("sora_character_comments_v1", JSON.stringify(all));
+      }
+    } catch (_) {}
+    return true;
+  }
 }
 
 window.api = new HaruEmochiAPI();
