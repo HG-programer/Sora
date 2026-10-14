@@ -776,6 +776,8 @@ function renderCharacterGrid() {
     return;
   }
 
+  const fragment = document.createDocumentFragment();
+
   state.characters.forEach((c) => {
     const card = document.createElement("article");
     card.className = "char-card";
@@ -860,8 +862,10 @@ function renderCharacterGrid() {
       }
     });
 
-    grid.appendChild(card);
+    fragment.appendChild(card);
   });
+
+  grid.appendChild(fragment);
 }
 
 // --- Active Sessions List ---
@@ -1331,10 +1335,18 @@ function createMessageDom(msgOrRole, content, modelUsed, charAvatar, userAvatar,
           ${role === "assistant" && model ? `<span>· ${model}</span>` : ""}
         </div>
         <div class="msg-action-btns">
-          <button type="button" class="msg-act-btn btn-copy-msg" title="Copy message">📋</button>
-          <button type="button" class="msg-act-btn btn-tts-msg" title="Voice narration">🔊</button>
-          <button type="button" class="msg-act-btn btn-edit-msg" title="Edit turn">✏️</button>
-          <button type="button" class="msg-act-btn btn-del-msg" title="Delete turn">🗑️</button>
+          <button type="button" class="msg-act-btn btn-copy-msg" title="Copy message" aria-label="Copy message">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+          </button>
+          <button type="button" class="msg-act-btn btn-tts-msg" title="Voice narration" aria-label="Voice narration">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg>
+          </button>
+          <button type="button" class="msg-act-btn btn-edit-msg" title="Edit turn" aria-label="Edit turn">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>
+          </button>
+          <button type="button" class="msg-act-btn btn-del-msg" title="Delete turn" aria-label="Delete turn">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+          </button>
         </div>
       </div>
     </div>
@@ -1351,7 +1363,7 @@ function createMessageDom(msgOrRole, content, modelUsed, charAvatar, userAvatar,
     const toCopy = row.dataset.rawText || text;
     if (navigator.clipboard && navigator.clipboard.writeText) {
       navigator.clipboard.writeText(toCopy)
-        .then(() => showToast("Copied to clipboard 📋"))
+        .then(() => showToast("Copied to clipboard"))
         .catch(() => copyFallback(toCopy));
     } else {
       copyFallback(toCopy);
@@ -1415,7 +1427,7 @@ function createMessageDom(msgOrRole, content, modelUsed, charAvatar, userAvatar,
       bubbleEl.innerHTML = formatRoleplayHTML(updated);
       editBoxEl.classList.add("hidden");
       bubbleEl.classList.remove("hidden");
-      showToast("Message updated ✏️");
+      showToast("Message updated");
     } catch (err) {
       showToast(`Edit failed: ${err.message}`);
     } finally {
@@ -1442,7 +1454,7 @@ function createMessageDom(msgOrRole, content, modelUsed, charAvatar, userAvatar,
       }
     }
     row.remove();
-    showToast("Turn deleted 🗑️");
+    showToast("Turn deleted");
   });
 
   return row;
@@ -1620,6 +1632,7 @@ function renderPersonasList() {
 }
 
 function switchTab(tabName, pushHistory = true) {
+  triggerHaptic(8);
   document.querySelectorAll(".nav-item").forEach((btn) => {
     btn.classList.toggle("active", btn.dataset.tab === tabName);
   });
@@ -1633,7 +1646,7 @@ function switchTab(tabName, pushHistory = true) {
     personas: "User Profiles",
     settings: "Configuration",
   };
-  document.getElementById("view-title").textContent = titles[tabName] || "Haru";
+  document.getElementById("view-title").textContent = titles[tabName] || "Sora";
   if (pushHistory && window.history && tabName !== "discover" && window.history.state?.tab !== tabName) {
     window.history.pushState({ view: "tab", tab: tabName }, "");
   }
@@ -2237,6 +2250,18 @@ function bindUIEvents() {
       if (container) container.scrollTop = container.scrollHeight;
     }, 250);
   });
+
+  if (window.visualViewport) {
+    window.visualViewport.addEventListener("resize", () => {
+      const chatDrawer = document.getElementById("chat-drawer");
+      if (chatDrawer && !chatDrawer.classList.contains("hidden")) {
+        const container = document.getElementById("chat-messages");
+        if (container) {
+          container.scrollTop = container.scrollHeight;
+        }
+      }
+    });
+  }
 
   chatInput.addEventListener("keydown", (e) => {
     if (e.key === "Enter" && !e.shiftKey && window.innerWidth > 768) {

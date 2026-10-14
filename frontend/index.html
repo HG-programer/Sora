@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover, interactive-widget=resizes-content" />
-  <meta name="theme-color" content="#151210" />
+  <meta name="theme-color" content="#090A0F" />
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
@@ -136,7 +136,7 @@
 
           <div class="category-strip" id="category-strip">
             <button class="cat-chip active" data-category="All">All</button>
-            <button class="cat-chip" data-category="Favorites">❤️ Favorites</button>
+            <button class="cat-chip" data-category="Favorites">Favorites</button>
             <button class="cat-chip" data-category="Uncensored 18+">18+ Uncensored</button>
             <button class="cat-chip" data-category="Romance">Romance</button>
             <button class="cat-chip" data-category="School">School &amp; Academy</button>
@@ -522,9 +522,9 @@
               <span id="bg-dim-label" class="muted-text">Dimming: 68%</span>
             </div>
             <div class="scene-presets-row">
-              <button type="button" id="use-char-art-bg-btn" class="chip-action" style="border-color:var(--accent-border);color:#f3b199;">Character AI Art (Default)</button>
+              <button type="button" id="use-char-art-bg-btn" class="chip-action" style="border-color:var(--accent-border);color:var(--accent-solid);">Character Art (Default)</button>
               <button type="button" class="chip-action" data-scene-url="">Solid Espresso</button>
-              <button type="button" class="chip-action" data-scene-url="/api/v1/scene/rainy-cafe">Late-Night Cafe</button>
+              <button type="button" class="chip-action" data-scene-url="/api/v1/scene/rainy-cafe">Rainy Cafe</button>
               <button type="button" class="chip-action" data-scene-url="/api/v1/scene/candlelit-study">Candlelit Study</button>
               <button type="button" class="chip-action" data-scene-url="/api/v1/scene/mountain-lodge">Mountain Lodge</button>
               <button type="button" class="chip-action" data-scene-url="/api/v1/scene/twilight-terrace">Twilight Terrace</button>
@@ -567,9 +567,9 @@
 
           <div class="mobile-sheet-header">
             <div class="sheet-tabs">
-              <button type="button" class="sheet-tab active" data-sheet-tab="ambience">🎨 Scene &amp; BG</button>
-              <button type="button" class="sheet-tab" data-sheet-tab="lore">🧠 Character Lore</button>
-              <button type="button" class="sheet-tab" data-sheet-tab="model">⚡ Model Engine</button>
+              <button type="button" class="sheet-tab active" data-sheet-tab="ambience">Scene &amp; Wallpaper</button>
+              <button type="button" class="sheet-tab" data-sheet-tab="lore">Character Lore</button>
+              <button type="button" class="sheet-tab" data-sheet-tab="model">Model Engine</button>
             </div>
             <button type="button" id="close-mobile-sheet-btn" class="icon-btn" title="Close sheet" aria-label="Close">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
@@ -585,7 +585,7 @@
                   <span>Upload Image</span>
                   <input type="file" id="sheet-bg-file-input" accept="image/*" hidden />
                 </label>
-                <button type="button" id="sheet-use-char-art-btn" class="btn-glass btn-sm">Character AI Art</button>
+                <button type="button" id="sheet-use-char-art-btn" class="btn-glass btn-sm">Character Art</button>
                 <button type="button" id="sheet-clear-bg-btn" class="btn-glass btn-sm">Reset</button>
               </div>
               <div class="input-with-button-row">
@@ -601,19 +601,19 @@
                   <span class="preset-name">Solid Espresso</span>
                 </button>
                 <button type="button" class="scene-preset-card" data-scene-preset="/api/v1/scene/rainy-cafe">
-                  <span class="preset-name">☕ Rainy Cafe</span>
+                  <span class="preset-name">Rainy Cafe</span>
                 </button>
                 <button type="button" class="scene-preset-card" data-scene-preset="/api/v1/scene/candlelit-study">
-                  <span class="preset-name">🕯️ Candlelit Study</span>
+                  <span class="preset-name">Candlelit Study</span>
                 </button>
                 <button type="button" class="scene-preset-card" data-scene-preset="/api/v1/scene/mountain-lodge">
-                  <span class="preset-name">🏔️ Mountain Lodge</span>
+                  <span class="preset-name">Mountain Lodge</span>
                 </button>
                 <button type="button" class="scene-preset-card" data-scene-preset="/api/v1/scene/twilight-terrace">
-                  <span class="preset-name">🌆 Twilight Terrace</span>
+                  <span class="preset-name">Twilight Terrace</span>
                 </button>
                 <button type="button" class="scene-preset-card" data-scene-preset="/api/v1/scene/noir-harbor">
-                  <span class="preset-name">🌧️ Noir Harbor</span>
+                  <span class="preset-name">Noir Harbor</span>
                 </button>
               </div>
             </div>
@@ -666,9 +666,9 @@
             <div class="sheet-group" style="padding-top:0.5rem;border-top:1px solid var(--border-subtle);">
               <label class="sheet-label">Session Controls</label>
               <div class="sheet-actions-row" style="display:flex;gap:0.5rem;flex-wrap:wrap;">
-                <button type="button" id="sheet-new-session-btn" class="btn-glass btn-sm">➕ New Chat</button>
-                <button type="button" id="sheet-export-chat-btn" class="btn-glass btn-sm">📥 Export Story (.md)</button>
-                <button type="button" id="sheet-delete-session-btn" class="btn-glass btn-sm" style="color:#f87171;border-color:rgba(239,68,68,0.35);">🗑️ Delete Chat</button>
+                <button type="button" id="sheet-new-session-btn" class="btn-glass btn-sm">New Chat</button>
+                <button type="button" id="sheet-export-chat-btn" class="btn-glass btn-sm">Export Story (.md)</button>
+                <button type="button" id="sheet-delete-session-btn" class="btn-glass btn-sm" style="color:#f87171;border-color:rgba(239,68,68,0.35);">Delete Chat</button>
               </div>
             </div>
           </div>
@@ -696,11 +696,11 @@
             <span>Reroll</span>
           </button>
           <button type="button" id="quick-tts-btn" class="chip-action rp-toolbar-chip" title="Toggle Voice Narration">
-            <span class="chip-symbol">🔊</span>
+            <span class="chip-symbol">🎙</span>
             <span id="quick-tts-label">Voice: Off</span>
           </button>
           <button type="button" id="mobile-quick-scene-btn" class="chip-action rp-toolbar-chip" title="Scene &amp; Atmosphere">
-            <span class="chip-symbol">🎨</span>
+            <span class="chip-symbol">✦</span>
             <span>Scene</span>
           </button>
           <span id="stream-status-indicator" class="stream-status"></span>
@@ -774,10 +774,10 @@
         </div>
 
         <!-- Founder & Super Admin Control Panel (Visible to harshitg933@gmail.com) -->
-        <div id="super-admin-panel" class="super-admin-panel hidden" style="margin-top:0.85rem;padding:0.85rem;background:rgba(217,119,87,0.08);border:1px solid rgba(217,119,87,0.35);border-radius:12px;">
+        <div id="super-admin-panel" class="super-admin-panel hidden" style="margin-top:0.85rem;padding:0.85rem;background:rgba(110,123,242,0.06);border:1px solid rgba(110,123,242,0.25);border-radius:12px;">
           <div style="display:flex;justify-content:space-between;align-items:center;gap:0.5rem;flex-wrap:wrap;margin-bottom:0.4rem;">
             <div style="display:flex;align-items:center;gap:0.4rem;">
-              <span class="badge-mini" style="background:#e0a458;color:#18120f;font-weight:700;">👑 SUPER ACCESS</span>
+              <span class="badge-mini" style="background:var(--accent-solid);color:#ffffff;font-weight:700;">FOUNDER ACCESS</span>
               <strong style="font-size:0.82rem;color:var(--text-main);">harshitg933@gmail.com</strong>
             </div>
             <span id="super-admin-active-tier-tag" class="badge-mini badge-warm">All Unlocked</span>
@@ -786,10 +786,10 @@
             As Founder, you have universal super access. Click below to simulate different tiers and test user blocks/paywalls in real time:
           </p>
           <div class="tier-sim-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:0.4rem;">
-            <button type="button" class="btn-tier-sim active" data-sim="super_admin">👑 Super Access (Full)</button>
-            <button type="button" class="btn-tier-sim" data-sim="ultra">🌟 Ultra Tier ($19/mo)</button>
-            <button type="button" class="btn-tier-sim" data-sim="pro">💎 Flagship Pro ($9/mo)</button>
-            <button type="button" class="btn-tier-sim" data-sim="free">🔒 Free Tier (Simulate Block)</button>
+            <button type="button" class="btn-tier-sim active" data-sim="super_admin">Founder (Full Access)</button>
+            <button type="button" class="btn-tier-sim" data-sim="ultra">Ultra Tier ($19/mo)</button>
+            <button type="button" class="btn-tier-sim" data-sim="pro">Flagship Pro ($9/mo)</button>
+            <button type="button" class="btn-tier-sim" data-sim="free">Free Tier (Simulate Block)</button>
           </div>
         </div>
 
@@ -822,8 +822,8 @@
           </form>
 
           <div style="margin-top:0.75rem;padding-top:0.65rem;border-top:1px dashed var(--border-subtle);text-align:center;">
-            <button type="button" id="claim-super-access-btn" class="btn-glass btn-sm" style="width:100%;font-size:0.78rem;color:#e0a458;border-color:rgba(224,164,88,0.4);">
-              👑 One-Click Super Access (harshitg933@gmail.com)
+            <button type="button" id="claim-super-access-btn" class="btn-glass btn-sm" style="width:100%;font-size:0.78rem;color:var(--accent-solid);border-color:var(--accent-border);">
+              Claim Founder Super Access (harshitg933@gmail.com)
             </button>
           </div>
 

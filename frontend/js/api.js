@@ -236,14 +236,7 @@ class HaruEmochiAPI {
           !cachedPayload || JSON.stringify(freshData) !== JSON.stringify(cachedPayload);
 
         if (isDifferent) {
-          try {
-            localStorage.setItem(
-              cacheKey,
-              JSON.stringify({ timestamp: Date.now(), data: freshData })
-            );
-          } catch (storageErr) {
-            console.warn("SWR localStorage write failed:", storageErr);
-          }
+          this._setSWRCache(cacheKey, freshData);
 
           if (typeof options.onRevalidate === "function") {
             try {
@@ -281,6 +274,54 @@ class HaruEmochiAPI {
         }
       }
       toRemove.forEach((k) => localStorage.removeItem(k));
+    } catch (_) {}
+  }
+
+  _setSWRCache(cacheKey, data) {
+    const MAX_SWR_ENTRIES = 30;
+    const writeEntry = () => {
+      localStorage.setItem(
+        cacheKey,
+        JSON.stringify({ timestamp: Date.now(), data })
+      );
+    };
+
+    try {
+      writeEntry();
+    } catch (storageErr) {
+      console.warn("SWR localStorage quota exceeded; evicting LRU entries:", storageErr);
+      this._pruneSWRCache(MAX_SWR_ENTRIES - 5);
+      try {
+        writeEntry();
+      } catch (retryErr) {
+        console.warn("SWR write failed after LRU eviction:", retryErr);
+      }
+    }
+
+    this._pruneSWRCache(MAX_SWR_ENTRIES);
+  }
+
+  _pruneSWRCache(maxLimit = 30) {
+    try {
+      const swrEntries = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const k = localStorage.key(i);
+        if (k && k.startsWith("sora_swr_")) {
+          try {
+            const item = JSON.parse(localStorage.getItem(k) || "{}");
+            swrEntries.push({ key: k, time: item.timestamp || 0 });
+          } catch (_) {
+            swrEntries.push({ key: k, time: 0 });
+          }
+        }
+      }
+      if (swrEntries.length > maxLimit) {
+        swrEntries.sort((a, b) => a.time - b.time);
+        const countToEvict = swrEntries.length - maxLimit;
+        for (let i = 0; i < countToEvict; i++) {
+          localStorage.removeItem(swrEntries[i].key);
+        }
+      }
     } catch (_) {}
   }
 
