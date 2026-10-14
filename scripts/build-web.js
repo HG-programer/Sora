@@ -16,22 +16,25 @@ if (fs.existsSync(DIST_DIR)) {
 }
 fs.mkdirSync(DIST_DIR, { recursive: true });
 
-function copyRecursive(src, dest) {
+function copyRecursive(src, dest, filterFn = null) {
   const stat = fs.statSync(src);
   if (stat.isDirectory()) {
     fs.mkdirSync(dest, { recursive: true });
     for (const item of fs.readdirSync(src)) {
-      copyRecursive(path.join(src, item), path.join(dest, item));
+      if (filterFn && !filterFn(item)) continue;
+      copyRecursive(path.join(src, item), path.join(dest, item), filterFn);
     }
   } else {
     fs.copyFileSync(src, dest);
   }
 }
 
-// 1. Copy static assets
+// 1. Copy static assets (excluding raster PNG icons in favor of vector icon.svg)
 console.log('📁 [Sora Build] Copying static assets (icons, manifest)...');
 if (fs.existsSync(path.join(SRC_DIR, 'assets'))) {
-  copyRecursive(path.join(SRC_DIR, 'assets'), path.join(DIST_DIR, 'assets'));
+  copyRecursive(path.join(SRC_DIR, 'assets'), path.join(DIST_DIR, 'assets'), (filename) => {
+    return filename !== 'icon-192.png' && filename !== 'icon-512.png';
+  });
 }
 if (fs.existsSync(path.join(SRC_DIR, 'manifest.webmanifest'))) {
   fs.copyFileSync(path.join(SRC_DIR, 'manifest.webmanifest'), path.join(DIST_DIR, 'manifest.webmanifest'));

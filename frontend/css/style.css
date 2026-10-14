@@ -74,6 +74,7 @@ html, body {
 #app-shell {
   display: flex;
   width: 100vw;
+  height: 100vh;
   height: 100dvh;
   background: var(--bg-deep);
 }
@@ -153,8 +154,9 @@ html, body {
   font-size: 0.94rem;
   font-weight: 500;
   cursor: pointer;
-  transition: all 0.18s var(--spring-ease);
+  transition: transform 120ms cubic-bezier(0.2, 0, 0, 1), background-color 0.18s ease, color 0.18s ease, border-color 0.18s ease;
   text-align: left;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .nav-svg {
@@ -164,18 +166,25 @@ html, body {
   opacity: 0.85;
 }
 
-.nav-item:hover {
-  background: rgba(255, 255, 255, 0.05);
-  color: var(--text-main);
-  border-color: var(--border-subtle);
+@media (hover: hover) and (pointer: fine) {
+  .nav-item:hover {
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--text-main);
+    border-color: var(--border-subtle);
+  }
+}
+
+.nav-item:active {
+  transform: scale(0.98);
+  transition: transform 120ms cubic-bezier(0.2, 0, 0, 1);
 }
 
 .nav-item.active {
-  background: linear-gradient(135deg, rgba(217, 119, 87, 0.2), rgba(217, 119, 87, 0.1));
+  background: var(--accent-soft);
   border-color: var(--accent-border);
-  color: #f7dfd4;
+  color: #ffffff;
   font-weight: 600;
-  box-shadow: 0 2px 8px -2px rgba(217, 119, 87, 0.25);
+  box-shadow: 0 2px 8px -2px rgba(110, 123, 242, 0.25);
 }
 
 .nav-item.active .nav-svg {
@@ -363,11 +372,11 @@ html, body {
    DIRECTORY HERO & TOOLBAR
    ========================================================== */
 .discover-hero {
-  background: linear-gradient(135deg, rgba(34, 28, 24, 0.85) 0%, rgba(24, 20, 18, 0.95) 100%);
+  background: var(--bg-card);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   border: 1px solid var(--border-subtle);
-  border-left: 3.5px solid var(--accent-solid);
+  border-left: 3px solid var(--accent-solid);
   border-radius: var(--radius-xl);
   padding: 1.35rem 1.6rem;
   margin-bottom: 1.35rem;
@@ -439,7 +448,7 @@ html, body {
   padding: 0.65rem 0.95rem 0.65rem 2.5rem;
   border-radius: var(--radius-md);
   border: 1px solid var(--border-subtle);
-  background: rgba(22, 18, 16, 0.85);
+  background: var(--bg-elevated);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   color: var(--text-main);
@@ -450,7 +459,7 @@ html, body {
 
 .search-input-wrap input:focus {
   border-color: var(--accent-solid);
-  box-shadow: 0 0 0 3px rgba(217, 119, 87, 0.2), inset 0 1px 2px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 0 0 3px rgba(110, 123, 242, 0.18), inset 0 1px 2px rgba(0, 0, 0, 0.2);
   outline: none;
 }
 
@@ -478,13 +487,21 @@ html, body {
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s var(--spring-ease);
+  -webkit-tap-highlight-color: transparent;
 }
 
-.cat-chip:hover {
-  background: rgba(255, 255, 255, 0.09);
-  border-color: var(--border-hover);
-  color: var(--text-main);
-  transform: translateY(-1px);
+@media (hover: hover) and (pointer: fine) {
+  .cat-chip:hover {
+    background: rgba(255, 255, 255, 0.09);
+    border-color: var(--border-hover);
+    color: var(--text-main);
+    transform: translateY(-1px);
+  }
+}
+
+.cat-chip:active {
+  transform: scale(0.98);
+  transition: transform 120ms cubic-bezier(0.2, 0, 0, 1);
 }
 
 .cat-chip.active {
@@ -532,7 +549,8 @@ html, body {
 }
 
 .char-card:active {
-  transform: scale(0.985);
+  transform: scale(0.98);
+  transition: transform 120ms cubic-bezier(0.2, 0, 0, 1);
 }
 
 .char-tile-media {
@@ -782,6 +800,7 @@ html, body {
   background: var(--bg-deep);
   display: flex;
   flex-direction: column;
+  height: 100vh;
   height: 100dvh;
   width: 100vw;
   overflow: hidden;
@@ -806,7 +825,7 @@ html, body {
   position: absolute;
   inset: 0;
   z-index: 1;
-  background: rgba(21, 18, 16, 0.68);
+  background: rgba(9, 10, 15, 0.72);
   pointer-events: none;
   transition: background-color 0.15s ease;
 }
@@ -1441,7 +1460,8 @@ input:focus, textarea:focus, select:focus {
 }
 
 .btn-primary:active {
-  transform: scale(0.97);
+  transform: scale(0.98);
+  transition: transform 120ms cubic-bezier(0.2, 0, 0, 1);
 }
 
 .btn-glass {
@@ -1473,7 +1493,8 @@ input:focus, textarea:focus, select:focus {
 }
 
 .btn-glass:active {
-  transform: scale(0.97);
+  transform: scale(0.98);
+  transition: transform 120ms cubic-bezier(0.2, 0, 0, 1);
 }
 
 .btn-sm {
@@ -1501,15 +1522,18 @@ input:focus, textarea:focus, select:focus {
   transition: all 0.16s var(--spring-ease);
 }
 
-.icon-btn:hover {
-  border-color: var(--border-hover);
-  color: var(--text-main);
-  background: rgba(44, 37, 32, 0.9);
-  transform: scale(1.04);
+@media (hover: hover) and (pointer: fine) {
+  .icon-btn:hover {
+    border-color: var(--border-hover);
+    color: var(--text-main);
+    background: rgba(30, 34, 48, 0.85);
+    transform: translateY(-1px);
+  }
 }
 
 .icon-btn:active {
-  transform: scale(0.92);
+  transform: scale(0.95);
+  transition: transform 120ms cubic-bezier(0.2, 0, 0, 1);
 }
 
 .select-pill {
@@ -1585,7 +1609,7 @@ input:focus, textarea:focus, select:focus {
 }
 
 .premium-spec-card {
-  background: rgba(22, 18, 15, 0.75);
+  background: var(--bg-card);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-lg);
   padding: 1rem;
@@ -1602,8 +1626,8 @@ input:focus, textarea:focus, select:focus {
 }
 
 .premium-spec-card.unlocked {
-  border-color: rgba(217, 119, 87, 0.4);
-  box-shadow: 0 4px 16px rgba(217, 119, 87, 0.15);
+  border-color: rgba(110, 123, 242, 0.4);
+  box-shadow: 0 4px 16px rgba(110, 123, 242, 0.15);
 }
 
 .premium-spec-top {
@@ -1771,7 +1795,7 @@ input:focus, textarea:focus, select:focus {
   content: '';
   position: absolute;
   inset: 0;
-  background: linear-gradient(to bottom, rgba(21, 18, 16, 0.15) 0%, rgba(21, 18, 16, 0.95) 100%);
+  background: linear-gradient(to bottom, rgba(9, 10, 15, 0.15) 0%, rgba(9, 10, 15, 0.95) 100%);
 }
 
 .prologue-content {
@@ -1997,7 +2021,7 @@ input:focus, textarea:focus, select:focus {
 .sheet-input:focus, .sheet-textarea:focus, .sheet-select:focus {
   border-color: var(--accent-solid);
   outline: none;
-  box-shadow: 0 0 0 3px rgba(217, 119, 87, 0.2);
+  box-shadow: 0 0 0 3px rgba(110, 123, 242, 0.18);
 }
 
 .input-with-button-row {

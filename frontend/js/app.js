@@ -18,11 +18,12 @@ const state = {
   editingCharacterId: null,
 };
 
-function triggerHaptic(ms = 12) {
+function hapticTick(ms = 8) {
   if (typeof navigator !== "undefined" && navigator.vibrate) {
     try { navigator.vibrate(ms); } catch (_) {}
   }
 }
+const triggerHaptic = hapticTick;
 
 function getCharacterCulture(c) {
   const text = `${c.name} ${c.scenario || ""} ${(c.tags || []).join(" ")}`.toLowerCase();
@@ -1188,6 +1189,7 @@ async function openExistingSession(sessionId) {
 }
 
 function mountChatDrawer(sessionData) {
+  hapticTick(8);
   state.activeSession = sessionData;
   const c = sessionData.character;
   const drawer = document.getElementById("chat-drawer");
@@ -2276,7 +2278,7 @@ function bindUIEvents() {
     const content = chatInput.value.trim();
     if (!content) return;
 
-    triggerHaptic(15);
+    hapticTick(8);
     chatInput.value = "";
     chatInput.style.height = "auto";
     const sendBtn = document.getElementById("chat-send-btn");

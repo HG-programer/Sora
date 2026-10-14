@@ -5,8 +5,8 @@
   "start_url": "/",
   "display": "standalone",
   "orientation": "portrait",
-  "background_color": "#151210",
-  "theme_color": "#151210",
+  "background_color": "#090A0F",
+  "theme_color": "#090A0F",
   "categories": ["entertainment", "books", "games"],
   "icons": [
     {

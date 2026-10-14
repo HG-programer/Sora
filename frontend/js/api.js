@@ -61,8 +61,10 @@ class HaruEmochiAPI {
   }
 
   setToken(token) {
-    if (token) localStorage.setItem(STORAGE_KEYS.TOKEN, token);
-    else localStorage.removeItem(STORAGE_KEYS.TOKEN);
+    try {
+      if (token) localStorage.setItem(STORAGE_KEYS.TOKEN, token);
+      else localStorage.removeItem(STORAGE_KEYS.TOKEN);
+    } catch (_) {}
   }
 
   getByokKeys() {
@@ -74,7 +76,9 @@ class HaruEmochiAPI {
   }
 
   setByokKeys(keysObj) {
-    localStorage.setItem(STORAGE_KEYS.BYOK, JSON.stringify(keysObj || {}));
+    try {
+      localStorage.setItem(STORAGE_KEYS.BYOK, JSON.stringify(keysObj || {}));
+    } catch (_) {}
   }
 
   hasPremiumPass() {
@@ -82,8 +86,10 @@ class HaruEmochiAPI {
   }
 
   setPremiumPass(active) {
-    if (active) localStorage.setItem(STORAGE_KEYS.PREMIUM_PASS, "active");
-    else localStorage.removeItem(STORAGE_KEYS.PREMIUM_PASS);
+    try {
+      if (active) localStorage.setItem(STORAGE_KEYS.PREMIUM_PASS, "active");
+      else localStorage.removeItem(STORAGE_KEYS.PREMIUM_PASS);
+    } catch (_) {}
   }
 
   getChatBgConfig(sessionId, characterId, defaultBanner = "") {
