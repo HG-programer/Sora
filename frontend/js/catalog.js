@@ -152,6 +152,9 @@ function generateCharacterPortraitSVG(char = {}) {
 window.generateCharacterPortraitSVG = generateCharacterPortraitSVG;
 
 function getCharacterPortraitURI(char) {
+  if (typeof window.getCharacterPortrait === "function") {
+    return window.getCharacterPortrait(char);
+  }
   if (!char) {
     return generateCharacterPortraitSVG({ name: "Character", gender: "Female", category: "Romance" });
   }

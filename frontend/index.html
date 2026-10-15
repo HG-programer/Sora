@@ -24,6 +24,18 @@
   <link rel="manifest" href="./manifest.webmanifest" />
   <link rel="icon" type="image/svg+xml" href="./assets/icon.svg" />
   <link rel="stylesheet" href="./css/style.css" />
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.getRegistrations().then(function(regs) {
+        regs.forEach(function(r) { r.unregister(); });
+      });
+    }
+    if ('caches' in window) {
+      caches.keys().then(function(keys) {
+        keys.forEach(function(k) { caches.delete(k); });
+      });
+    }
+  </script>
 </head>
 <body>
   <div id="app-shell">
@@ -575,7 +587,7 @@
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
         </button>
         <div class="chat-avatar-wrapper" id="chat-avatar-profile-trigger" title="Tap to view character profile &amp; lore">
-          <img id="chat-char-avatar" src="./assets/icon.svg" alt="Character" class="chat-avatar-header" />
+          <img id="chat-char-avatar" src="./assets/icon.svg" alt="Character" class="chat-avatar-header char-avatar-img" />
           <span class="chat-online-pulse"></span>
         </div>
       </div>
@@ -1168,7 +1180,7 @@
       <div class="modal-card glass-card modal-card-wide comments-modal-card" style="max-width:580px;max-height:88dvh;display:flex;flex-direction:column;">
         <div class="modal-header comments-modal-header">
           <div class="comments-header-char-info">
-            <img id="comment-char-avatar" src="./assets/icon.svg" alt="Character" class="char-avatar-lg" />
+            <img id="comment-char-avatar" src="./assets/icon.svg" alt="Character" class="char-avatar-lg char-avatar-img" />
             <div class="comments-char-meta">
               <div class="comments-title-row">
                 <h3 id="comment-char-name">Character Name</h3>
@@ -1223,7 +1235,7 @@
       <div class="modal-card glass-card modal-card-wide core-memories-card" style="max-width:540px;max-height:86dvh;display:flex;flex-direction:column;">
         <div class="modal-header">
           <div style="display:flex;align-items:center;gap:0.75rem;">
-            <img id="memories-char-avatar" src="./assets/icon.svg" alt="Character" class="char-avatar-md" style="width:42px;height:42px;border-radius:12px;object-fit:cover;border:1px solid var(--border-subtle);" />
+            <img id="memories-char-avatar" src="./assets/icon.svg" alt="Character" class="char-avatar-md char-avatar-img" style="width:42px;height:42px;border-radius:12px;object-fit:cover;border:1px solid var(--border-subtle);" />
             <div>
               <h3 id="memories-char-name" style="margin:0;font-size:1.05rem;">Character Memories</h3>
               <p class="muted-text" style="font-size:0.76rem;margin:0.15rem 0 0;">Pivotal facts, promises, and backstory locked in active memory</p>

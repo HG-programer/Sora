@@ -3794,5 +3794,128 @@ button:active,
   }
 }
 
+/* STRICT CHAT FULLSCREEN ISOLATION - NO OVERLAPS */
+body.chat-mode-open {
+  overflow: hidden !important;
+}
+body.chat-mode-open .app-header,
+body.chat-mode-open .top-bar,
+body.chat-mode-open .main-content,
+body.chat-mode-open .view-section,
+body.chat-mode-open .bottom-nav,
+body.chat-mode-open #bottom-nav,
+body.chat-mode-open #app-shell,
+body.chat-mode-open #main-nav,
+body.chat-mode-open #viewport,
+body.chat-mode-open .web-install-banner {
+  display: none !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
 
+.chat-drawer, #chat-drawer {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  height: 100dvh !important;
+  background: #09090b !important;
+  z-index: 99999 !important;
+  display: none;
+  flex-direction: column !important;
+  overflow: hidden !important;
+}
 
+body.chat-mode-open .chat-drawer,
+body.chat-mode-open #chat-drawer,
+.chat-drawer.active,
+.chat-drawer.open {
+  display: flex !important;
+}
+
+body:not(.chat-mode-open) .chat-drawer,
+body:not(.chat-mode-open) #chat-drawer,
+.chat-drawer.hidden {
+  display: none !important;
+}
+
+.chat-header {
+  flex: 0 0 auto !important;
+  min-height: 62px !important;
+  max-height: 68px !important;
+  padding: 8px 12px !important;
+  background: #111116 !important;
+  border-bottom: 1px solid rgba(255,255,255,0.08) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 10px !important;
+  position: relative !important;
+  z-index: 20 !important;
+}
+
+.chat-messages, #chat-messages {
+  flex: 1 1 auto !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  padding: 16px 12px 24px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 12px !important;
+  background: #09090b !important;
+}
+
+.chat-input-area, .chat-footer, .chat-input-dock {
+  flex: 0 0 auto !important;
+  padding: 10px 12px calc(12px + env(safe-area-inset-bottom, 0px)) !important;
+  background: #111116 !important;
+  border-top: 1px solid rgba(255,255,255,0.08) !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  position: relative !important;
+  z-index: 20 !important;
+}
+
+.char-card-banner {
+  width: 100% !important;
+  height: 145px !important;
+  position: relative !important;
+  overflow: hidden !important;
+  background: #18181b !important;
+  border-radius: 12px 12px 0 0 !important;
+}
+
+.char-card-img {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+  display: block !important;
+}
+
+.char-avatar-img {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+  border-radius: inherit !important;
+  display: block !important;
+}
+
+.char-card-category {
+  position: absolute !important;
+  bottom: 8px !important;
+  left: 8px !important;
+  background: rgba(9, 9, 11, 0.78) !important;
+  backdrop-filter: blur(8px) !important;
+  -webkit-backdrop-filter: blur(8px) !important;
+  color: #f472b6 !important;
+  font-size: 0.72rem !important;
+  font-weight: 600 !important;
+  padding: 3px 8px !important;
+  border-radius: 6px !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  z-index: 2 !important;
+}

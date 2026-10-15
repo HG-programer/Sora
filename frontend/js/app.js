@@ -1,4 +1,12 @@
 // frontend/js/app.js
+// Kill lingering ServiceWorker and cache in native APK & web to ensure fresh assets
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.getRegistrations().then(regs => regs.forEach(r => r.unregister()));
+}
+if ('caches' in window) {
+  caches.keys().then(keys => keys.forEach(k => caches.delete(k)));
+}
+
 const state = {
   user: null,
   characters: [],
@@ -242,69 +250,60 @@ function copyFallback(text) {
   ta.remove();
 }
 
-function getFallbackAvatar(name = "Character", gender = "Female", category = "Romance") {
-  if (typeof window.generateCharacterPortraitSVG === "function") {
-    return window.generateCharacterPortraitSVG({ name, gender, category });
-  }
-  const clean = (name || "").replace(/[^a-zA-Z0-9\s]/g, "").trim();
-  const initials = (clean.split(/\s+/).slice(0, 2).map((w) => w[0]).join("") || "S").toUpperCase();
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120"><rect width="120" height="120" rx="22" fill="#181B26"/><text x="60" y="66" font-family="sans-serif" font-size="40" font-weight="700" fill="#6E7BF2" text-anchor="middle" dominant-baseline="central">${initials}</text></svg>`;
-  return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
-}
-window.getFallbackAvatar = getFallbackAvatar;
+window.getCharacterPortrait = function(char) {
+  if (char && char.avatar && char.avatar.startsWith('data:image/')) return char.avatar;
+  if (char && char.avatar_url && char.avatar_url.startsWith('data:image/')) return char.avatar_url;
+  const name = String((char && char.name) || 'Character').replace(/[&<>"']/g, '');
+  const role = String((char && (char.category || char.role || char.tagline)) || 'Companion').slice(0, 22).replace(/[&<>"']/g, '');
+  const seed = name.split('').reduce((acc, c) => acc + c.charCodeAt(0), 0);
+  const palettes = [
+    ['#4c1d95', '#7c3aed', '#c4b5fd', '#f472b6'],
+    ['#1e3a8a', '#3b82f6', '#93c5fd', '#38bdf8'],
+    ['#831843', '#db2777', '#f9a8d4', '#fb7185'],
+    ['#064e3b', '#10b981', '#6ee7b7', '#34d399'],
+    ['#7c2d12', '#ea580c', '#fdba74', '#fbbf24'],
+    ['#312e81', '#6366f1', '#a5b4fc', '#818cf8']
+  ];
+  const [bg1, bg2, accent, glow] = palettes[seed % palettes.length];
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 320" width="400" height="320">
+    <defs>
+      <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0%" stop-color="${bg1}"/>
+        <stop offset="100%" stop-color="#09090b"/>
+      </linearGradient>
+      <radialGradient id="aura" cx="50%" cy="42%" r="50%">
+        <stop offset="0%" stop-color="${bg2}" stop-opacity="0.65"/>
+        <stop offset="100%" stop-color="${bg1}" stop-opacity="0"/>
+      </radialGradient>
+    </defs>
+    <rect width="400" height="320" fill="url(#bg)"/>
+    <circle cx="200" cy="135" r="130" fill="url(#aura)"/>
+    <circle cx="80" cy="60" r="3" fill="${accent}" opacity="0.6"/>
+    <circle cx="330" cy="85" r="4" fill="${glow}" opacity="0.5"/>
+    <circle cx="310" cy="45" r="2" fill="#ffffff" opacity="0.5"/>
+    <!-- Stylized Anime Bust & Hair Silhouette -->
+    <path d="M110 320 C115 235 150 210 200 210 C250 210 285 235 290 320 Z" fill="${bg2}" opacity="0.85"/>
+    <path d="M135 320 C142 250 168 230 200 230 C232 230 258 250 265 320 Z" fill="#18181b"/>
+    <!-- Head & Hair -->
+    <path d="M138 135 C135 78 165 52 200 52 C235 52 265 78 262 135 C268 165 255 195 242 205 C235 175 230 160 200 160 C170 160 165 175 158 205 C145 195 132 165 138 135 Z" fill="${accent}"/>
+    <circle cx="200" cy="132" r="44" fill="#fde68a"/>
+    <!-- Bangs -->
+    <path d="M152 118 C165 85 235 85 248 118 C235 102 215 112 200 98 C185 112 165 102 152 118 Z" fill="${bg2}"/>
+    <!-- Glowing Eyes -->
+    <ellipse cx="183" cy="134" rx="5.5" ry="4" fill="${bg1}"/>
+    <ellipse cx="217" cy="134" rx="5.5" ry="4" fill="${bg1}"/>
+    <circle cx="185" cy="133" r="2" fill="${glow}"/>
+    <circle cx="219" cy="133" r="2" fill="${glow}"/>
+    <path d="M194 150 Q200 155 206 150" stroke="${bg1}" stroke-width="2.2" fill="none" stroke-linecap="round"/>
+  </svg>`;
+  return 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svg)));
+};
 
-function getCharacterPortraitURI(char) {
-  if (typeof window.getCharacterPortraitURI === "function" && window.getCharacterPortraitURI !== getCharacterPortraitURI) {
-    return window.getCharacterPortraitURI(char);
-  }
-  if (!char) {
-    return typeof window.generateCharacterPortraitSVG === "function"
-      ? window.generateCharacterPortraitSVG({ name: "Character", gender: "Female", category: "Romance" })
-      : getFallbackAvatar();
-  }
-  let raw = (typeof char === "string" ? char : char.avatar_url) || "";
-  raw = typeof raw === "string" ? raw.trim() : "";
-
-  if (raw.startsWith("data:image/svg+xml")) {
-    if (raw.includes("<svg") || raw.includes("#")) {
-      const commaIdx = raw.indexOf(",");
-      if (commaIdx !== -1) {
-        const payload = raw.slice(commaIdx + 1);
-        try {
-          const decoded = decodeURIComponent(payload);
-          return "data:image/svg+xml;charset=utf-8," + encodeURIComponent(decoded);
-        } catch {
-          return "data:image/svg+xml;charset=utf-8," + encodeURIComponent(payload);
-        }
-      }
-    }
-    if (!raw.startsWith("data:image/svg+xml;charset=utf-8,")) {
-      return raw.replace(/^data:image\/svg\+xml(?:;[a-z0-9=_-]+)*,/i, "data:image/svg+xml;charset=utf-8,");
-    }
-    return raw;
-  }
-
-  if (raw.startsWith("/") || raw.startsWith("./") || raw.startsWith("assets/") || raw.includes("/uploads/")) {
-    return (window.api && typeof window.api.resolveAssetUrl === "function")
-      ? window.api.resolveAssetUrl(raw)
-      : raw;
-  }
-
-  // If avatar_url is provided (including DiceBear Lorelei anime avatars or CDN), use it!
-  if (raw.length > 0) {
-    return raw;
-  }
-
-  return typeof window.generateCharacterPortraitSVG === "function"
-    ? window.generateCharacterPortraitSVG(char)
-    : getFallbackAvatar(char.name, char.gender, char.category);
-}
-window.getCharacterPortraitURI = getCharacterPortraitURI;
-
-function getCharacterAvatarUrl(char) {
-  return getCharacterPortraitURI(char);
-}
-window.getCharacterAvatarUrl = getCharacterAvatarUrl;
+window.getCharacterPortraitURI = window.getCharacterPortrait;
+window.getCharacterAvatarUrl = window.getCharacterPortrait;
+window.getFallbackAvatar = function(name, gender, category) {
+  return window.getCharacterPortrait({ name, gender, category });
+};
 
 // Offline Storage & State Helpers
 function getLocalSessions() {
@@ -592,7 +591,7 @@ function renderTiesTab(filter = "all") {
 
     card.innerHTML = `
       <div class="tie-card-header">
-        <img src="${avatarUrl}" alt="${tie.character_name}" class="tie-avatar char-portrait-img" loading="lazy" decoding="async" onerror="this.onerror=null; this.src=getFallbackAvatar('${safeName}', 'Female', '${safeCategory}');" />
+        <img class="char-avatar-img tie-avatar" src="${window.getCharacterPortrait({ name: tie.character_name, category: tie.category, avatar: tie.avatar_url })}" alt="${tie.character_name}" />
         <div class="tie-meta">
           <div class="tie-char-name">${tie.character_name}</div>
           <div class="tie-badge-row">
@@ -747,12 +746,8 @@ function openCharacterComments(charId) {
   const taglineEl = document.getElementById("comment-char-tagline");
 
   if (avatarEl) {
-    const safeName = (char.name || "Character").replace(/'/g, "\\'");
-    avatarEl.src = getCharacterAvatarUrl(char);
-    avatarEl.onerror = () => {
-      avatarEl.onerror = null;
-      avatarEl.src = getFallbackAvatar(safeName, char.gender || "Female", char.category || "Romance");
-    };
+    avatarEl.classList.add("char-avatar-img");
+    avatarEl.src = window.getCharacterPortrait(char);
   }
   if (nameEl) nameEl.textContent = char.name;
   if (taglineEl) taglineEl.textContent = char.tagline || "";
@@ -1032,11 +1027,8 @@ function openCoreMemoriesModal(charId) {
   const avatarEl = document.getElementById("memories-char-avatar");
   const nameEl = document.getElementById("memories-char-name");
   if (avatarEl) {
-    avatarEl.src = getCharacterAvatarUrl(char);
-    avatarEl.onerror = () => {
-      avatarEl.onerror = null;
-      avatarEl.src = getFallbackAvatar(char.name, char.gender, char.category);
-    };
+    avatarEl.classList.add("char-avatar-img");
+    avatarEl.src = window.getCharacterPortrait(char);
   }
   if (nameEl) nameEl.textContent = `${char.name}'s Core Memories`;
 
@@ -1171,25 +1163,15 @@ function isNativeContainer() {
 }
 
 function registerServiceWorker() {
-  const isNative = isNativeContainer();
-
-  // In native Android APK, unregister any lingering service worker and clear shell cache so WebView always loads fresh assets directly from APK
-  if (isNative) {
-    if ("serviceWorker" in navigator) {
-      navigator.serviceWorker.getRegistrations().then((registrations) => {
-        registrations.forEach((r) => r.unregister());
-      }).catch(() => {});
-    }
-    if ("caches" in window) {
-      caches.keys().then((keys) => {
-        keys.forEach((k) => caches.delete(k));
-      }).catch(() => {});
-    }
-    return;
-  }
-
   if ("serviceWorker" in navigator) {
-    navigator.serviceWorker.register("/sw.js").catch(() => {});
+    navigator.serviceWorker.getRegistrations().then((registrations) => {
+      registrations.forEach((r) => r.unregister());
+    }).catch(() => {});
+  }
+  if ("caches" in window) {
+    caches.keys().then((keys) => {
+      keys.forEach((k) => caches.delete(k));
+    }).catch(() => {});
   }
   window.addEventListener("beforeinstallprompt", (e) => {
     e.preventDefault();
@@ -1808,14 +1790,9 @@ function renderCharacterGrid() {
     const commentCount = getCharacterCommentCount(c.id);
 
     card.innerHTML = `
-      <div class="char-tile-media">
-        <img src="${avatarSrc}" alt="${c.name}" class="char-tile-img char-portrait-img" loading="lazy" decoding="async" onerror="this.onerror=null; this.src=getFallbackAvatar('${safeName}', '${charGender}', '${safeCategory}');" />
-        <div class="char-tile-scrim"></div>
-        <div class="char-tile-badges">
-          <span class="badge-mini badge-gender">${charGender}</span>
-          <span class="badge-mini badge-warm">${c.category}</span>
-          <span class="badge-mini" title="${culture.label}">${culture.flag} ${culture.label}</span>
-        </div>
+      <div class="char-card-banner">
+        <img class="char-card-img" src="${window.getCharacterPortrait(c)}" alt="${c.name}" />
+        <span class="char-card-category">${c.category || 'Character'}</span>
       </div>
       <div class="char-card-body">
         <div class="char-header-info">
@@ -1944,10 +1921,8 @@ function renderSessionsList() {
   state.sessions.forEach((s) => {
     const item = document.createElement("div");
     item.className = "session-card";
-    const avatarSrc = getCharacterPortraitURI({ name: s.character_name, avatar_url: s.character_avatar });
-    const safeName = (s.character_name || "").replace(/'/g, "\\'");
     item.innerHTML = `
-      <img src="${avatarSrc}" alt="${s.character_name}" class="char-avatar-lg char-portrait-img" style="width:42px;height:42px;" onerror="this.onerror=null; this.src=getFallbackAvatar('${safeName}');" />
+      <img class="char-avatar-img" src="${window.getCharacterPortrait({ name: s.character_name, avatar: s.character_avatar })}" alt="${s.character_name}" style="width:42px;height:42px;border-radius:10px;object-fit:cover;" />
       <div style="flex:1;min-width:0;">
         <div style="display:flex;justify-content:space-between;align-items:center;">
           <strong style="font-size:0.88rem;">${s.character_name}</strong>
@@ -2006,10 +1981,8 @@ function renderMyCharactersList() {
   state.myCharacters.forEach((c) => {
     const item = document.createElement("div");
     item.className = "session-card";
-    const avatarSrc = getCharacterPortraitURI(c);
-    const safeName = (c.name || "").replace(/'/g, "\\'");
     item.innerHTML = `
-      <img src="${avatarSrc}" alt="${c.name}" class="char-avatar-lg char-portrait-img" style="width:44px;height:44px;" onerror="this.onerror=null; this.src=getFallbackAvatar('${safeName}', '${c.gender || ''}');" />
+      <img class="char-avatar-img" src="${window.getCharacterPortrait(c)}" alt="${c.name}" style="width:44px;height:44px;border-radius:10px;object-fit:cover;" />
       <div style="flex:1;min-width:0;">
         <div style="display:flex;justify-content:space-between;align-items:center;gap:0.4rem;">
           <strong style="font-size:0.9rem;">${c.name}</strong>
@@ -2220,19 +2193,18 @@ function mountChatDrawer(sessionData) {
   const c = sessionData.character;
   const drawer = document.getElementById("chat-drawer");
   drawer.classList.remove("hidden");
+  drawer.classList.add("open");
   drawer.setAttribute("aria-hidden", "false");
   document.body.classList.add("chat-active");
+  document.body.classList.add("chat-mode-open");
   if (window.history && window.history.state?.view !== "chat") {
     window.history.pushState({ view: "chat", sessionId: sessionData.id }, "");
   }
 
   const charAvatarEl = document.getElementById("chat-char-avatar");
   if (charAvatarEl) {
-    charAvatarEl.onerror = () => {
-      charAvatarEl.onerror = null;
-      charAvatarEl.src = getFallbackAvatar(c.name, c.gender, c.category);
-    };
-    charAvatarEl.src = getCharacterAvatarUrl(c);
+    charAvatarEl.classList.add("char-avatar-img");
+    charAvatarEl.src = window.getCharacterPortrait(c);
   }
   document.getElementById("chat-char-name").textContent = c.name;
   document.getElementById("chat-char-category").textContent = c.category;
@@ -3329,10 +3301,15 @@ function bindUIEvents() {
   });
 
   document.getElementById("close-chat-btn").addEventListener("click", () => {
+    document.body.classList.remove("chat-mode-open");
     if (window.history.state?.view === "chat") {
       window.history.back();
     } else {
-      document.getElementById("chat-drawer").classList.add("hidden");
+      const drawer = document.getElementById("chat-drawer");
+      if (drawer) {
+        drawer.classList.add("hidden");
+        drawer.classList.remove("open");
+      }
       document.body.classList.remove("chat-active");
       loadSessions();
     }
@@ -4522,7 +4499,9 @@ function bindUIEvents() {
     }
     const chatDrawer = document.getElementById("chat-drawer");
     if (chatDrawer && !chatDrawer.classList.contains("hidden")) {
+      document.body.classList.remove("chat-mode-open");
       chatDrawer.classList.add("hidden");
+      chatDrawer.classList.remove("open");
       document.body.classList.remove("chat-active");
       loadSessions();
       return true;
@@ -4536,6 +4515,9 @@ function bindUIEvents() {
   }
 
   window.addEventListener("popstate", (e) => {
+    if (e.state?.view !== "chat") {
+      document.body.classList.remove("chat-mode-open");
+    }
     const handled = handleHardwareBack();
     if (!handled && e.state?.tab) {
       switchTab(e.state.tab, false);
