@@ -1,4 +1,15 @@
 // frontend/js/api.js
+window.getLocalTies = function() {
+  try {
+    const raw = localStorage.getItem('sora_character_ties') || localStorage.getItem('sora_ties_v1') || localStorage.getItem('sora_ties') || '{}';
+    const parsed = JSON.parse(raw);
+    return (parsed && typeof parsed === 'object') ? parsed : {};
+  } catch (e) {
+    return {};
+  }
+};
+const getLocalTies = window.getLocalTies;
+
 const STORAGE_KEYS = {
   TOKEN: "haru_emochi_jwt_token",
   SERVER_URL: "haru_emochi_server_url",

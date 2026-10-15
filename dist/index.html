@@ -22,7 +22,7 @@
  <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..600;1,6..72,400..500&amp;family=Plus+Jakarta+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet" />
  <link rel="manifest" href="./manifest.webmanifest" />
  <link rel="icon" type="image/svg+xml" href="./assets/icon.svg" />
- <link rel="stylesheet" href="./css/style.css?v=mv9qqluu" />
+ <link rel="stylesheet" href="./css/style.css?v=mv9sp5pq" />
  <script>
  if ('serviceWorker' in navigator) {
  navigator.serviceWorker.getRegistrations().then(function(regs) {
@@ -741,8 +741,8 @@
  </div>
  </div>
  </div>
- <footer class="chat-input-dock">
- <div class="rp-quick-toolbar">
+ <footer class="chat-input-dock chat-input-area chat-footer">
+ <div class="chat-quick-bar rp-quick-toolbar quick-actions">
  <button type="button" id="insert-action-btn" class="chip-action rp-toolbar-chip" title="Insert *action* formatting">
  <span class="chip-symbol">✦</span>
  <span>*Action*</span>
@@ -774,14 +774,14 @@
  </button>
  <span id="stream-status-indicator" class="stream-status"></span>
  </div>
- <form id="chat-send-form" class="chat-send-row">
+ <form id="chat-send-form" class="chat-send-row chat-input-row">
  <textarea
  id="chat-input"
  rows="1"
  placeholder="Write a message or *action*..."
  required
  ></textarea>
- <button type="submit" id="chat-send-btn" class="btn-send" title="Send message" aria-label="Send">
+ <button type="submit" id="chat-send-btn" class="btn-send send-btn" title="Send message" aria-label="Send">
  <svg class="send-arrow-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
  </button>
  </form>
@@ -1133,8 +1133,8 @@
  </div>
  </div>
  <div id="toast-container" class="toast-container"></div>
- <script src="./js/api.js?v=mv9qqluu"></script>
- <script src="./js/catalog.js?v=mv9qqluu"></script>
- <script src="./js/app.js?v=mv9qqluu"></script>
+ <script src="./js/api.js?v=mv9sp5pq"></script>
+ <script src="./js/catalog.js?v=mv9sp5pq"></script>
+ <script src="./js/app.js?v=mv9sp5pq"></script>
 </body>
 </html>

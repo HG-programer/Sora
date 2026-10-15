@@ -7,6 +7,17 @@ if ('caches' in window) {
   caches.keys().then(keys => keys.forEach(k => caches.delete(k)));
 }
 
+window.getLocalTies = function() {
+  try {
+    const raw = localStorage.getItem('sora_character_ties') || localStorage.getItem('sora_ties_v1') || localStorage.getItem('sora_ties') || '{}';
+    const parsed = JSON.parse(raw);
+    return (parsed && typeof parsed === 'object') ? parsed : {};
+  } catch (e) {
+    return {};
+  }
+};
+const getLocalTies = window.getLocalTies;
+
 const state = {
   user: null,
   characters: [],
@@ -250,59 +261,67 @@ function copyFallback(text) {
   ta.remove();
 }
 
-window.getCharacterPortrait = function(char) {
-  if (char && char.avatar && char.avatar.startsWith('data:image/')) return char.avatar;
-  if (char && char.avatar_url && char.avatar_url.startsWith('data:image/')) return char.avatar_url;
-  const name = String((char && char.name) || 'Character').replace(/[&<>"']/g, '');
-  const role = String((char && (char.category || char.role || char.tagline)) || 'Companion').slice(0, 22).replace(/[&<>"']/g, '');
+window.getFallbackPortraitSVG = function(char) {
+  const name = String((typeof char === 'object' ? char?.name : char) || 'Character').replace(/[&<>"']/g, '');
+  const initial = (name.trim()[0] || 'S').toUpperCase();
   const seed = name.split('').reduce((acc, c) => acc + c.charCodeAt(0), 0);
   const palettes = [
-    ['#4c1d95', '#7c3aed', '#c4b5fd', '#f472b6'],
-    ['#1e3a8a', '#3b82f6', '#93c5fd', '#38bdf8'],
-    ['#831843', '#db2777', '#f9a8d4', '#fb7185'],
-    ['#064e3b', '#10b981', '#6ee7b7', '#34d399'],
-    ['#7c2d12', '#ea580c', '#fdba74', '#fbbf24'],
-    ['#312e81', '#6366f1', '#a5b4fc', '#818cf8']
+    { g1: '#1a102f', g2: '#0d081a', accent: '#a855f7', glow: '#c084fc' },
+    { g1: '#0f172a', g2: '#050914', accent: '#3b82f6', glow: '#60a5fa' },
+    { g1: '#1f131a', g2: '#0e060b', accent: '#ec4899', glow: '#f472b6' },
+    { g1: '#091e17', g2: '#040d0a', accent: '#10b981', glow: '#34d399' },
+    { g1: '#1c130c', g2: '#0a0603', accent: '#f59e0b', glow: '#fbbf24' },
+    { g1: '#151426', g2: '#090812', accent: '#6366f1', glow: '#818cf8' }
   ];
-  const [bg1, bg2, accent, glow] = palettes[seed % palettes.length];
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 320" width="400" height="320">
+  const p = palettes[seed % palettes.length];
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 480" width="400" height="480">
     <defs>
-      <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
-        <stop offset="0%" stop-color="${bg1}"/>
-        <stop offset="100%" stop-color="#09090b"/>
+      <linearGradient id="g_${seed}" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stop-color="${p.g1}"/>
+        <stop offset="100%" stop-color="${p.g2}"/>
       </linearGradient>
-      <radialGradient id="aura" cx="50%" cy="42%" r="50%">
-        <stop offset="0%" stop-color="${bg2}" stop-opacity="0.65"/>
-        <stop offset="100%" stop-color="${bg1}" stop-opacity="0"/>
+      <radialGradient id="glow_${seed}" cx="50%" cy="40%" r="55%">
+        <stop offset="0%" stop-color="${p.glow}" stop-opacity="0.3"/>
+        <stop offset="100%" stop-color="${p.g2}" stop-opacity="0"/>
       </radialGradient>
+      <linearGradient id="accentG_${seed}" x1="0%" y1="0%" x2="100%" y2="0%">
+        <stop offset="0%" stop-color="${p.accent}"/>
+        <stop offset="100%" stop-color="${p.glow}"/>
+      </linearGradient>
     </defs>
-    <rect width="400" height="320" fill="url(#bg)"/>
-    <circle cx="200" cy="135" r="130" fill="url(#aura)"/>
-    <circle cx="80" cy="60" r="3" fill="${accent}" opacity="0.6"/>
-    <circle cx="330" cy="85" r="4" fill="${glow}" opacity="0.5"/>
-    <circle cx="310" cy="45" r="2" fill="#ffffff" opacity="0.5"/>
-    <!-- Stylized Anime Bust & Hair Silhouette -->
-    <path d="M110 320 C115 235 150 210 200 210 C250 210 285 235 290 320 Z" fill="${bg2}" opacity="0.85"/>
-    <path d="M135 320 C142 250 168 230 200 230 C232 230 258 250 265 320 Z" fill="#18181b"/>
-    <!-- Head & Hair -->
-    <path d="M138 135 C135 78 165 52 200 52 C235 52 265 78 262 135 C268 165 255 195 242 205 C235 175 230 160 200 160 C170 160 165 175 158 205 C145 195 132 165 138 135 Z" fill="${accent}"/>
-    <circle cx="200" cy="132" r="44" fill="#fde68a"/>
-    <!-- Bangs -->
-    <path d="M152 118 C165 85 235 85 248 118 C235 102 215 112 200 98 C185 112 165 102 152 118 Z" fill="${bg2}"/>
-    <!-- Glowing Eyes -->
-    <ellipse cx="183" cy="134" rx="5.5" ry="4" fill="${bg1}"/>
-    <ellipse cx="217" cy="134" rx="5.5" ry="4" fill="${bg1}"/>
-    <circle cx="185" cy="133" r="2" fill="${glow}"/>
-    <circle cx="219" cy="133" r="2" fill="${glow}"/>
-    <path d="M194 150 Q200 155 206 150" stroke="${bg1}" stroke-width="2.2" fill="none" stroke-linecap="round"/>
+    <rect width="400" height="480" fill="url(#g_${seed})"/>
+    <circle cx="200" cy="190" r="160" fill="url(#glow_${seed})"/>
+    <path d="M-50 480 L220 0 L260 0 L-10 480 Z" fill="${p.accent}" opacity="0.05"/>
+    <path d="M120 480 L380 0 L430 0 L170 480 Z" fill="${p.glow}" opacity="0.04"/>
+    <circle cx="200" cy="190" r="72" fill="none" stroke="url(#accentG_${seed})" stroke-width="2" opacity="0.7"/>
+    <circle cx="200" cy="190" r="82" fill="none" stroke="${p.glow}" stroke-width="1" stroke-dasharray="4 6" opacity="0.45"/>
+    <text x="200" y="214" font-family="'Plus Jakarta Sans', system-ui, -apple-system, sans-serif" font-size="64" font-weight="700" fill="#ffffff" text-anchor="middle">${initial}</text>
+    <text x="200" y="308" font-family="'Plus Jakarta Sans', system-ui, -apple-system, sans-serif" font-size="14" font-weight="600" fill="${p.glow}" text-anchor="middle" letter-spacing="3" opacity="0.9">${name.toUpperCase()}</text>
+    <line x1="150" y1="324" x2="250" y2="324" stroke="${p.accent}" stroke-width="1.5" opacity="0.6"/>
   </svg>`;
   return 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svg)));
+};
+
+window.getCharacterPortrait = function(char) {
+  if (!char) return '';
+  const raw = (typeof char === 'string' ? char : (char.image || char.avatar_url || char.avatar)) || '';
+  if (typeof raw === 'string' && raw.startsWith('https://') && !raw.includes('data:image/svg') && !raw.includes('api.dicebear.com')) {
+    return raw;
+  }
+  if (typeof raw === 'string' && raw.startsWith('data:image/') && !raw.includes('<path d="M110 320')) {
+    return raw;
+  }
+  const name = String((typeof char === 'object' ? char?.name : char) || 'Character').trim();
+  const role = String((typeof char === 'object' ? (char?.tagline || char?.description || char?.category || 'anime character') : 'anime character')).slice(0, 80);
+  const seed = name.split('').reduce((acc, c) => acc + c.charCodeAt(0), 0);
+  const prompt = encodeURIComponent(`masterpiece anime portrait illustration of ${name}, ${role}, detailed face and eyes, cinematic lighting, soft bokeh background, 8k resolution, key visual`);
+  return `https://image.pollinations.ai/prompt/${prompt}?width=400&height=480&seed=${seed}&nologo=true`;
 };
 
 window.getCharacterPortraitURI = window.getCharacterPortrait;
 window.getCharacterAvatarUrl = window.getCharacterPortrait;
 window.getFallbackAvatar = function(name, gender, category) {
-  return window.getCharacterPortrait({ name, gender, category });
+  return window.getFallbackPortraitSVG({ name, gender, category });
 };
 
 // Offline Storage & State Helpers
@@ -355,22 +374,17 @@ function toggleLocalLikedId(id, isLiked) {
 // CHARACTER TIES & BOND PROGRESSION ENGINE
 // ==========================================================
 function getCharacterTies() {
-  try {
-    const raw = window.api?.getSecureItem
-      ? window.api.getSecureItem("sora_character_ties", "{}")
-      : localStorage.getItem("sora_character_ties") || "{}";
-    return JSON.parse(raw || "{}");
-  } catch {
-    return {};
-  }
+  return window.getLocalTies();
 }
+window.getCharacterTies = getCharacterTies;
 
 function saveCharacterTies(ties) {
   try {
+    const jsonStr = JSON.stringify(ties || {});
+    localStorage.setItem("sora_character_ties", jsonStr);
+    localStorage.setItem("sora_ties_v1", jsonStr);
     if (window.api?.setSecureItem) {
       window.api.setSecureItem("sora_character_ties", ties);
-    } else {
-      localStorage.setItem("sora_character_ties", JSON.stringify(ties || {}));
     }
   } catch (_) {}
 }
@@ -591,7 +605,7 @@ function renderTiesTab(filter = "all") {
 
     card.innerHTML = `
       <div class="tie-card-header">
-        <img class="char-avatar-img tie-avatar" src="${window.getCharacterPortrait({ name: tie.character_name, category: tie.category, avatar: tie.avatar_url })}" alt="${tie.character_name}" />
+        <img class="char-avatar-img tie-avatar" src="${window.getCharacterPortrait({ name: tie.character_name, category: tie.category, avatar: tie.avatar_url })}" alt="${tie.character_name}" onerror="this.onerror=null; this.src=window.getFallbackPortraitSVG('${safeName}');" />
         <div class="tie-meta">
           <div class="tie-char-name">${tie.character_name}</div>
           <div class="tie-badge-row">
@@ -747,6 +761,7 @@ function openCharacterComments(charId) {
 
   if (avatarEl) {
     avatarEl.classList.add("char-avatar-img");
+    avatarEl.onerror = function() { this.onerror = null; this.src = window.getFallbackPortraitSVG(char); };
     avatarEl.src = window.getCharacterPortrait(char);
   }
   if (nameEl) nameEl.textContent = char.name;
@@ -1028,6 +1043,7 @@ function openCoreMemoriesModal(charId) {
   const nameEl = document.getElementById("memories-char-name");
   if (avatarEl) {
     avatarEl.classList.add("char-avatar-img");
+    avatarEl.onerror = function() { this.onerror = null; this.src = window.getFallbackPortraitSVG(char); };
     avatarEl.src = window.getCharacterPortrait(char);
   }
   if (nameEl) nameEl.textContent = `${char.name}'s Core Memories`;
@@ -1791,7 +1807,7 @@ function renderCharacterGrid() {
 
     card.innerHTML = `
       <div class="char-card-banner">
-        <img class="char-card-img" src="${window.getCharacterPortrait(c)}" alt="${c.name}" />
+        <img class="char-card-img" src="${window.getCharacterPortrait(c)}" alt="${c.name}" onerror="this.onerror=null; this.src=window.getFallbackPortraitSVG('${safeName}');" />
         <span class="char-card-category">${c.category || 'Character'}</span>
       </div>
       <div class="char-card-body">
@@ -1921,8 +1937,9 @@ function renderSessionsList() {
   state.sessions.forEach((s) => {
     const item = document.createElement("div");
     item.className = "session-card";
+    const sName = (s.character_name || "Character").replace(/'/g, "\\'");
     item.innerHTML = `
-      <img class="char-avatar-img" src="${window.getCharacterPortrait({ name: s.character_name, avatar: s.character_avatar })}" alt="${s.character_name}" style="width:42px;height:42px;border-radius:10px;object-fit:cover;" />
+      <img class="char-avatar-img" src="${window.getCharacterPortrait({ name: s.character_name, avatar: s.character_avatar })}" alt="${s.character_name}" onerror="this.onerror=null; this.src=window.getFallbackPortraitSVG('${sName}');" style="width:42px;height:42px;border-radius:10px;object-fit:cover;" />
       <div style="flex:1;min-width:0;">
         <div style="display:flex;justify-content:space-between;align-items:center;">
           <strong style="font-size:0.88rem;">${s.character_name}</strong>
@@ -1981,8 +1998,9 @@ function renderMyCharactersList() {
   state.myCharacters.forEach((c) => {
     const item = document.createElement("div");
     item.className = "session-card";
+    const cSafeName = (c.name || "Character").replace(/'/g, "\\'");
     item.innerHTML = `
-      <img class="char-avatar-img" src="${window.getCharacterPortrait(c)}" alt="${c.name}" style="width:44px;height:44px;border-radius:10px;object-fit:cover;" />
+      <img class="char-avatar-img" src="${window.getCharacterPortrait(c)}" alt="${c.name}" onerror="this.onerror=null; this.src=window.getFallbackPortraitSVG('${cSafeName}');" style="width:44px;height:44px;border-radius:10px;object-fit:cover;" />
       <div style="flex:1;min-width:0;">
         <div style="display:flex;justify-content:space-between;align-items:center;gap:0.4rem;">
           <strong style="font-size:0.9rem;">${c.name}</strong>
@@ -2204,6 +2222,7 @@ function mountChatDrawer(sessionData) {
   const charAvatarEl = document.getElementById("chat-char-avatar");
   if (charAvatarEl) {
     charAvatarEl.classList.add("char-avatar-img");
+    charAvatarEl.onerror = function() { this.onerror = null; this.src = window.getFallbackPortraitSVG(c); };
     charAvatarEl.src = window.getCharacterPortrait(c);
   }
   document.getElementById("chat-char-name").textContent = c.name;
@@ -3687,10 +3706,27 @@ function bindUIEvents() {
     const statusEl = document.getElementById("stream-status-indicator");
     statusEl.textContent = `Generating via ${displayModelLabel}...`;
 
-    const activeChar = state.activeSession.character;
-    const currentTie = recordTieInteraction(activeChar.id, activeChar, 15);
-    const activePersona = (state.user?.personas || []).find((p) => p.id === selectedPersona) || null;
-    const coreMems = getCharacterCoreMemories(activeChar.id).map((m) => m.text);
+    const activeChar = state.activeSession.character || {};
+    let currentTie = { level: 1, stage: "Stranger", xp: 15 };
+    try {
+      if (typeof recordTieInteraction === "function" && activeChar?.id) {
+        currentTie = recordTieInteraction(activeChar.id, activeChar, 15);
+      }
+    } catch (tieErr) {
+      console.warn("Tie interaction record error:", tieErr);
+    }
+
+    let activePersona = null;
+    try {
+      activePersona = (state.user?.personas || []).find((p) => p.id === selectedPersona) || null;
+    } catch (_) {}
+
+    let coreMems = [];
+    try {
+      if (typeof getCharacterCoreMemories === "function" && activeChar?.id) {
+        coreMems = (getCharacterCoreMemories(activeChar.id) || []).map((m) => m?.text || String(m));
+      }
+    } catch (_) {}
 
     let accumulated = "";
     await window.api.streamMessage(
