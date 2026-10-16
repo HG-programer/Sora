@@ -1,0 +1,1141 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+ <meta charset="UTF-8" />
+ <meta http-equiv="Content-Security-Policy" content="default-src * 'unsafe-inline' 'unsafe-eval' data: blob:; img-src * data: blob: 'unsafe-inline'; connect-src *; media-src * data: blob:; font-src * data:; style-src * 'unsafe-inline'; script-src * 'unsafe-inline' 'unsafe-eval';" />
+ <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover, interactive-widget=resizes-content" />
+ <meta name="theme-color" content="#090A0F" />
+ <meta name="mobile-web-app-capable" content="yes" />
+ <meta name="apple-mobile-web-app-capable" content="yes" />
+ <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+ <meta name="apple-mobile-web-app-title" content="Sora" />
+ <link rel="apple-touch-icon" href="./assets/icon.svg" />
+ <meta property="og:title" content="Sora — Living Character AI &amp; Curated Roleplay" />
+ <meta property="og:description" content="Unfiltered stories, living characters, zero ads. Just pure immersion. Powered by Gemini, Claude, and local-first sovereign storage." />
+ <meta property="og:type" content="website" />
+ <meta property="og:image" content="./assets/icon.svg" />
+ <meta name="twitter:card" content="summary" />
+ <meta name="twitter:title" content="Sora — Living Character AI" />
+ <meta name="twitter:description" content="Unfiltered stories, living characters, zero ads. Just pure immersion." />
+ <title>Sora — Unfiltered stories, living characters, zero ads. Just pure immersion.</title>
+ <link rel="preconnect" href="https://fonts.googleapis.com" />
+ <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+ <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..600;1,6..72,400..500&amp;family=Plus+Jakarta+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet" />
+ <link rel="manifest" href="./manifest.webmanifest" />
+ <link rel="icon" type="image/svg+xml" href="./assets/icon.svg" />
+ <link rel="stylesheet" href="./css/style.css?v=mvb026je" />
+ <script>
+ if ('serviceWorker' in navigator) {
+ navigator.serviceWorker.getRegistrations().then(function(regs) {
+ regs.forEach(function(r) { r.unregister(); });
+ });
+ }
+ if ('caches' in window) {
+ caches.keys().then(function(keys) {
+ keys.forEach(function(k) { caches.delete(k); });
+ });
+ }
+ </script>
+</head>
+<body>
+ <div id="app-shell">
+ <nav id="main-nav" aria-label="Primary Navigation">
+ <div class="brand-logo" id="nav-logo-btn">
+ <img src="./assets/icon.svg" alt="Sora" class="brand-icon" />
+ <div class="brand-text">
+ <span class="brand-title">Sora</span>
+ <span class="brand-sub">Unfiltered stories, living characters, zero ads. Just pure immersion.</span>
+ </div>
+ </div>
+ <div class="nav-section-label">Library</div>
+ <div class="nav-links">
+ <button class="nav-item active" data-tab="discover">
+ <svg class="nav-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></svg>
+ <span class="nav-label">Directory</span>
+ </button>
+ <button class="nav-item" data-tab="chats">
+ <svg class="nav-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+ <span class="nav-label">Sessions</span>
+ <span id="chats-count-badge" class="nav-badge hidden">0</span>
+ </button>
+ <button class="nav-item" data-tab="ties">
+ <svg class="nav-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+ <span class="nav-label">Ties</span>
+ <span id="ties-count-badge" class="nav-badge hidden">0</span>
+ </button>
+ <button class="nav-item" data-tab="create">
+ <svg class="nav-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+ <span class="nav-label">Create</span>
+ </button>
+ <button class="nav-item" data-tab="personas">
+ <svg class="nav-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+ <span class="nav-label">Profiles</span>
+ </button>
+ <button class="nav-item" data-tab="settings">
+ <svg class="nav-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+ <span class="nav-label">Configuration</span>
+ </button>
+ </div>
+ <div class="nav-footer">
+ <div id="user-pill" class="user-pill" title="Manage account">
+ <img id="nav-user-avatar" src="./assets/icon.svg" alt="User" class="user-avatar-sm" />
+ <div class="user-pill-info">
+ <span id="nav-user-name" class="user-name-sm">Loading...</span>
+ <span id="nav-user-status" class="user-status-sm">Guest</span>
+ </div>
+ </div>
+ </div>
+ </nav>
+ <main id="viewport">
+ <div id="web-get-app-banner" class="web-install-banner hidden">
+ <div class="web-banner-content">
+ <span class="web-banner-badge">Android &amp; Web</span>
+ <span class="web-banner-text">Get Sora with native 60fps haptics and background voice.</span>
+ </div>
+ <div class="web-banner-actions">
+ <a id="banner-download-apk-link" href="https://github.com/HG-programer/Sora/releases/latest/download/app-release.apk" class="banner-action-btn banner-btn-apk" download>
+ <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+ <span>Download APK</span>
+ </a>
+ <button type="button" id="banner-install-pwa-btn" class="banner-action-btn banner-btn-pwa hidden">
+ <span>Install PWA</span>
+ </button>
+ <button type="button" id="close-web-banner-btn" class="banner-close-btn" aria-label="Dismiss banner">✕</button>
+ </div>
+ </div>
+ <header class="top-bar">
+ <div class="top-bar-left">
+ <img src="./assets/icon.svg" alt="Logo" class="mobile-only-logo" />
+ <div class="breadcrumb-row">
+ <span class="breadcrumb-root">Sora</span>
+ <span class="breadcrumb-sep">/</span>
+ <h1 id="view-title" class="view-title">Character Directory</h1>
+ </div>
+ </div>
+ <div class="top-bar-right">
+ <div id="platform-live-pill" class="live-metrics-pill">
+ <span class="pulse-dot"></span>
+ <span id="metrics-text">Online</span>
+ </div>
+ <button id="open-premium-btn" class="btn-glass btn-sm pro-top-pill" title="Sora Pro — Community Edition">
+ <span class="pro-sparkle">✦</span>
+ <span id="top-pro-label">Sora Pro</span>
+ </button>
+ <a id="get-app-btn" href="https://github.com/HG-programer/Sora/releases/latest/download/app-release.apk" class="btn-glass btn-sm hidden" title="Download Signed Android APK" download style="text-decoration:none;display:inline-flex;align-items:center;gap:0.35rem;">
+ <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+ <span>Get APK</span>
+ </a>
+ <button id="install-pwa-btn" class="btn-glass btn-sm hidden" title="Install Android Application">
+ Install App
+ </button>
+ <button id="open-auth-btn" class="btn-glass btn-sm">
+ <span id="top-auth-label">Account</span>
+ </button>
+ </div>
+ </header>
+ <section id="tab-discover" class="tab-panel active">
+ <div class="discover-hero">
+ <div class="discover-hero-copy">
+ <span class="editorial-eyebrow">Curated Interactive Fiction</span>
+ <h2 class="discover-headline">Choose a character to begin your story.</h2>
+ <p class="discover-subline">Unfiltered stories, living characters, zero ads. Just pure immersion.</p>
+ </div>
+ <div class="discover-hero-actions">
+ <button type="button" class="btn-primary" onclick="switchTab('create')">Create Character</button>
+ </div>
+ </div>
+ <div class="discover-toolbar">
+ <div class="search-row">
+ <div class="search-input-wrap">
+ <svg class="search-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+ <input type="search" id="char-search-input" placeholder="Search by name, trope, or keyword (e.g. Romance, Betrayal, School)..." autocomplete="off" />
+ </div>
+ <select id="char-gender-select" class="select-pill" aria-label="Filter by gender">
+ <option value="All">Gender: All</option>
+ <option value="Female">Gender: Female</option>
+ <option value="Male">Gender: Male</option>
+ <option value="Non-Binary">Gender: Non-Binary</option>
+ </select>
+ <select id="char-sort-select" class="select-pill" aria-label="Sort order">
+ <option value="trending">Sort: Most Active</option>
+ <option value="likes">Sort: Highest Rated</option>
+ <option value="newest">Sort: Recently Added</option>
+ </select>
+ <div class="view-mode-toggle" id="view-mode-toggle" title="Switch directory layout">
+ <button type="button" id="grid-view-compact-btn" class="icon-toggle-btn active" title="2-Column Visual Grid" aria-label="2-Column Grid">
+ <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></svg>
+ </button>
+ <button type="button" id="grid-view-story-btn" class="icon-toggle-btn" title="Full Story Cards" aria-label="Story Cards">
+ <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+ </button>
+ </div>
+ <span id="directory-count-badge" class="badge-mini badge-warm" style="display:inline-flex;align-items:center;padding:0.35rem 0.65rem;font-size:0.75rem;">210 Characters</span>
+ </div>
+ <div class="category-strip" id="category-strip">
+ <button class="cat-chip active" data-category="All">All</button>
+ <button class="cat-chip" data-category="Favorites">Favorites</button>
+ <button class="cat-chip" data-category="Uncensored 18+">18+ Uncensored</button>
+ <button class="cat-chip" data-category="Romance">Romance</button>
+ <button class="cat-chip" data-category="School">School &amp; Academy</button>
+ <button class="cat-chip" data-category="Betrayal">Betrayal</button>
+ <button class="cat-chip" data-category="Enemies to Lovers">Enemies to Lovers</button>
+ <button class="cat-chip" data-category="Slow Burn">Slow Burn</button>
+ <button class="cat-chip" data-category="Dark Romance">Dark Romance</button>
+ <button class="cat-chip" data-category="Mafia">Mafia &amp; Syndicate</button>
+ <button class="cat-chip" data-category="Fantasy">Fantasy</button>
+ <button class="cat-chip" data-category="Royalty">Royalty</button>
+ <button class="cat-chip" data-category="Angst">Angst</button>
+ <button class="cat-chip" data-category="Slice of Life">Slice of Life</button>
+ <button class="cat-chip" data-category="Anime">Anime</button>
+ <button class="cat-chip" data-category="Sci-Fi">Sci-Fi</button>
+ <button class="cat-chip" data-category="Mystery">Mystery &amp; Noir</button>
+ <button class="cat-chip" data-category="Drama">Drama</button>
+ <button class="cat-chip" data-category="RPG">Tabletop RPG</button>
+ <button class="cat-chip" data-category="Mine">Created by Me</button>
+ </div>
+ </div>
+ <div id="character-grid" class="character-grid"></div>
+ </section>
+ <section id="tab-chats" class="tab-panel">
+ <div class="page-Intro">
+ <h2>Active Sessions</h2>
+ <p class="muted-text">Persistent conversation threads associated with your account.</p>
+ </div>
+ <div id="sessions-list" class="sessions-list"></div>
+ </section>
+ <section id="tab-ties" class="tab-panel">
+ <div class="page-Intro">
+ <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:1rem;flex-wrap:wrap;">
+ <div>
+ <h2>Character Ties &amp; Bonds</h2>
+ <p class="muted-text">Living connections, emotional affinity, and relationship tiers earned across your conversations.</p>
+ </div>
+ <div class="ties-filter-chips" style="display:flex;gap:0.4rem;align-items:center;">
+ <button type="button" class="cat-chip active tie-filter-chip" data-tie-filter="all">All Ties</button>
+ <button type="button" class="cat-chip tie-filter-chip" data-tie-filter="soulbound">💖 Soulbound</button>
+ <button type="button" class="cat-chip tie-filter-chip" data-tie-filter="close">💫 Close Bond</button>
+ <button type="button" class="cat-chip tie-filter-chip" data-tie-filter="recent">Recent</button>
+ </div>
+ </div>
+ </div>
+ <div id="ties-empty-state" class="empty-state-box hidden" style="margin-top:1.5rem;text-align:center;padding:3rem 1rem;">
+ <div style="font-size:2.5rem;margin-bottom:0.75rem;">🌿</div>
+ <h3 style="color:var(--text-main);margin-bottom:0.4rem;">No Active Character Ties Yet</h3>
+ <p class="muted-text" style="max-width:420px;margin:0 auto 1.25rem;font-size:0.85rem;line-height:1.5;">
+ Every conversation you have deepens your bond. Explore characters in the directory to establish your first connection!
+ </p>
+ <button type="button" class="btn-primary btn-sm" onclick="switchTab('discover')">Browse Characters</button>
+ </div>
+ <div id="ties-grid" class="ties-grid" style="display:grid;grid-template-columns:repeat(auto-fill, minmax(280px, 1fr));gap:1rem;margin-top:1rem;"></div>
+ </section>
+ <section id="tab-create" class="tab-panel">
+ <div class="studio-layout">
+ <form id="create-char-form" class="studio-form glass-card">
+ <div class="studio-form-header">
+ <h2>Character Studio</h2>
+ <p class="muted-text">Design your own character from scratch or load from 210+ ready-made Male &amp; Female templates across all genres (including 18+ Uncensored).</p>
+ </div>
+ <div class="account-profile-box" style="margin-top:0;">
+ <div style="display:flex;justify-content:space-between;align-items:center;gap:0.5rem;flex-wrap:wrap;margin-bottom:0.45rem;">
+ <strong style="font-size:0.82rem;color:var(--text-main);">Quick-Load Character Template (210+ Presets · Male &amp; Female)</strong>
+ <span class="badge-mini badge-warm">All Genres + Uncensored 18+</span>
+ </div>
+ <div class="upload-input-row">
+ <select id="studio-template-gender" class="select-pill" aria-label="Filter templates by gender">
+ <option value="All">Template Gender: All</option>
+ <option value="Female">Female Templates (105)</option>
+ <option value="Male">Male Templates (103)</option>
+ </select>
+ <select id="studio-template-select" class="select-pill" style="flex:1;min-width:220px;" aria-label="Select a character template">
+ <option value="">-- Select a Character Template to Pre-Fill Form --</option>
+ </select>
+ <button type="button" id="apply-template-btn" class="btn-glass btn-sm">Load into Studio</button>
+ </div>
+ </div>
+ <div class="form-row-3">
+ <div class="form-group">
+ <label for="cc-name">Character Name *</label>
+ <input type="text" id="cc-name" required maxlength="100" placeholder="e.g., Kazuha Shinomiya" />
+ </div>
+ <div class="form-group">
+ <label for="cc-gender">Character Gender *</label>
+ <select id="cc-gender">
+ <option value="Female">Female</option>
+ <option value="Male">Male</option>
+ <option value="Non-Binary">Non-Binary / Other</option>
+ </select>
+ </div>
+ <div class="form-group">
+ <label for="cc-category">Primary Category *</label>
+ <select id="cc-category">
+ <option value="Romance">Romance</option>
+ <option value="Uncensored 18+">18+ Uncensored</option>
+ <option value="School">School &amp; Academy</option>
+ <option value="Betrayal">Betrayal</option>
+ <option value="Enemies to Lovers">Enemies to Lovers</option>
+ <option value="Slow Burn">Slow Burn</option>
+ <option value="Dark Romance">Dark Romance</option>
+ <option value="Mafia">Mafia &amp; Syndicate</option>
+ <option value="Fantasy">Fantasy</option>
+ <option value="Royalty">Royalty</option>
+ <option value="Angst">Angst</option>
+ <option value="Slice of Life">Slice of Life</option>
+ <option value="Anime">Anime</option>
+ <option value="Sci-Fi">Sci-Fi</option>
+ <option value="Mystery">Mystery &amp; Noir</option>
+ <option value="Drama">Drama</option>
+ <option value="RPG">Tabletop RPG</option>
+ </select>
+ </div>
+ </div>
+ <div class="form-group">
+ <label for="cc-tagline">Summary / Tagline *</label>
+ <input type="text" id="cc-tagline" required maxlength="240" placeholder="Concise one-line description displayed in the directory" />
+ </div>
+ <div class="form-row-2">
+ <div class="form-group">
+ <label for="cc-tags">Trope &amp; Genre Tags (comma-separated or tap below)</label>
+ <input type="text" id="cc-tags" placeholder="Romance, School, Enemies to Lovers, Slow Burn" />
+ <div class="quick-tags-bar" id="cc-quick-tags">
+ <button type="button" class="quick-tag-chip" data-quick-tag="Uncensored 18+">+ 18+ Uncensored</button>
+ <button type="button" class="quick-tag-chip" data-quick-tag="Romance">+ Romance</button>
+ <button type="button" class="quick-tag-chip" data-quick-tag="School">+ School</button>
+ <button type="button" class="quick-tag-chip" data-quick-tag="Betrayal">+ Betrayal</button>
+ <button type="button" class="quick-tag-chip" data-quick-tag="Enemies to Lovers">+ Enemies to Lovers</button>
+ <button type="button" class="quick-tag-chip" data-quick-tag="Slow Burn">+ Slow Burn</button>
+ <button type="button" class="quick-tag-chip" data-quick-tag="Dark Romance">+ Dark Romance</button>
+ <button type="button" class="quick-tag-chip" data-quick-tag="Mafia">+ Mafia</button>
+ <button type="button" class="quick-tag-chip" data-quick-tag="Childhood Friend">+ Childhood Friend</button>
+ <button type="button" class="quick-tag-chip" data-quick-tag="Arranged Marriage">+ Arranged Marriage</button>
+ <button type="button" class="quick-tag-chip" data-quick-tag="Possessive">+ Possessive</button>
+ <button type="button" class="quick-tag-chip" data-quick-tag="Royalty">+ Royalty</button>
+ <button type="button" class="quick-tag-chip" data-quick-tag="Angst">+ Angst</button>
+ </div>
+ </div>
+ <div class="form-group">
+ <label for="cc-model">Default Model Engine</label>
+ <select id="cc-model" class="model-dropdown-populate"></select>
+ </div>
+ </div>
+ <div class="form-row-2">
+ <div class="form-group">
+ <label for="cc-avatar">Character Portrait (AI Art, Upload, or URL)</label>
+ <div class="upload-input-row">
+ <img id="cc-avatar-preview" src="./assets/icon.svg" alt="Preview" class="upload-thumb-preview" />
+ <input type="text" id="cc-avatar" placeholder="Paste image URL or pick AI art..." style="flex:1;" />
+ <button type="button" id="cc-random-ai-btn" class="btn-primary btn-sm" title="Generate/Assign AI Portrait">Pick AI Art</button>
+ <label class="btn-glass btn-sm file-label-btn">
+ Upload
+ <input type="file" id="cc-avatar-file" accept="image/*" hidden />
+ </label>
+ </div>
+ <input type="hidden" id="cc-accent" value="#d97757" />
+ </div>
+ <div class="form-group">
+ <label for="cc-banner">Default Chat Background Image (Defaults to Portrait Image)</label>
+ <div class="upload-input-row">
+ <input type="text" id="cc-banner" placeholder="Leave blank to use Character Portrait as default background..." style="flex:1;" />
+ <label class="btn-glass btn-sm file-label-btn">
+ Upload BG
+ <input type="file" id="cc-banner-file" accept="image/*" hidden />
+ </label>
+ </div>
+ </div>
+ </div>
+ <div class="form-group">
+ <label for="cc-personality">Character Instructions &amp; Persona *</label>
+ <textarea id="cc-personality" rows="3" required placeholder="Define demeanor, speaking style, temperament, and behavioral constraints..."></textarea>
+ </div>
+ <div class="form-row-2">
+ <div class="form-group">
+ <label for="cc-backstory">Background Context</label>
+ <textarea id="cc-backstory" rows="3" placeholder="Relevant history, role, and relationship to the user..."></textarea>
+ </div>
+ <div class="form-group">
+ <label for="cc-scenario">Current Setting</label>
+ <textarea id="cc-scenario" rows="3" placeholder="Immediate location and situation at the start of the session..."></textarea>
+ </div>
+ </div>
+ <div class="form-group">
+ <label for="cc-greeting">Opening Message * <span class="hint-inline">(Wrap physical actions in *asterisks*)</span></label>
+ <textarea id="cc-greeting" rows="4" required placeholder="*Looks up from the file folder on the desk.* &quot;Glad you made it. Take a look at this report.&quot;"></textarea>
+ </div>
+ <div class="form-group">
+ <label for="cc-example">Reference Dialogue (optional)</label>
+ <textarea id="cc-example" rows="2" placeholder="Sample lines to calibrate tone and sentence length..."></textarea>
+ </div>
+ <div class="form-footer-row">
+ <label class="checkbox-label">
+ <input type="checkbox" id="cc-public" checked />
+ <span>List in public directory</span>
+ </label>
+ <button type="submit" class="btn-primary">Create &amp; Start Chatting</button>
+ </div>
+ </form>
+ <div class="glass-card" style="margin-top: 1.25rem;">
+ <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.75rem;">
+ <div>
+ <h3>Characters Created by You</h3>
+ <p class="muted-text">Click any character to start a conversation or manage your creations.</p>
+ </div>
+ </div>
+ <div id="my-characters-list" class="sessions-list"></div>
+ </div>
+ </div>
+ </section>
+ <section id="tab-personas" class="tab-panel">
+ <div class="studio-layout">
+ <div class="glass-card">
+ <h2>User Roleplay Profiles</h2>
+ <p class="muted-text" style="margin-bottom: 1rem;">Configure the identity and background passed to characters during your conversations.</p>
+ <form id="create-persona-form" class="studio-form">
+ <div class="form-row-2">
+ <div class="form-group">
+ <label for="up-name">Profile Name *</label>
+ <input type="text" id="up-name" required maxlength="80" placeholder="e.g., Alex Mercer" />
+ </div>
+ <div class="form-group">
+ <label for="up-desc">Background / Role</label>
+ <input type="text" id="up-desc" maxlength="400" placeholder="Context about your character or role..." />
+ </div>
+ </div>
+ <div>
+ <button type="submit" class="btn-primary btn-sm">Create Profile</button>
+ </div>
+ </form>
+ <div id="personas-list" class="personas-grid"></div>
+ </div>
+ </div>
+ </section>
+ <section id="tab-settings" class="tab-panel">
+ <div class="studio-layout">
+ <div class="glass-card">
+ <div style="margin-bottom: 1rem;">
+ <h2>Sora In-House Models (Included Free)</h2>
+ <p class="muted-text">Proprietary Sora character engines included for all users with zero subscription or API key required.</p>
+ </div>
+ <div class="table-wrap">
+ <table class="data-table">
+ <thead>
+ <tr>
+ <th>Model Name</th>
+ <th>Classification</th>
+ <th>Tuning Profile</th>
+ <th>Availability</th>
+ </tr>
+ </thead>
+ <tbody id="free-adapters-table-body"></tbody>
+ </table>
+ </div>
+ </div>
+ <div class="glass-card" style="margin-top: 1rem;">
+ <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:1rem;flex-wrap:wrap;margin-bottom: 1rem;">
+ <div>
+ <h2>Sora Pro &amp; Model Engines (Earnable &amp; Free)</h2>
+ <p class="muted-text">Zero advertising, zero subscriptions. Unlocked through roleplay affinity or free BYOK provider keys.</p>
+ </div>
+ <span id="premium-plan-badge" class="badge-mini">Standard Tier</span>
+ </div>
+ <div id="premium-transparency-grid" class="premium-specs-grid"></div>
+ </div>
+ <div class="glass-card" style="margin-top: 1rem;">
+ <h3>Developer &amp; Direct Provider Configuration</h3>
+ <p class="muted-text">Optional local device configuration for Android APK remote endpoints or direct flagship provider keys.</p>
+ <form id="byok-form" class="studio-form" style="margin-top: 1rem;">
+ <div class="form-row-2">
+ <div class="form-group">
+ <label for="cfg-server-url">API Server Endpoint (Android / Remote Host)</label>
+ <input type="text" id="cfg-server-url" placeholder="Default: current origin (e.g. http://192.168.1.10:5050)" />
+ </div>
+ <div class="form-group">
+ <label for="cfg-xai-key">xAI Grok-2 API Key</label>
+ <input type="password" id="cfg-xai-key" placeholder="xai-..." />
+ </div>
+ </div>
+ <div class="form-row-2">
+ <div class="form-group">
+ <label for="cfg-openrouter-key">Nous Hermes 3 405B Key (OpenRouter)</label>
+ <input type="password" id="cfg-openrouter-key" placeholder="sk-or-v1-..." />
+ </div>
+ <div class="form-group">
+ <label for="cfg-openai-key">OpenAI GPT-4o API Key</label>
+ <input type="password" id="cfg-openai-key" placeholder="sk-..." />
+ </div>
+ </div>
+ <div class="form-row-2">
+ <div class="form-group">
+ <label for="cfg-gemini-key">Google Gemini 2.0 API Key</label>
+ <input type="password" id="cfg-gemini-key" placeholder="AIza..." />
+ </div>
+ <div class="form-group">
+ <label for="cfg-groq-key">High-Speed Compute Key (Optional)</label>
+ <input type="password" id="cfg-groq-key" placeholder="gsk_..." />
+ </div>
+ </div>
+ <input type="hidden" id="cfg-hf-key" value="" />
+ <input type="hidden" id="cfg-ollama-url" value="" />
+ <div>
+ <button type="submit" class="btn-primary btn-sm">Save Configuration</button>
+ </div>
+ </form>
+ </div>
+ <div class="glass-card" style="margin-top: 1rem;">
+ <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.5rem;flex-wrap:wrap;gap:0.5rem;">
+ <div>
+ <h3>Local Backup &amp; Device Migration</h3>
+ <p class="muted-text">Safeguard your chat histories, personas, and custom creations as a portable JSON file.</p>
+ </div>
+ <span class="badge-mini" style="background:rgba(255,255,255,0.06);color:var(--text-muted);">1-Click JSON</span>
+ </div>
+ <div style="display:flex;gap:0.6rem;flex-wrap:wrap;margin-top:0.75rem;">
+ <button type="button" id="cfg-export-backup-btn" class="btn-glass btn-sm" style="display:inline-flex;align-items:center;gap:0.35rem;">
+ <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+ <span>Export All Chats &amp; Personas (.json)</span>
+ </button>
+ <button type="button" id="cfg-import-backup-btn" class="btn-glass btn-sm" style="display:inline-flex;align-items:center;gap:0.35rem;">
+ <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+ <span>Import Backup File</span>
+ </button>
+ </div>
+ </div>
+ <div class="glass-card" style="margin-top: 1rem;">
+ <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.5rem;flex-wrap:wrap;gap:0.5rem;">
+ <div>
+ <h3>About Sora &amp; Compliance</h3>
+ <p class="muted-text">Zero advertising, local-first storage, transparent routing, and sovereign privacy.</p>
+ </div>
+ <span class="badge-mini badge-warm">v1.0.0-apk</span>
+ </div>
+ <div style="display:flex;gap:0.6rem;flex-wrap:wrap;margin-top:0.75rem;">
+ <a href="privacy.html" target="_blank" rel="noopener noreferrer" class="btn-glass btn-sm" style="display:inline-flex;align-items:center;gap:0.35rem;text-decoration:none;">
+ <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+ <span>Privacy Policy</span>
+ </a>
+ <a href="https://github.com/HG-programer/Sora" target="_blank" rel="noopener noreferrer" class="btn-glass btn-sm" style="display:inline-flex;align-items:center;gap:0.35rem;text-decoration:none;">
+ <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/></svg>
+ <span>Source Repository</span>
+ </a>
+ <a href="https://github.com/HG-programer/Sora/releases/latest" target="_blank" rel="noopener noreferrer" class="btn-glass btn-sm" style="display:inline-flex;align-items:center;gap:0.35rem;text-decoration:none;">
+ <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+ <span>Check Updates (APK)</span>
+ </a>
+ </div>
+ </div>
+ </div>
+ </main>
+ </div>
+ <aside id="chat-drawer" class="chat-drawer hidden" aria-hidden="true">
+ <div id="chat-bg-layer" class="chat-bg-layer"></div>
+ <div id="chat-bg-scrim" class="chat-bg-scrim"></div>
+ <header class="chat-header">
+ <div class="chat-header-left">
+ <button id="close-chat-btn" class="icon-btn header-back-btn" title="Return to directory">
+ <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+ </button>
+ <div class="chat-avatar-wrapper" id="chat-avatar-profile-trigger" title="Tap to view character profile &amp; lore">
+ <img id="chat-char-avatar" src="./assets/icon.svg" alt="Character" class="chat-avatar-header char-avatar-img" />
+ <span class="chat-online-pulse"></span>
+ </div>
+ </div>
+ <div class="chat-header-center" id="chat-meta-profile-trigger" title="Tap to view character profile &amp; lore">
+ <div class="chat-char-title-row">
+ <h2 id="chat-char-name">Character</h2>
+ <div id="chat-bond-pill" class="chat-bond-pill" title="Character Tie &amp; Bond Progression">
+ <span id="chat-bond-icon">🌿</span>
+ <span id="chat-bond-label">Stranger Lv.1</span>
+ <span id="chat-bond-pct" class="chat-bond-pct">0%</span>
+ </div>
+ <span id="chat-char-category" class="badge-mini badge-warm hidden-xs">Category</span>
+ <span id="chat-mood-badge" class="badge-mini chat-mood-badge hidden-xs" title="Character Live Mood">✨ Curious</span>
+ </div>
+ <p id="chat-char-tagline" class="chat-char-tagline"></p>
+ </div>
+ <div class="chat-header-right">
+ <button type="button" id="chat-header-comments-btn" class="chat-header-btn chat-comments-btn" title="View Character Community Comments">
+ <span>💬</span>
+ <span id="chat-comments-count">0</span>
+ </button>
+ <button type="button" id="chat-mobile-menu-btn" class="chat-header-btn chat-options-btn" title="Chat Atmosphere, Lore &amp; Options">
+ <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="1.5"/><circle cx="19" cy="12" r="1.5"/><circle cx="5" cy="12" r="1.5"/></svg>
+ </button>
+ </div>
+ </header>
+ <div id="chat-bg-panel" class="chat-lore-panel hidden">
+ <div class="bg-customizer-wrap">
+ <div class="bg-customizer-col">
+ <h4>Custom Chat Window Background</h4>
+ <p class="muted-text" style="margin-bottom:0.5rem;">Upload your own image or paste a URL for this conversation's background.</p>
+ <div class="upload-input-row">
+ <label class="btn-primary btn-sm file-label-btn">
+ Upload Image
+ <input type="file" id="chat-bg-file-input" accept="image/*" hidden />
+ </label>
+ <input type="text" id="chat-bg-url-input" placeholder="Or paste image URL (https://...)" style="flex:1;" />
+ <button type="button" id="apply-bg-url-btn" class="btn-glass btn-sm">Apply URL</button>
+ <button type="button" id="clear-bg-btn" class="btn-glass btn-sm">Reset</button>
+ </div>
+ </div>
+ <div class="bg-customizer-col">
+ <div style="display:flex;justify-content:space-between;align-items:center;">
+ <h4>Scene Presets &amp; Dimming</h4>
+ <span id="bg-dim-label" class="muted-text">Dimming: 68%</span>
+ </div>
+ <div class="scene-presets-row">
+ <button type="button" id="use-char-art-bg-btn" class="chip-action" style="border-color:var(--accent-border);color:var(--accent-solid);">Character Art (Default)</button>
+ <button type="button" class="chip-action" data-scene-url="">Solid Espresso</button>
+ <button type="button" class="chip-action" data-scene-url="/api/v1/scene/rainy-cafe">Rainy Cafe</button>
+ <button type="button" class="chip-action" data-scene-url="/api/v1/scene/candlelit-study">Candlelit Study</button>
+ <button type="button" class="chip-action" data-scene-url="/api/v1/scene/mountain-lodge">Mountain Lodge</button>
+ <button type="button" class="chip-action" data-scene-url="/api/v1/scene/twilight-terrace">Twilight Terrace</button>
+ <button type="button" class="chip-action" data-scene-url="/api/v1/scene/noir-harbor">Noir Harbor</button>
+ </div>
+ <div class="dim-slider-row">
+ <span class="muted-text" style="font-size:0.72rem;">Brighter Image</span>
+ <input type="range" id="chat-bg-dim-slider" min="20" max="92" value="68" />
+ <span class="muted-text" style="font-size:0.72rem;">Darker Contrast</span>
+ </div>
+ </div>
+ </div>
+ </div>
+ <div id="chat-lore-panel" class="chat-lore-panel hidden">
+ <div class="lore-cols">
+ <div>
+ <h4>Character Definition</h4>
+ <p id="chat-lore-personality" class="muted-text"></p>
+ <p id="chat-lore-scenario" class="muted-text" style="margin-top:0.35rem;"></p>
+ </div>
+ <div>
+ <h4>Session Context Notes</h4>
+ <textarea id="chat-memory-input" rows="3" placeholder="Persistent notes included in the system prompt for this session..."></textarea>
+ <button id="save-memory-btn" class="btn-glass btn-sm" style="margin-top:0.4rem;">Update Notes</button>
+ </div>
+ </div>
+ </div>
+ <div id="chat-messages" class="chat-messages"></div>
+ <div id="chat-mobile-sheet" class="mobile-sheet-backdrop hidden">
+ <div class="mobile-sheet-content">
+ <div class="sheet-drag-handle-bar" id="sheet-drag-handle">
+ <span class="sheet-drag-handle"></span>
+ </div>
+ <div class="mobile-sheet-header">
+ <div class="sheet-tabs">
+ <button type="button" class="sheet-tab active" data-sheet-tab="ambience">Scene &amp; Wallpaper</button>
+ <button type="button" class="sheet-tab" data-sheet-tab="lore">Character Lore</button>
+ <button type="button" class="sheet-tab" data-sheet-tab="model">Model Engine</button>
+ </div>
+ <button type="button" id="close-mobile-sheet-btn" class="icon-btn" title="Close sheet" aria-label="Close">
+ <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+ </button>
+ </div>
+ <div class="sheet-quick-actions" style="display:flex;gap:0.4rem;align-items:center;padding:0.4rem 0 0.75rem;border-bottom:1px solid var(--border-subtle);flex-wrap:wrap;">
+ <button type="button" id="chat-favorite-btn" class="btn-glass btn-sm" title="Save to Favorites" style="display:inline-flex;align-items:center;gap:0.35rem;">
+ <span id="chat-favorite-icon">🤍</span>
+ <span>Favorite</span>
+ </button>
+ <button type="button" id="chat-mobile-fav-btn" style="display:none;"></button>
+ <button type="button" id="chat-tts-toggle-btn" class="btn-glass btn-sm" title="Toggle Voice Narration" style="display:inline-flex;align-items:center;gap:0.35rem;">
+ <span>🔊</span>
+ <span>Voice Off</span>
+ </button>
+ <button type="button" id="chat-mobile-tts-btn" style="display:none;"></button>
+ <button type="button" id="open-core-memories-btn" class="btn-glass btn-sm" title="Manage Character Core Memories" style="display:inline-flex;align-items:center;gap:0.35rem;">
+ <span>📌</span>
+ <span>Memories (<span id="core-memories-count-badge">0</span>)</span>
+ </button>
+ <button type="button" id="chat-mobile-memories-btn" style="display:none;"><span id="chat-mobile-memories-count">0</span></button>
+ <button type="button" id="chat-mobile-comments-btn" style="display:none;"><span id="chat-mobile-comments-count">0</span></button>
+ <button type="button" id="chat-new-branch-btn" class="btn-glass btn-sm" title="Start fresh conversation">➕ New Chat</button>
+ <button type="button" id="chat-export-btn" class="btn-glass btn-sm" title="Export conversation as Markdown">📥 Export</button>
+ <button type="button" id="toggle-bg-btn" style="display:none;">Atmosphere</button>
+ <button type="button" id="toggle-lore-btn" style="display:none;">Notes</button>
+ <button type="button" id="chat-mobile-model-btn" style="display:none;"><span id="chat-mobile-model-label">Sora Core v2</span></button>
+ <select id="chat-model-select" style="display:none;" class="model-dropdown-populate"></select>
+ <select id="chat-persona-select" style="display:none;"></select>
+ </div>
+ <div id="sheet-section-ambience" class="sheet-panel active">
+ <div class="sheet-group">
+ <label class="sheet-label">Atmosphere &amp; Background Wallpaper</label>
+ <div class="upload-input-row" style="margin-bottom:0.65rem;">
+ <label class="btn-primary btn-sm file-label-btn">
+ <span>Upload Image</span>
+ <input type="file" id="sheet-bg-file-input" accept="image/*" hidden />
+ </label>
+ <button type="button" id="sheet-use-char-art-btn" class="btn-glass btn-sm">Character Art</button>
+ <button type="button" id="sheet-clear-bg-btn" class="btn-glass btn-sm">Reset</button>
+ </div>
+ <div class="input-with-button-row">
+ <input type="text" id="sheet-bg-url-input" placeholder="Or paste image URL (https://...)" class="sheet-input" />
+ <button type="button" id="sheet-apply-bg-url-btn" class="btn-glass btn-sm">Apply</button>
+ </div>
+ </div>
+ <div class="sheet-group">
+ <label class="sheet-label">Atmospheric Presets</label>
+ <div class="scene-presets-grid">
+ <button type="button" class="scene-preset-card" data-scene-preset="">
+ <span class="preset-name">Solid Espresso</span>
+ </button>
+ <button type="button" class="scene-preset-card" data-scene-preset="/api/v1/scene/rainy-cafe">
+ <span class="preset-name">Rainy Cafe</span>
+ </button>
+ <button type="button" class="scene-preset-card" data-scene-preset="/api/v1/scene/candlelit-study">
+ <span class="preset-name">Candlelit Study</span>
+ </button>
+ <button type="button" class="scene-preset-card" data-scene-preset="/api/v1/scene/mountain-lodge">
+ <span class="preset-name">Mountain Lodge</span>
+ </button>
+ <button type="button" class="scene-preset-card" data-scene-preset="/api/v1/scene/twilight-terrace">
+ <span class="preset-name">Twilight Terrace</span>
+ </button>
+ <button type="button" class="scene-preset-card" data-scene-preset="/api/v1/scene/noir-harbor">
+ <span class="preset-name">Noir Harbor</span>
+ </button>
+ </div>
+ </div>
+ <div class="sheet-group">
+ <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.35rem;">
+ <label class="sheet-label" style="margin-bottom:0;">Background Dimming</label>
+ <span id="sheet-dim-val" class="sheet-badge">68%</span>
+ </div>
+ <input type="range" id="sheet-dim-slider" min="20" max="95" value="68" class="sheet-slider" />
+ </div>
+ <div class="sheet-group">
+ <label class="sheet-label">Ambient Blur Effect</label>
+ <div class="sheet-pills-row">
+ <button type="button" class="sheet-pill-btn active" data-blur="none">Crisp Art</button>
+ <button type="button" class="sheet-pill-btn" data-blur="soft">Soft Bokeh</button>
+ <button type="button" class="sheet-pill-btn" data-blur="dreamy">Dreamy Mist</button>
+ </div>
+ </div>
+ </div>
+ <div id="sheet-section-lore" class="sheet-panel">
+ <div class="sheet-group">
+ <label class="sheet-label">Character Persona &amp; Tone</label>
+ <p id="sheet-lore-personality" class="sheet-lore-text"></p>
+ </div>
+ <div class="sheet-group">
+ <label class="sheet-label">Scenario &amp; Setting</label>
+ <p id="sheet-lore-scenario" class="sheet-lore-text"></p>
+ </div>
+ <div class="sheet-group">
+ <label class="sheet-label">Persistent Session Memory &amp; Lore Notes</label>
+ <textarea id="sheet-memory-input" class="sheet-textarea" rows="3" placeholder="Key plot details, relationship notes, or instructions to remember..."></textarea>
+ <button type="button" id="sheet-save-memory-btn" class="btn-primary btn-sm" style="margin-top:0.4rem;">Save Story Notes</button>
+ </div>
+ </div>
+ <div id="sheet-section-model" class="sheet-panel">
+ <div class="sheet-group">
+ <label class="sheet-label">Select AI Story Engine</label>
+ <select id="sheet-model-select" class="sheet-select model-dropdown-populate"></select>
+ </div>
+ <div class="sheet-group">
+ <label class="sheet-label">Your Roleplay Persona</label>
+ <select id="sheet-persona-select" class="sheet-select"></select>
+ </div>
+ <div class="sheet-group" style="padding-top:0.5rem;border-top:1px solid var(--border-subtle);">
+ <label class="sheet-label">Session Controls</label>
+ <div class="sheet-actions-row" style="display:flex;gap:0.5rem;flex-wrap:wrap;">
+ <button type="button" id="sheet-new-session-btn" class="btn-glass btn-sm">New Chat</button>
+ <button type="button" id="sheet-export-chat-btn" class="btn-glass btn-sm">Export Story (.md)</button>
+ <button type="button" id="sheet-delete-session-btn" class="btn-glass btn-sm" style="color:#f87171;border-color:rgba(239,68,68,0.35);">Delete Chat</button>
+ </div>
+ </div>
+ </div>
+ </div>
+ </div>
+ <footer class="chat-input-dock chat-input-area chat-footer">
+ <div class="chat-quick-bar rp-quick-toolbar quick-actions">
+ <button type="button" id="insert-action-btn" class="chip-action rp-toolbar-chip" title="Insert *action* formatting">
+ <span class="chip-symbol">✦</span>
+ <span>*Action*</span>
+ </button>
+ <button type="button" class="chip-action rp-toolbar-chip rp-mood-chip" data-quick-action="*smiles warmly* " title="Insert *smiles warmly*">
+ <span>*smiles*</span>
+ </button>
+ <button type="button" class="chip-action rp-toolbar-chip rp-mood-chip" data-quick-action="*steps closer* " title="Insert *steps closer*">
+ <span>*steps closer*</span>
+ </button>
+ <button type="button" class="chip-action rp-toolbar-chip rp-mood-chip" data-quick-action="*whispers softly* " title="Insert *whispers softly*">
+ <span>*whispers*</span>
+ </button>
+ <button type="button" id="regenerate-btn" class="chip-action rp-toolbar-chip" title="Reroll last character response">
+ <span class="chip-symbol">↺</span>
+ <span>Reroll</span>
+ </button>
+ <button type="button" id="quick-tts-btn" class="chip-action rp-toolbar-chip" title="Toggle Voice Narration">
+ <span class="chip-symbol">🎙</span>
+ <span id="quick-tts-label">Voice: Off</span>
+ </button>
+ <button type="button" id="deep-rp-toggle-btn" class="chip-action rp-toolbar-chip" title="Toggle Deep Roleplay Mode (Rich multi-paragraph sensory narrative &amp; extended memory)">
+ <span class="chip-symbol">✦</span>
+ <span id="deep-rp-toggle-label">Deep RP: Off</span>
+ </button>
+ <button type="button" id="mobile-quick-scene-btn" class="chip-action rp-toolbar-chip" title="Scene &amp; Atmosphere">
+ <span class="chip-symbol">✦</span>
+ <span>Scene</span>
+ </button>
+ <span id="stream-status-indicator" class="stream-status"></span>
+ </div>
+ <form id="chat-send-form" class="chat-send-row chat-input-row">
+ <textarea
+ id="chat-input"
+ rows="1"
+ placeholder="Write a message or *action*..."
+ required
+ ></textarea>
+ <button type="submit" id="chat-send-btn" class="btn-send send-btn" title="Send message" aria-label="Send">
+ <svg class="send-arrow-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+ </button>
+ </form>
+ </footer>
+ </aside>
+ <div id="auth-modal" class="modal-backdrop hidden">
+ <div class="modal-card glass-card modal-card-wide" style="max-width:480px;">
+ <div class="modal-header">
+ <div>
+ <h3>Account &amp; Profile</h3>
+ <p id="acct-status-subtitle" class="muted-text">Manage your identity, created characters, and cross-device login.</p>
+ </div>
+ <button id="close-auth-modal" class="icon-btn">Close</button>
+ </div>
+ <div id="account-profile-box" class="account-profile-box">
+ <div class="account-avatar-row">
+ <img id="acct-avatar-preview" src="./assets/icon.svg" alt="Avatar" class="char-avatar-lg" />
+ <div style="flex:1;min-width:0;">
+ <div style="display:flex;align-items:center;gap:0.45rem;flex-wrap:wrap;">
+ <strong id="acct-current-name" style="font-size:0.95rem;">User</strong>
+ <span id="acct-tier-pill" class="badge-mini badge-warm">Guest Session</span>
+ </div>
+ <div id="acct-current-handle" class="muted-text" style="font-size:0.75rem;">@guest</div>
+ <div id="acct-current-email" class="muted-text" style="font-size:0.75rem;color:var(--text-subtle);">No email linked</div>
+ </div>
+ <label class="btn-glass btn-sm file-label-btn">
+ Change Avatar
+ <input type="file" id="acct-avatar-file" accept="image/*" hidden />
+ </label>
+ </div>
+ <form id="account-profile-form" style="margin-top:0.75rem;display:flex;flex-direction:column;gap:0.55rem;">
+ <div class="form-row-2" style="grid-template-columns: 1fr 1fr;gap:0.55rem;">
+ <div class="form-group">
+ <label for="acct-edit-display">Display Name</label>
+ <input type="text" id="acct-edit-display" maxlength="80" placeholder="Your display name" />
+ </div>
+ <div class="form-group">
+ <label for="acct-edit-bio">Short Bio / Signature</label>
+ <input type="text" id="acct-edit-bio" maxlength="200" placeholder="Writer, RPG fan..." />
+ </div>
+ </div>
+ <div class="form-group">
+ <label for="acct-edit-email">Account Email <span class="muted-text">(harshitg933@gmail.com unlocks Super Access)</span></label>
+ <input type="email" id="acct-edit-email" placeholder="harshitg933@gmail.com" />
+ </div>
+ <div style="display:flex;justify-content:space-between;align-items:center;gap:0.5rem;">
+ <button type="submit" class="btn-glass btn-sm">Update Profile</button>
+ <button type="button" id="logout-account-btn" class="btn-glass btn-sm hidden">Sign Out</button>
+ </div>
+ </form>
+ </div>
+ <div class="account-profile-box" style="margin-top:0.85rem;padding:0.85rem;border-radius:12px;background:rgba(255,255,255,0.02);border:1px solid var(--border-subtle);">
+ <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.4rem;">
+ <div style="display:flex;align-items:center;gap:0.4rem;">
+ <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--accent-solid);"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+ <strong style="font-size:0.82rem;color:var(--text-main);">Backup &amp; Restore</strong>
+ </div>
+ <span class="badge-mini" style="background:rgba(255,255,255,0.06);color:var(--text-muted);font-size:0.7rem;">Portable JSON</span>
+ </div>
+ <p class="muted-text" style="font-size:0.75rem;margin-bottom:0.65rem;line-height:1.45;">
+ Export conversations, personas, and custom characters to a local backup file or restore previously saved data.
+ </p>
+ <div style="display:flex;gap:0.5rem;flex-wrap:wrap;">
+ <button type="button" id="export-backup-btn" class="btn-glass btn-sm" style="flex:1;min-width:120px;display:inline-flex;align-items:center;justify-content:center;gap:0.35rem;">
+ <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+ <span>Export Backup</span>
+ </button>
+ <button type="button" id="import-backup-btn" class="btn-glass btn-sm" style="flex:1;min-width:120px;display:inline-flex;align-items:center;justify-content:center;gap:0.35rem;">
+ <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+ <span>Import Backup</span>
+ </button>
+ <input type="file" id="import-backup-file" accept=".json,application/json" style="display:none;" />
+ </div>
+ </div>
+ <div id="super-admin-panel" class="super-admin-panel hidden" style="margin-top:0.85rem;padding:0.85rem;background:rgba(110,123,242,0.06);border:1px solid rgba(110,123,242,0.25);border-radius:12px;">
+ <div style="display:flex;justify-content:space-between;align-items:center;gap:0.5rem;flex-wrap:wrap;margin-bottom:0.4rem;">
+ <div style="display:flex;align-items:center;gap:0.4rem;">
+ <span class="badge-mini" style="background:var(--accent-solid);color:#ffffff;font-weight:700;">FOUNDER ACCESS</span>
+ <strong style="font-size:0.82rem;color:var(--text-main);">harshitg933@gmail.com</strong>
+ </div>
+ <span id="super-admin-active-tier-tag" class="badge-mini badge-warm">All Unlocked</span>
+ </div>
+ <p class="muted-text" style="font-size:0.76rem;margin-bottom:0.55rem;line-height:1.4;">
+ As Founder, you have universal super access. Click below to simulate different tiers and test user blocks/paywalls in real time:
+ </p>
+ <div class="tier-sim-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:0.4rem;">
+ <button type="button" class="btn-tier-sim active" data-sim="super_admin">Founder (Full Access)</button>
+ <button type="button" class="btn-tier-sim" data-sim="ultra">Ultra Tier ($19/mo)</button>
+ <button type="button" class="btn-tier-sim" data-sim="pro">Flagship Pro ($9/mo)</button>
+ <button type="button" class="btn-tier-sim" data-sim="free">Free Tier (Simulate Block)</button>
+ </div>
+ </div>
+ <div id="auth-switch-section" style="margin-top:0.95rem;padding-top:0.85rem;border-top:1px solid var(--border-subtle);">
+ <div class="auth-tabs">
+ <button type="button" class="auth-tab active" data-auth-mode="register">Create Permanent Account</button>
+ <button type="button" class="auth-tab" data-auth-mode="login">Sign In to Existing</button>
+ </div>
+ <div style="margin-top:0.75rem;">
+ <div style="display:flex;gap:0.5rem;">
+ <button type="button" id="google-auth-btn" class="btn-glass btn-sm" style="flex:1;display:inline-flex;align-items:center;justify-content:center;gap:0.45rem;padding:0.5rem 0.6rem;">
+ <svg width="15" height="15" viewBox="0 0 24 24"><path fill="#EA4335" d="M12 5c1.6 0 3 .6 4.1 1.6l3.1-3.1C17.3 1.7 14.8 1 12 1 7.5 1 3.7 3.6 1.9 7.3l3.7 2.9C6.5 7.4 9 5 12 5z"/><path fill="#4285F4" d="M23.5 12.3c0-.8-.1-1.7-.2-2.3H12v4.5h6.5c-.3 1.5-1.1 2.8-2.4 3.7l3.7 2.9c2.2-2 3.7-5 3.7-8.8z"/><path fill="#FBBC05" d="M5.6 14.8c-.2-.7-.4-1.5-.4-2.3 0-.8.2-1.6.4-2.3L1.9 7.3C.7 9.7 0 12.3 0 15s.7 5.3 1.9 7.7l3.7-2.9z"/><path fill="#34A853" d="M12 23c3.2 0 6-1.1 8-3l-3.7-2.9c-1.1.7-2.5 1.2-4.3 1.2-3 0-5.5-2.4-6.4-5.2L1.9 16C3.7 19.7 7.5 23 12 23z"/></svg>
+ <span>Google</span>
+ </button>
+ <button type="button" id="facebook-auth-btn" class="btn-glass btn-sm" style="flex:1;display:inline-flex;align-items:center;justify-content:center;gap:0.45rem;padding:0.5rem 0.6rem;">
+ <svg width="15" height="15" viewBox="0 0 24 24" fill="#1877F2"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+ <span>Facebook</span>
+ </button>
+ </div>
+ <div class="auth-divider" style="margin:0.75rem 0 0.35rem;"><span>or with email &amp; username</span></div>
+ </div>
+ <form id="auth-form" style="margin-top:0.6rem;">
+ <div class="form-group">
+ <label for="auth-username" id="auth-username-label">Username</label>
+ <input type="text" id="auth-username" required minlength="3" placeholder="choose_a_username" />
+ </div>
+ <div class="form-group" id="auth-email-group" style="display:flex;flex-direction:column;margin-top:0.6rem;">
+ <label for="auth-email">Email Address <span class="muted-text">(Enter harshitg933@gmail.com for Super Access)</span></label>
+ <input type="email" id="auth-email" placeholder="harshitg933@gmail.com" />
+ </div>
+ <div class="form-group" id="auth-display-group" style="display:flex;margin-top:0.6rem;">
+ <label for="auth-display">Display Name</label>
+ <input type="text" id="auth-display" placeholder="How characters &amp; users see you" />
+ </div>
+ <div class="form-group" style="margin-top:0.6rem;">
+ <label for="auth-password">Password</label>
+ <input type="password" id="auth-password" required minlength="4" placeholder="••••••••" />
+ </div>
+ <p id="auth-error-msg" class="error-text hidden"></p>
+ <button type="submit" id="auth-submit-btn" class="btn-primary" style="width:100%;margin-top:0.8rem;">Save Permanent Account</button>
+ </form>
+ <div style="margin-top:0.75rem;padding-top:0.65rem;border-top:1px dashed var(--border-subtle);text-align:center;">
+ <button type="button" id="claim-super-access-btn" class="btn-glass btn-sm" style="width:100%;font-size:0.78rem;color:var(--accent-solid);border-color:var(--accent-border);">
+ Claim Founder Super Access (harshitg933@gmail.com)
+ </button>
+ </div>
+ <div class="auth-divider"><span>or</span></div>
+ <button type="button" id="new-guest-btn" class="btn-glass btn-sm" style="width:100%;">
+ Switch to Fresh Guest Session
+ </button>
+ <div class="auth-legal-footer" style="margin-top:0.85rem;text-align:center;font-size:0.75rem;color:var(--text-muted);line-height:1.4;">
+ By using Sora, you agree to local data sovereignty.
+ <a href="privacy.html" target="_blank" rel="noopener noreferrer" style="color:var(--accent-solid);text-decoration:underline;margin-left:0.25rem;">Privacy Policy</a>
+ </div>
+ </div>
+ </div>
+ </div>
+ <div id="premium-modal" class="modal-backdrop hidden">
+ <div class="modal-card glass-card modal-card-wide pro-modal-card" style="max-width:620px;max-height:90dvh;overflow-y:auto;">
+ <div class="modal-header">
+ <div style="display:flex;align-items:center;gap:0.65rem;">
+ <div class="pro-modal-icon-badge">✦</div>
+ <div>
+ <div style="display:flex;align-items:center;gap:0.5rem;flex-wrap:wrap;">
+ <h3 style="margin:0;">Sora Pro</h3>
+ <span id="pro-modal-tier-badge" class="badge-mini badge-warm">Earnable Edition · $0</span>
+ </div>
+ <p class="muted-text" style="font-size:0.78rem;margin-top:0.2rem;">Zero ads, zero subscriptions, sovereign local roleplay. Unlocked through affinity or free BYOK.</p>
+ </div>
+ </div>
+ <button id="close-premium-modal" class="icon-btn" aria-label="Close">Close</button>
+ </div>
+ <div id="pro-active-banner" class="pro-unlocked-banner hidden">
+ <div style="display:flex;align-items:center;gap:0.5rem;">
+ <span class="pro-sparkle" style="font-size:1.2rem;">✦</span>
+ <div>
+ <strong style="color:var(--text-main);font-size:0.9rem;">Sora Pro is Active on your Device!</strong>
+ <p class="muted-text" style="font-size:0.75rem;margin:0;">Deep Roleplay Mode, multi-provider model switching, and ✦ PRO Astral badge enabled.</p>
+ </div>
+ </div>
+ </div>
+ <div id="pro-unlock-methods-wrap" style="display:flex;flex-direction:column;gap:0.85rem;margin-top:0.75rem;">
+ <div class="pro-method-card">
+ <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.4rem;">
+ <div style="display:flex;align-items:center;gap:0.4rem;">
+ <span style="font-size:1rem;">⚡</span>
+ <strong style="font-size:0.85rem;">Method 1: Affinity &amp; Activity Unlock (Free)</strong>
+ </div>
+ <span class="badge-mini" style="background:rgba(110,123,242,0.15);color:#8B98F8;">100% Earnable</span>
+ </div>
+ <p class="muted-text" style="font-size:0.76rem;line-height:1.45;margin-bottom:0.6rem;">
+ Roleplay with characters to unlock Pro. Send 10+ messages across conversations OR reach Level 2+ Tie with any companion:
+ </p>
+ <div class="pro-progress-group">
+ <div class="pro-progress-label-row">
+ <span>Story Messages Sent</span>
+ <span id="pro-progress-msg-label">0 / 10 Messages</span>
+ </div>
+ <div class="pro-progress-track">
+ <div id="pro-progress-msg-bar" class="pro-progress-fill" style="width: 0%;"></div>
+ </div>
+ </div>
+ <div class="pro-progress-group" style="margin-top:0.5rem;">
+ <div class="pro-progress-label-row">
+ <span>Highest Character Bond</span>
+ <span id="pro-progress-tie-label">Stranger (Lv.1 / Lv.2)</span>
+ </div>
+ <div class="pro-progress-track">
+ <div id="pro-progress-tie-bar" class="pro-progress-fill" style="width: 0%;"></div>
+ </div>
+ </div>
+ <div style="margin-top:0.75rem;display:flex;justify-content:flex-end;">
+ <button type="button" id="claim-pro-btn" class="btn-primary btn-sm" style="display:inline-flex;align-items:center;gap:0.4rem;">
+ <span class="pro-sparkle">✦</span>
+ <span id="claim-pro-btn-label">Claim Sora Pro (Free)</span>
+ </button>
+ </div>
+ </div>
+ <div class="pro-method-card">
+ <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.4rem;">
+ <div style="display:flex;align-items:center;gap:0.4rem;">
+ <span style="font-size:1rem;">🔑</span>
+ <strong style="font-size:0.85rem;">Method 2: Free BYOK Provider Key</strong>
+ </div>
+ <span class="badge-mini" style="background:rgba(16,185,129,0.15);color:#34D399;">Instant Unlock</span>
+ </div>
+ <p class="muted-text" style="font-size:0.76rem;line-height:1.45;margin-bottom:0.6rem;">
+ Connecting a free API key from Groq, Google Gemini, or OpenRouter grants instant Pro status and direct flagship inference:
+ </p>
+ <div style="display:flex;gap:0.5rem;flex-wrap:wrap;">
+ <a href="https://console.groq.com/keys" target="_blank" rel="noopener noreferrer" class="btn-glass btn-xs" style="text-decoration:none;font-size:0.74rem;">
+ Free Groq Key (30 req/min) ↗
+ </a>
+ <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener noreferrer" class="btn-glass btn-xs" style="text-decoration:none;font-size:0.74rem;">
+ Free Gemini Flash Key ↗
+ </a>
+ <a href="https://openrouter.ai/keys" target="_blank" rel="noopener noreferrer" class="btn-glass btn-xs" style="text-decoration:none;font-size:0.74rem;">
+ Free OpenRouter Key ↗
+ </a>
+ </div>
+ </div>
+ </div>
+ <div style="margin-top:1rem;">
+ <h4 style="font-size:0.85rem;margin-bottom:0.5rem;color:var(--text-main);">Included Sora Pro Perks ($0.00 Forever):</h4>
+ <div class="pro-perks-grid">
+ <div class="pro-perk-item">
+ <span class="pro-perk-icon">✦</span>
+ <div>
+ <strong>Deep Roleplay Mode</strong>
+ <p class="muted-text">Multi-paragraph sensory prose, inner monologues, and extended memory retention.</p>
+ </div>
+ </div>
+ <div class="pro-perk-item">
+ <span class="pro-perk-icon">✦</span>
+ <div>
+ <strong>AI Model Switcher</strong>
+ <p class="muted-text">Toggle between Sora Standard, Sora Deep Roleplay, and high-speed BYOK engines.</p>
+ </div>
+ </div>
+ <div class="pro-perk-item">
+ <span class="pro-perk-icon">✦</span>
+ <div>
+ <strong>Unlimited Characters &amp; Personas</strong>
+ <p class="muted-text">Craft unlimited original characters, lore scenarios, and writer identities.</p>
+ </div>
+ </div>
+ <div class="pro-perk-item">
+ <span class="pro-perk-icon">✦</span>
+ <div>
+ <strong>Astral Pro Badge</strong>
+ <p class="muted-text">Exclusive ✦ PRO highlight displayed on your profile and community comments.</p>
+ </div>
+ </div>
+ </div>
+ </div>
+ <div id="modal-premium-list" class="premium-specs-grid hidden" style="margin-top:0.25rem;"></div>
+ <div class="modal-actions-row" style="margin-top:1rem;justify-content:flex-end;">
+ <button id="close-premium-continue-free" class="btn-glass">Done</button>
+ </div>
+ </div>
+ </div>
+ <div id="comments-modal" class="modal-backdrop hidden">
+ <div class="modal-card glass-card modal-card-wide comments-modal-card" style="max-width:580px;max-height:88dvh;display:flex;flex-direction:column;">
+ <div class="modal-header comments-modal-header">
+ <div class="comments-header-char-info">
+ <img id="comment-char-avatar" src="./assets/icon.svg" alt="Character" class="char-avatar-lg char-avatar-img" />
+ <div class="comments-char-meta">
+ <div class="comments-title-row">
+ <h3 id="comment-char-name">Character Name</h3>
+ <span id="comment-char-rating" class="badge-mini badge-warm">★ 4.9</span>
+ <span id="comment-modal-count" class="badge-mini">0 comments</span>
+ </div>
+ <p id="comment-char-tagline" class="muted-text" style="font-size:0.8rem;margin-top:0.15rem;display:-webkit-box;-webkit-line-clamp:1;-webkit-box-orient:vertical;overflow:hidden;"></p>
+ </div>
+ </div>
+ <button type="button" id="close-comments-modal" class="icon-btn">Close</button>
+ </div>
+ <div class="comment-composer-box">
+ <form id="comment-compose-form">
+ <textarea
+ id="comment-input-text"
+ rows="2"
+ placeholder="Share your thoughts, scenario highlights, or chemistry with this character..."
+ required
+ ></textarea>
+ <div class="comment-composer-actions">
+ <div class="reaction-tag-selector" id="reaction-tag-selector">
+ <button type="button" class="reaction-chip active" data-reaction-tag="Peak">🔥 Peak</button>
+ <button type="button" class="reaction-chip" data-reaction-tag="Wholesome">❤️ Wholesome</button>
+ <button type="button" class="reaction-chip" data-reaction-tag="In-Character">🎭 In-Character</button>
+ <button type="button" class="reaction-chip" data-reaction-tag="Emotional">😭 Emotional</button>
+ </div>
+ <button type="submit" id="comment-submit-btn" class="btn-primary btn-sm">Post</button>
+ </div>
+ </form>
+ </div>
+ <div class="comments-subbar">
+ <span class="comments-feed-title">Community Reflections</span>
+ <div class="comments-sort-tabs">
+ <button type="button" class="comment-sort-tab active" data-comment-sort="top">Top</button>
+ <button type="button" class="comment-sort-tab" data-comment-sort="newest">Newest</button>
+ </div>
+ </div>
+ <div id="comments-feed-list" class="comments-feed-list" style="overflow-y:auto;flex:1;padding-right:0.25rem;">
+ </div>
+ </div>
+ </div>
+ <div id="core-memories-modal" class="modal-backdrop hidden">
+ <div class="modal-card glass-card modal-card-wide core-memories-card" style="max-width:540px;max-height:86dvh;display:flex;flex-direction:column;">
+ <div class="modal-header">
+ <div style="display:flex;align-items:center;gap:0.75rem;">
+ <img id="memories-char-avatar" src="./assets/icon.svg" alt="Character" class="char-avatar-md char-avatar-img" style="width:42px;height:42px;border-radius:12px;object-fit:cover;border:1px solid var(--border-subtle);" />
+ <div>
+ <h3 id="memories-char-name" style="margin:0;font-size:1.05rem;">Character Memories</h3>
+ <p class="muted-text" style="font-size:0.76rem;margin:0.15rem 0 0;">Pivotal facts, promises, and backstory locked in active memory</p>
+ </div>
+ </div>
+ <button type="button" id="close-memories-modal" class="icon-btn">Close</button>
+ </div>
+ <div style="padding:0.75rem 1rem;border-bottom:1px solid var(--border-subtle);background:rgba(255,255,255,0.02);">
+ <form id="add-core-memory-form" style="display:flex;gap:0.5rem;">
+ <input
+ type="text"
+ id="new-core-memory-input"
+ class="search-input"
+ style="flex:1;font-size:0.86rem;padding:0.45rem 0.75rem;"
+ placeholder="Add key fact (e.g. Promised to visit the Kyoto festival together)..."
+ maxlength="200"
+ required
+ />
+ <button type="submit" class="btn-primary btn-sm" style="white-space:nowrap;padding:0.45rem 0.85rem;">+ Pin</button>
+ </form>
+ </div>
+ <div id="core-memories-list" style="overflow-y:auto;flex:1;padding:0.85rem 1rem;display:flex;flex-direction:column;gap:0.55rem;">
+ </div>
+ <div class="modal-actions" style="padding:0.65rem 1rem;border-top:1px solid var(--border-subtle);display:flex;justify-content:space-between;align-items:center;">
+ <span id="memories-capacity-label" class="muted-text" style="font-size:0.78rem;">0 / 15 Memories</span>
+ <button type="button" id="clear-all-memories-btn" class="btn-xs btn-outline" style="color:#ef4444;border-color:rgba(239,68,68,0.3);">Clear All</button>
+ </div>
+ </div>
+ </div>
+ <div id="toast-container" class="toast-container"></div>
+ <script src="./js/api.js?v=mvb026je"></script>
+ <script src="./js/catalog.js?v=mvb026je"></script>
+ <script src="./js/app.js?v=mvb026je"></script>
+</body>
+</html>
