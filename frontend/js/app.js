@@ -7,16 +7,17 @@ if ('caches' in window) {
   caches.keys().then(keys => keys.forEach(k => caches.delete(k)));
 }
 
-window.getLocalTies = function() {
-  try {
-    const raw = localStorage.getItem('sora_character_ties') || localStorage.getItem('sora_ties_v1') || localStorage.getItem('sora_ties') || '{}';
-    const parsed = JSON.parse(raw);
-    return (parsed && typeof parsed === 'object') ? parsed : {};
-  } catch (e) {
-    return {};
-  }
-};
-const getLocalTies = window.getLocalTies;
+if (!window.getLocalTies) {
+  window.getLocalTies = function() {
+    try {
+      const raw = localStorage.getItem('sora_character_ties') || localStorage.getItem('sora_ties_v1') || localStorage.getItem('sora_ties') || '{}';
+      const parsed = JSON.parse(raw);
+      return (parsed && typeof parsed === 'object') ? parsed : {};
+    } catch (e) {
+      return {};
+    }
+  };
+}
 
 const state = {
   user: null,
@@ -305,17 +306,17 @@ window.getFallbackPortraitSVG = function(char) {
 window.getCharacterPortrait = function(char) {
   if (!char) return '';
   const raw = (typeof char === 'string' ? char : (char.image || char.avatar_url || char.avatar)) || '';
-  if (typeof raw === 'string' && raw.startsWith('https://') && !raw.includes('data:image/svg') && !raw.includes('api.dicebear.com')) {
-    return raw;
-  }
-  if (typeof raw === 'string' && raw.startsWith('data:image/') && !raw.includes('<path d="M110 320')) {
-    return raw;
+  if (typeof raw === 'string' && raw.trim()) {
+    const trimmed = raw.trim();
+    if (trimmed.startsWith('http://') || trimmed.startsWith('https://') || trimmed.startsWith('data:image/') || trimmed.startsWith('./') || trimmed.startsWith('/')) {
+      return trimmed;
+    }
   }
   const name = String((typeof char === 'object' ? char?.name : char) || 'Character').trim();
-  const role = String((typeof char === 'object' ? (char?.tagline || char?.description || char?.category || 'anime character') : 'anime character')).slice(0, 80);
-  const seed = name.split('').reduce((acc, c) => acc + c.charCodeAt(0), 0);
-  const prompt = encodeURIComponent(`masterpiece anime portrait illustration of ${name}, ${role}, detailed face and eyes, cinematic lighting, soft bokeh background, 8k resolution, key visual`);
-  return `https://image.pollinations.ai/prompt/${prompt}?width=400&height=480&seed=${seed}&nologo=true`;
+  const seed = encodeURIComponent(name.replace(/\s+/g, '_') || 'Sora');
+  const isMale = char && typeof char === 'object' && char.gender === 'Male';
+  const style = isMale ? 'adventurer' : 'lorelei';
+  return `https://api.dicebear.com/9.x/${style}/svg?seed=${seed}`;
 };
 
 window.getCharacterPortraitURI = window.getCharacterPortrait;
@@ -1434,7 +1435,7 @@ function getUserActivityStats() {
     });
   });
 
-  const ties = getLocalTies();
+  const ties = window.getLocalTies();
   let maxTieLevel = 1;
   let highestTieStage = "Stranger";
   Object.values(ties).forEach((t) => {

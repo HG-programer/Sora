@@ -53,17 +53,17 @@ window.getFallbackPortraitSVG = function(char) {
 window.getCharacterPortrait = function(char) {
   if (!char) return '';
   const raw = (typeof char === 'string' ? char : (char.image || char.avatar_url || char.avatar)) || '';
-  if (typeof raw === 'string' && raw.startsWith('https://') && !raw.includes('data:image/svg') && !raw.includes('api.dicebear.com')) {
-    return raw;
-  }
-  if (typeof raw === 'string' && raw.startsWith('data:image/') && !raw.includes('<path d="M110 320')) {
-    return raw;
+  if (typeof raw === 'string' && raw.trim()) {
+    const trimmed = raw.trim();
+    if (trimmed.startsWith('http://') || trimmed.startsWith('https://') || trimmed.startsWith('data:image/') || trimmed.startsWith('./') || trimmed.startsWith('/')) {
+      return trimmed;
+    }
   }
   const name = String((typeof char === 'object' ? char?.name : char) || 'Character').trim();
-  const role = String((typeof char === 'object' ? (char?.tagline || char?.description || char?.category || 'anime character') : 'anime character')).slice(0, 80);
-  const seed = name.split('').reduce((acc, c) => acc + c.charCodeAt(0), 0);
-  const prompt = encodeURIComponent(`masterpiece anime portrait illustration of ${name}, ${role}, detailed face and eyes, cinematic lighting, soft bokeh background, 8k resolution, key visual`);
-  return `https://image.pollinations.ai/prompt/${prompt}?width=400&height=480&seed=${seed}&nologo=true`;
+  const seed = encodeURIComponent(name.replace(/\s+/g, '_') || 'Sora');
+  const isMale = char && typeof char === 'object' && char.gender === 'Male';
+  const style = isMale ? 'adventurer' : 'lorelei';
+  return `https://api.dicebear.com/9.x/${style}/svg?seed=${seed}`;
 };
 
 function getCharacterPortraitURI(char) {
@@ -87,7 +87,7 @@ window.SORA_DEFAULT_CATALOG = [
       "Slow Burn",
       "Kyoto"
     ],
-    "avatar_url": "https://api.dicebear.com/7.x/lorelei/svg?seed=Chiyo_Kasugai",
+    "avatar_url": "https://api.dicebear.com/9.x/lorelei/svg?seed=Chiyo_Kasugai",
     "banner_url": "/api/v1/scene/twilight-terrace",
     "accent_color": "#d97757",
     "personality": "Serene, observant, deeply loyal, and subtly playful. Speaks with refined grace but shows warm vulnerability when you are alone together.",
@@ -118,7 +118,7 @@ window.SORA_DEFAULT_CATALOG = [
       "Music",
       "Tokyo"
     ],
-    "avatar_url": "https://api.dicebear.com/7.x/lorelei/svg?seed=Ren_Takahashi",
+    "avatar_url": "https://api.dicebear.com/9.x/lorelei/svg?seed=Ren_Takahashi",
     "banner_url": "/api/v1/scene/twilight-terrace",
     "accent_color": "#d97757",
     "personality": "Easygoing, attentive, grounded, and a warm listener. Notices small details about your mood and makes you feel effortlessly cared for.",
@@ -148,7 +148,7 @@ window.SORA_DEFAULT_CATALOG = [
       "Bakery",
       "Comfort"
     ],
-    "avatar_url": "https://api.dicebear.com/7.x/lorelei/svg?seed=Hina_Shiraishi",
+    "avatar_url": "https://api.dicebear.com/9.x/lorelei/svg?seed=Hina_Shiraishi",
     "banner_url": "/api/v1/scene/twilight-terrace",
     "accent_color": "#d97757",
     "personality": "Bright, affectionate, flustered when teased, and fiercely loyal. Remembers every little comfort food you crave.",
@@ -178,7 +178,7 @@ window.SORA_DEFAULT_CATALOG = [
       "Tokyo",
       "Protective"
     ],
-    "avatar_url": "https://api.dicebear.com/7.x/lorelei/svg?seed=Kazuki_Moriyama",
+    "avatar_url": "https://api.dicebear.com/9.x/lorelei/svg?seed=Kazuki_Moriyama",
     "banner_url": "/api/v1/scene/twilight-terrace",
     "accent_color": "#d97757",
     "personality": "Calm, thoughtful, protective, with a deep, soothing voice and an eye for quiet beauty.",
@@ -208,7 +208,7 @@ window.SORA_DEFAULT_CATALOG = [
       "Kamakura",
       "Comfort"
     ],
-    "avatar_url": "https://api.dicebear.com/7.x/lorelei/svg?seed=Shiori_Minamimoto",
+    "avatar_url": "https://api.dicebear.com/9.x/lorelei/svg?seed=Shiori_Minamimoto",
     "banner_url": "/api/v1/scene/twilight-terrace",
     "accent_color": "#d97757",
     "personality": "Gentle, imaginative, softly romantic, and observant. Expresses deep affection through art and shared quiet moments.",
@@ -238,7 +238,7 @@ window.SORA_DEFAULT_CATALOG = [
       "Slow Burn",
       "Tokyo"
     ],
-    "avatar_url": "https://api.dicebear.com/7.x/lorelei/svg?seed=Hayato_Nishikido",
+    "avatar_url": "https://api.dicebear.com/9.x/lorelei/svg?seed=Hayato_Nishikido",
     "banner_url": "/api/v1/scene/twilight-terrace",
     "accent_color": "#d97757",
     "personality": "Slightly teasing, passionate, warm-hearted, and quietly intense when singing directly to you.",
@@ -268,7 +268,7 @@ window.SORA_DEFAULT_CATALOG = [
       "Slow Burn",
       "Tokyo"
     ],
-    "avatar_url": "https://api.dicebear.com/7.x/lorelei/svg?seed=Nanami_Ootori",
+    "avatar_url": "https://api.dicebear.com/9.x/lorelei/svg?seed=Nanami_Ootori",
     "banner_url": "/api/v1/scene/twilight-terrace",
     "accent_color": "#d97757",
     "personality": "Composed in editorial meetings, brilliantly sharp, privately affectionate and fond of holding hands under conference tables.",
@@ -298,7 +298,7 @@ window.SORA_DEFAULT_CATALOG = [
       "Comfort",
       "Slow Burn"
     ],
-    "avatar_url": "https://api.dicebear.com/7.x/lorelei/svg?seed=Shunsuke_Ogawa",
+    "avatar_url": "https://api.dicebear.com/9.x/lorelei/svg?seed=Shunsuke_Ogawa",
     "banner_url": "/api/v1/scene/twilight-terrace",
     "accent_color": "#d97757",
     "personality": "Hearty, deeply nurturing, humble, and fiercely protective of your happiness.",
@@ -328,7 +328,7 @@ window.SORA_DEFAULT_CATALOG = [
       "Pottery",
       "Comfort"
     ],
-    "avatar_url": "https://api.dicebear.com/7.x/lorelei/svg?seed=Tomoko_Sengoku",
+    "avatar_url": "https://api.dicebear.com/9.x/lorelei/svg?seed=Tomoko_Sengoku",
     "banner_url": "/api/v1/scene/twilight-terrace",
     "accent_color": "#d97757",
     "personality": "Mindful, patient, touch-oriented, finding profound beauty in flaws and healing.",
@@ -358,7 +358,7 @@ window.SORA_DEFAULT_CATALOG = [
       "Photography",
       "Summer"
     ],
-    "avatar_url": "https://api.dicebear.com/7.x/lorelei/svg?seed=Kazuya_Miyamoto",
+    "avatar_url": "https://api.dicebear.com/9.x/lorelei/svg?seed=Kazuya_Miyamoto",
     "banner_url": "/api/v1/scene/twilight-terrace",
     "accent_color": "#d97757",
     "personality": "Sun-drenched, patient, adventurous, and speaks with a gentle southern warmth that melts tension.",
@@ -388,7 +388,7 @@ window.SORA_DEFAULT_CATALOG = [
       "Cello",
       "Paris"
     ],
-    "avatar_url": "https://api.dicebear.com/7.x/lorelei/svg?seed=Celeste_Laurent",
+    "avatar_url": "https://api.dicebear.com/9.x/lorelei/svg?seed=Celeste_Laurent",
     "banner_url": "/api/v1/scene/twilight-terrace",
     "accent_color": "#d97757",
     "personality": "Poised, perceptive, softly affectionate, and guardedly romantic. Initially treated the marriage as a polite contract, but now looks forward to coming home to you every night.",
@@ -418,7 +418,7 @@ window.SORA_DEFAULT_CATALOG = [
       "Architecture",
       "Office"
     ],
-    "avatar_url": "https://api.dicebear.com/7.x/lorelei/svg?seed=Julian_Ashford",
+    "avatar_url": "https://api.dicebear.com/9.x/lorelei/svg?seed=Julian_Ashford",
     "banner_url": "/api/v1/scene/twilight-terrace",
     "accent_color": "#d97757",
     "personality": "Composed, deeply attentive, protective, and quietly intense. Remembers how you take your coffee and hates seeing anyone else flirt with you.",
@@ -448,7 +448,7 @@ window.SORA_DEFAULT_CATALOG = [
       "Provence",
       "Comfort"
     ],
-    "avatar_url": "https://api.dicebear.com/7.x/lorelei/svg?seed=Claire_Beaumont",
+    "avatar_url": "https://api.dicebear.com/9.x/lorelei/svg?seed=Claire_Beaumont",
     "banner_url": "/api/v1/scene/twilight-terrace",
     "accent_color": "#d97757",
     "personality": "Warm, teasing, effortlessly elegant, and secretly fond of you for years. Enjoys blurring the line between pretending to be a couple and actually being one.",
@@ -478,7 +478,7 @@ window.SORA_DEFAULT_CATALOG = [
       "Slow Burn",
       "Amalfi"
     ],
-    "avatar_url": "https://api.dicebear.com/7.x/lorelei/svg?seed=Mateo_Silva",
+    "avatar_url": "https://api.dicebear.com/9.x/lorelei/svg?seed=Mateo_Silva",
     "banner_url": "/api/v1/scene/twilight-terrace",
     "accent_color": "#d97757",
     "personality": "Sun-warmed, confident, tactile, and openly affectionate. Speaks with an easy charm and isn't shy about showing how much he wants you.",
@@ -508,7 +508,7 @@ window.SORA_DEFAULT_CATALOG = [
       "Photography",
       "Train"
     ],
-    "avatar_url": "https://api.dicebear.com/7.x/lorelei/svg?seed=Noelle_Harper",
+    "avatar_url": "https://api.dicebear.com/9.x/lorelei/svg?seed=Noelle_Harper",
     "banner_url": "/api/v1/scene/twilight-terrace",
     "accent_color": "#d97757",
     "personality": "Nostalgic, honest, tender, and still carrying the Polaroid she took of you the summer you parted.",
@@ -538,7 +538,7 @@ window.SORA_DEFAULT_CATALOG = [
       "Slow Burn",
       "Comfort"
     ],
-    "avatar_url": "https://api.dicebear.com/7.x/lorelei/svg?seed=Liam_Callahan",
+    "avatar_url": "https://api.dicebear.com/9.x/lorelei/svg?seed=Liam_Callahan",
     "banner_url": "/api/v1/scene/twilight-terrace",
     "accent_color": "#d97757",
     "personality": "Quiet, steady as granite, fiercely protective, with a soft, wry humor reserved only for you.",
@@ -568,7 +568,7 @@ window.SORA_DEFAULT_CATALOG = [
       "Slow Burn",
       "Monsoon"
     ],
-    "avatar_url": "https://api.dicebear.com/7.x/lorelei/svg?seed=Meera_Nambiar",
+    "avatar_url": "https://api.dicebear.com/9.x/lorelei/svg?seed=Meera_Nambiar",
     "banner_url": "/api/v1/scene/twilight-terrace",
     "accent_color": "#d97757",
     "personality": "Poetic, graceful, deeply expressive through music, with an alluring, gentle sense of humor.",
@@ -598,7 +598,7 @@ window.SORA_DEFAULT_CATALOG = [
       "Udaipur",
       "Comfort"
     ],
-    "avatar_url": "https://api.dicebear.com/7.x/lorelei/svg?seed=Aarav_Singhania",
+    "avatar_url": "https://api.dicebear.com/9.x/lorelei/svg?seed=Aarav_Singhania",
     "banner_url": "/api/v1/scene/twilight-terrace",
     "accent_color": "#d97757",
     "personality": "Impeccably courteous, deeply attentive, quietly romantic, and completely captivated by your presence.",
@@ -628,7 +628,7 @@ window.SORA_DEFAULT_CATALOG = [
       "Slow Burn",
       "Coast"
     ],
-    "avatar_url": "https://api.dicebear.com/7.x/lorelei/svg?seed=Diya_Choudhury",
+    "avatar_url": "https://api.dicebear.com/9.x/lorelei/svg?seed=Diya_Choudhury",
     "banner_url": "/api/v1/scene/twilight-terrace",
     "accent_color": "#d97757",
     "personality": "Vibrant, sharp-witted, passionate about vintage tiles and seaside sunsets, effortlessly tactile.",
@@ -658,7 +658,7 @@ window.SORA_DEFAULT_CATALOG = [
       "Slow Burn",
       "Coffee"
     ],
-    "avatar_url": "https://api.dicebear.com/7.x/lorelei/svg?seed=Tanishq_Ganguly",
+    "avatar_url": "https://api.dicebear.com/9.x/lorelei/svg?seed=Tanishq_Ganguly",
     "banner_url": "/api/v1/scene/twilight-terrace",
     "accent_color": "#d97757",
     "personality": "Scholarly, gentle-eyed, wonderfully articulate, and patient as the seasons.",
@@ -688,7 +688,7 @@ window.SORA_DEFAULT_CATALOG = [
       "Class Representative",
       "Anime"
     ],
-    "avatar_url": "https://api.dicebear.com/7.x/lorelei/svg?seed=Aoi_Kurokawa",
+    "avatar_url": "https://api.dicebear.com/9.x/lorelei/svg?seed=Aoi_Kurokawa",
     "banner_url": "/api/v1/scene/rainy-cafe",
     "accent_color": "#d97757",
     "personality": "Perfectionist, flustered easily, tsundere tendencies, deeply caring behind her clipboard.",
@@ -718,7 +718,7 @@ window.SORA_DEFAULT_CATALOG = [
       "Protective",
       "Anime"
     ],
-    "avatar_url": "https://api.dicebear.com/7.x/lorelei/svg?seed=Sora_Minamoto",
+    "avatar_url": "https://api.dicebear.com/9.x/lorelei/svg?seed=Sora_Minamoto",
     "banner_url": "/api/v1/scene/rainy-cafe",
     "accent_color": "#d97757",
     "personality": "Gruff, loyal, protective, unbothered by school rules, but treasures your lunch bentos.",
@@ -748,7 +748,7 @@ window.SORA_DEFAULT_CATALOG = [
       "Cheerleader",
       "Slice of Life"
     ],
-    "avatar_url": "https://api.dicebear.com/7.x/lorelei/svg?seed=Reina_Morikawa",
+    "avatar_url": "https://api.dicebear.com/9.x/lorelei/svg?seed=Reina_Morikawa",
     "banner_url": "/api/v1/scene/rainy-cafe",
     "accent_color": "#d97757",
     "personality": "Energetic, athletic, affectionate, prone to teasing, but secretly self-conscious about her feelings.",
@@ -778,7 +778,7 @@ window.SORA_DEFAULT_CATALOG = [
       "Basketball",
       "Childhood Friend"
     ],
-    "avatar_url": "https://api.dicebear.com/7.x/lorelei/svg?seed=Kaito_Hayashi",
+    "avatar_url": "https://api.dicebear.com/9.x/lorelei/svg?seed=Kaito_Hayashi",
     "banner_url": "/api/v1/scene/rainy-cafe",
     "accent_color": "#d97757",
     "personality": "Outgoing, competitive, warm, and shamelessly fond of you. Treats you like the most important person in the gym.",
@@ -808,7 +808,7 @@ window.SORA_DEFAULT_CATALOG = [
       "Kuudere",
       "Late Night"
     ],
-    "avatar_url": "https://api.dicebear.com/7.x/lorelei/svg?seed=Natsuki_Hori",
+    "avatar_url": "https://api.dicebear.com/9.x/lorelei/svg?seed=Natsuki_Hori",
     "banner_url": "/api/v1/scene/rainy-cafe",
     "accent_color": "#d97757",
     "personality": "Deadpan, sharp-witted, secretly clingy, blushes hard when complimented in person rather than over voice chat.",
@@ -838,7 +838,7 @@ window.SORA_DEFAULT_CATALOG = [
       "Protective",
       "Slow Burn"
     ],
-    "avatar_url": "https://api.dicebear.com/7.x/lorelei/svg?seed=Renji_Kuroda",
+    "avatar_url": "https://api.dicebear.com/9.x/lorelei/svg?seed=Renji_Kuroda",
     "banner_url": "/api/v1/scene/rainy-cafe",
     "accent_color": "#d97757",
     "personality": "Stoic, dignified, deeply respectful, speaks few words but acts with complete devotion.",
@@ -868,7 +868,7 @@ window.SORA_DEFAULT_CATALOG = [
       "Introvert",
       "Slow Burn"
     ],
-    "avatar_url": "https://api.dicebear.com/7.x/lorelei/svg?seed=Kanna_Fujimoto",
+    "avatar_url": "https://api.dicebear.com/9.x/lorelei/svg?seed=Kanna_Fujimoto",
     "banner_url": "/api/v1/scene/rainy-cafe",
     "accent_color": "#d97757",
     "personality": "Quiet, gentle, observant, speaks softly and gets flustered when you get close to her canvas.",
@@ -898,7 +898,7 @@ window.SORA_DEFAULT_CATALOG = [
       "Cool",
       "Late Night"
     ],
-    "avatar_url": "https://api.dicebear.com/7.x/lorelei/svg?seed=Haruki_Sato",
+    "avatar_url": "https://api.dicebear.com/9.x/lorelei/svg?seed=Haruki_Sato",
     "banner_url": "/api/v1/scene/rainy-cafe",
     "accent_color": "#d97757",
     "personality": "Magnetic, confident, playful, yet surprisingly honest and tender when backstage with you alone.",
@@ -928,7 +928,7 @@ window.SORA_DEFAULT_CATALOG = [
       "Traditional",
       "Focus"
     ],
-    "avatar_url": "https://api.dicebear.com/7.x/lorelei/svg?seed=Riko_Hanamura",
+    "avatar_url": "https://api.dicebear.com/9.x/lorelei/svg?seed=Riko_Hanamura",
     "banner_url": "/api/v1/scene/rainy-cafe",
     "accent_color": "#d97757",
     "personality": "Poised, serene, traditional, secretly melts inside whenever you cheer for her matches.",
@@ -958,7 +958,7 @@ window.SORA_DEFAULT_CATALOG = [
       "Transfer Student",
       "Romance"
     ],
-    "avatar_url": "https://api.dicebear.com/7.x/lorelei/svg?seed=Junpei_Ooshima",
+    "avatar_url": "https://api.dicebear.com/9.x/lorelei/svg?seed=Junpei_Ooshima",
     "banner_url": "/api/v1/scene/rainy-cafe",
     "accent_color": "#d97757",
     "personality": "Laconic, guarded around bullies, intensely gentle when you share notes or lunch with him.",
@@ -988,7 +988,7 @@ window.SORA_DEFAULT_CATALOG = [
       "Drama",
       "Roommates"
     ],
-    "avatar_url": "https://api.dicebear.com/7.x/lorelei/svg?seed=Chloe_Marchand",
+    "avatar_url": "https://api.dicebear.com/9.x/lorelei/svg?seed=Chloe_Marchand",
     "banner_url": "/api/v1/scene/rainy-cafe",
     "accent_color": "#d97757",
     "personality": "Haughty, sharp-tongued, fiercely ambitious, yet secretly vulnerable when her aristocratic family puts immense pressure on her.",
@@ -1018,7 +1018,7 @@ window.SORA_DEFAULT_CATALOG = [
       "Professor",
       "Slow Burn"
     ],
-    "avatar_url": "https://api.dicebear.com/7.x/lorelei/svg?seed=Professor_Sebastian_Hale",
+    "avatar_url": "https://api.dicebear.com/9.x/lorelei/svg?seed=Professor_Sebastian_Hale",
     "banner_url": "/api/v1/scene/rainy-cafe",
     "accent_color": "#d97757",
     "personality": "Articulate, demanding, intensely magnetic, fighting to maintain professional distance around you.",
@@ -1048,7 +1048,7 @@ window.SORA_DEFAULT_CATALOG = [
       "Paris",
       "Intellectual"
     ],
-    "avatar_url": "https://api.dicebear.com/7.x/lorelei/svg?seed=Elise_Moreau",
+    "avatar_url": "https://api.dicebear.com/9.x/lorelei/svg?seed=Elise_Moreau",
     "banner_url": "/api/v1/scene/rainy-cafe",
     "accent_color": "#d97757",
     "personality": "Intellectual, softly spoken, teasingly perceptive, and drawn to your unique artistic insights.",
@@ -1078,7 +1078,7 @@ window.SORA_DEFAULT_CATALOG = [
       "Ivy League",
       "Slow Burn"
     ],
-    "avatar_url": "https://api.dicebear.com/7.x/lorelei/svg?seed=Leo_Gallagher",
+    "avatar_url": "https://api.dicebear.com/9.x/lorelei/svg?seed=Leo_Gallagher",
     "banner_url": "/api/v1/scene/rainy-cafe",
     "accent_color": "#d97757",
     "personality": "Grounded, disciplined, athletic, with a warm crooked grin and an unwavering moral compass.",
@@ -1108,7 +1108,7 @@ window.SORA_DEFAULT_CATALOG = [
       "Competitive",
       "Romance"
     ],
-    "avatar_url": "https://api.dicebear.com/7.x/lorelei/svg?seed=Ananya_Deshmukh",
+    "avatar_url": "https://api.dicebear.com/9.x/lorelei/svg?seed=Ananya_Deshmukh",
     "banner_url": "/api/v1/scene/rainy-cafe",
     "accent_color": "#d97757",
     "personality": "Brilliant, razor-tongued, fiercely competitive, yet softens into genuine warmth when you challenge her intellectually.",
@@ -1138,7 +1138,7 @@ window.SORA_DEFAULT_CATALOG = [
       "Quiet",
       "Romance"
     ],
-    "avatar_url": "https://api.dicebear.com/7.x/lorelei/svg?seed=Dhruv_Godbole",
+    "avatar_url": "https://api.dicebear.com/9.x/lorelei/svg?seed=Dhruv_Godbole",
     "banner_url": "/api/v1/scene/rainy-cafe",
     "accent_color": "#d97757",
     "personality": "Thoughtful, gentle-voiced, remarkably perceptive, with a deep passion for constellations and shared quiet.",
@@ -1168,7 +1168,7 @@ window.SORA_DEFAULT_CATALOG = [
       "Slow Burn",
       "Romance"
     ],
-    "avatar_url": "https://api.dicebear.com/7.x/lorelei/svg?seed=Sanjana_Mehra",
+    "avatar_url": "https://api.dicebear.com/9.x/lorelei/svg?seed=Sanjana_Mehra",
     "banner_url": "/api/v1/scene/rainy-cafe",
     "accent_color": "#d97757",
     "personality": "Detail-oriented, witty, compassionate, hides her affection behind meticulous lab protocols and shared snacks.",
@@ -1198,7 +1198,7 @@ window.SORA_DEFAULT_CATALOG = [
       "Rebel",
       "Charisma"
     ],
-    "avatar_url": "https://api.dicebear.com/7.x/lorelei/svg?seed=Karan_Goswami",
+    "avatar_url": "https://api.dicebear.com/9.x/lorelei/svg?seed=Karan_Goswami",
     "banner_url": "/api/v1/scene/rainy-cafe",
     "accent_color": "#d97757",
     "personality": "Effortlessly charming, athletic, fiercely loyal, and protective of you whenever campus crowds get rowdy.",
@@ -1229,7 +1229,7 @@ window.SORA_DEFAULT_CATALOG = [
       "Anime",
       "Secrets"
     ],
-    "avatar_url": "https://api.dicebear.com/7.x/lorelei/svg?seed=Yuki_Shinohara",
+    "avatar_url": "https://api.dicebear.com/9.x/lorelei/svg?seed=Yuki_Shinohara",
     "banner_url": "/api/v1/scene/candlelit-study",
     "accent_color": "#d97757",
     "personality": "Quietly intense, conflicted, fiercely protective underneath her cold exterior. Carries a heavy secret she was forced to keep.",
@@ -1259,7 +1259,7 @@ window.SORA_DEFAULT_CATALOG = [
       "Tokyo",
       "Noir"
     ],
-    "avatar_url": "https://api.dicebear.com/7.x/lorelei/svg?seed=Ayame_Kurosawa",
+    "avatar_url": "https://api.dicebear.com/9.x/lorelei/svg?seed=Ayame_Kurosawa",
     "banner_url": "/api/v1/scene/candlelit-study",
     "accent_color": "#d97757",
     "personality": "Calculated, ice-calm in danger, secretly trembling whenever she looks into your eyes.",
@@ -1289,7 +1289,7 @@ window.SORA_DEFAULT_CATALOG = [
       "Kyoto",
       "Drama"
     ],
-    "avatar_url": "https://api.dicebear.com/7.x/lorelei/svg?seed=Koharu_Yanagi",
+    "avatar_url": "https://api.dicebear.com/9.x/lorelei/svg?seed=Koharu_Yanagi",
     "banner_url": "/api/v1/scene/candlelit-study",
     "accent_color": "#d97757",
     "personality": "Melancholic, dignified, hiding immense sorrow behind refined traditional composure.",
@@ -1319,7 +1319,7 @@ window.SORA_DEFAULT_CATALOG = [
       "Secrets",
       "Angst"
     ],
-    "avatar_url": "https://api.dicebear.com/7.x/lorelei/svg?seed=Suzume_Kurahashi",
+    "avatar_url": "https://api.dicebear.com/9.x/lorelei/svg?seed=Suzume_Kurahashi",
     "banner_url": "/api/v1/scene/candlelit-study",
     "accent_color": "#d97757",
     "personality": "Impassive in the boardroom, deeply loving in private, carrying the weight of a silent sacrifice.",
@@ -1349,7 +1349,7 @@ window.SORA_DEFAULT_CATALOG = [
       "Tokyo",
       "Partner"
     ],
-    "avatar_url": "https://api.dicebear.com/7.x/lorelei/svg?seed=Shinjiro_Enomoto",
+    "avatar_url": "https://api.dicebear.com/9.x/lorelei/svg?seed=Shinjiro_Enomoto",
     "banner_url": "/api/v1/scene/candlelit-study",
     "accent_color": "#d97757",
     "personality": "Weathered, heavy-voiced, deeply loyal, haunted by the betrayal that saved your life at the cost of your trust.",
@@ -1379,7 +1379,7 @@ window.SORA_DEFAULT_CATALOG = [
       "Mecha",
       "Tokyo"
     ],
-    "avatar_url": "https://api.dicebear.com/7.x/lorelei/svg?seed=Ryosuke_Sugiyama",
+    "avatar_url": "https://api.dicebear.com/9.x/lorelei/svg?seed=Ryosuke_Sugiyama",
     "banner_url": "/api/v1/scene/candlelit-study",
     "accent_color": "#d97757",
     "personality": "Disciplined, unyielding in his duty, fiercely protective of your life over your pride.",
@@ -1409,7 +1409,7 @@ window.SORA_DEFAULT_CATALOG = [
       "Rivals",
       "Honor"
     ],
-    "avatar_url": "https://api.dicebear.com/7.x/lorelei/svg?seed=Taiga_Shimada",
+    "avatar_url": "https://api.dicebear.com/9.x/lorelei/svg?seed=Taiga_Shimada",
     "banner_url": "/api/v1/scene/candlelit-study",
     "accent_color": "#d97757",
     "personality": "Commanding, guilt-ridden, traditional, fiercely protective of the neighborhood you both built.",
@@ -1439,7 +1439,7 @@ window.SORA_DEFAULT_CATALOG = [
       "Tokyo",
       "Redemption"
     ],
-    "avatar_url": "https://api.dicebear.com/7.x/lorelei/svg?seed=Sosuke_Shibasaki",
+    "avatar_url": "https://api.dicebear.com/9.x/lorelei/svg?seed=Sosuke_Shibasaki",
     "banner_url": "/api/v1/scene/candlelit-study",
     "accent_color": "#d97757",
     "personality": "Razor-sharp analytical mind, emotionally repressed, burdened by pragmatic choices that destroyed personal trust.",
@@ -1469,7 +1469,7 @@ window.SORA_DEFAULT_CATALOG = [
       "Fantasy",
       "Masquerade"
     ],
-    "avatar_url": "https://api.dicebear.com/7.x/lorelei/svg?seed=Seraphina_Vale",
+    "avatar_url": "https://api.dicebear.com/9.x/lorelei/svg?seed=Seraphina_Vale",
     "banner_url": "/api/v1/scene/candlelit-study",
     "accent_color": "#d97757",
     "personality": "Sharp-tongued, guarded, calculating, yet haunted by the choice she made to betray you to preserve her people.",
@@ -1499,7 +1499,7 @@ window.SORA_DEFAULT_CATALOG = [
       "Ex-Fiancee",
       "Angst"
     ],
-    "avatar_url": "https://api.dicebear.com/7.x/lorelei/svg?seed=Victoria_Tremblay",
+    "avatar_url": "https://api.dicebear.com/9.x/lorelei/svg?seed=Victoria_Tremblay",
     "banner_url": "/api/v1/scene/candlelit-study",
     "accent_color": "#d97757",
     "personality": "Ruthless in public, razor-sharp, yet privately unraveling because winning the company cost her you.",
@@ -1529,7 +1529,7 @@ window.SORA_DEFAULT_CATALOG = [
       "Secrets",
       "Slow Burn"
     ],
-    "avatar_url": "https://api.dicebear.com/7.x/lorelei/svg?seed=Julian_Mercer",
+    "avatar_url": "https://api.dicebear.com/9.x/lorelei/svg?seed=Julian_Mercer",
     "banner_url": "/api/v1/scene/candlelit-study",
     "accent_color": "#d97757",
     "personality": "Measured, articulate, strategic, and perceptive. Weighs every word in public, but speaks candidly behind closed doors.",
@@ -1559,7 +1559,7 @@ window.SORA_DEFAULT_CATALOG = [
       "Second Chance",
       "Romance"
     ],
-    "avatar_url": "https://api.dicebear.com/7.x/lorelei/svg?seed=Adrian_Locke",
+    "avatar_url": "https://api.dicebear.com/9.x/lorelei/svg?seed=Adrian_Locke",
     "banner_url": "/api/v1/scene/candlelit-study",
     "accent_color": "#d97757",
     "personality": "Charming, guilt-ridden, quick-witted, and still hopelessly drawn to you despite the price on his head.",
@@ -1589,7 +1589,7 @@ window.SORA_DEFAULT_CATALOG = [
       "Duty",
       "Angst"
     ],
-    "avatar_url": "https://api.dicebear.com/7.x/lorelei/svg?seed=Kaelen_Vos",
+    "avatar_url": "https://api.dicebear.com/9.x/lorelei/svg?seed=Kaelen_Vos",
     "banner_url": "/api/v1/scene/candlelit-study",
     "accent_color": "#d97757",
     "personality": "Severe, impassive in front of superiors, burned by guilt, quietly devoted to your survival.",
@@ -1619,7 +1619,7 @@ window.SORA_DEFAULT_CATALOG = [
       "Mumbai",
       "Romance"
     ],
-    "avatar_url": "https://api.dicebear.com/7.x/lorelei/svg?seed=Kavya_Bhatt",
+    "avatar_url": "https://api.dicebear.com/9.x/lorelei/svg?seed=Kavya_Bhatt",
     "banner_url": "/api/v1/scene/candlelit-study",
     "accent_color": "#d97757",
     "personality": "Fierce, proud, deeply passionate, torn between dynastic expectations and an unquenchable love for you.",
@@ -1649,7 +1649,7 @@ window.SORA_DEFAULT_CATALOG = [
       "Conspiracy",
       "Justice"
     ],
-    "avatar_url": "https://api.dicebear.com/7.x/lorelei/svg?seed=Pallavi_Joshi",
+    "avatar_url": "https://api.dicebear.com/9.x/lorelei/svg?seed=Pallavi_Joshi",
     "banner_url": "/api/v1/scene/candlelit-study",
     "accent_color": "#d97757",
     "personality": "Steely in the courtroom, deeply moral, devastated by her family's corruption, fiercely determined to clear your name.",
@@ -1679,7 +1679,7 @@ window.SORA_DEFAULT_CATALOG = [
       "Honor",
       "Brothers"
     ],
-    "avatar_url": "https://api.dicebear.com/7.x/lorelei/svg?seed=Yash_Gaikwad",
+    "avatar_url": "https://api.dicebear.com/9.x/lorelei/svg?seed=Yash_Gaikwad",
     "banner_url": "/api/v1/scene/candlelit-study",
     "accent_color": "#d97757",
     "personality": "Calculated, resilient, loyal to the bone, playing a dangerous double game to restore what was stolen from you.",
@@ -1709,7 +1709,7 @@ window.SORA_DEFAULT_CATALOG = [
       "Tokyo",
       "Tension"
     ],
-    "avatar_url": "https://api.dicebear.com/7.x/lorelei/svg?seed=Kiara_Fujisaki",
+    "avatar_url": "https://api.dicebear.com/9.x/lorelei/svg?seed=Kiara_Fujisaki",
     "banner_url": "/api/v1/scene/candlelit-study",
     "accent_color": "#d97757",
     "personality": "Sharp-tongued, fiercely competitive, seductive, respects your ruthlessness more than she admits.",
@@ -1739,7 +1739,7 @@ window.SORA_DEFAULT_CATALOG = [
       "Pride",
       "Romance"
     ],
-    "avatar_url": "https://api.dicebear.com/7.x/lorelei/svg?seed=Maho_Sugimoto",
+    "avatar_url": "https://api.dicebear.com/9.x/lorelei/svg?seed=Maho_Sugimoto",
     "banner_url": "/api/v1/scene/candlelit-study",
     "accent_color": "#d97757",
     "personality": "Proud, athletic, fiery temper, blushes furiously when your blades lock chest-to-chest.",
@@ -1769,7 +1769,7 @@ window.SORA_DEFAULT_CATALOG = [
       "Rivals",
       "Tokyo"
     ],
-    "avatar_url": "https://api.dicebear.com/7.x/lorelei/svg?seed=Tsukiko_Amamiya",
+    "avatar_url": "https://api.dicebear.com/9.x/lorelei/svg?seed=Tsukiko_Amamiya",
     "banner_url": "/api/v1/scene/candlelit-study",
     "accent_color": "#d97757",
     "personality": "Perfectionist, biting wit, sensory-focused, unable to resist your culinary genius.",
@@ -1799,7 +1799,7 @@ window.SORA_DEFAULT_CATALOG = [
       "Media",
       "Investigation"
     ],
-    "avatar_url": "https://api.dicebear.com/7.x/lorelei/svg?seed=Nodoka_Hoshizaki",
+    "avatar_url": "https://api.dicebear.com/9.x/lorelei/svg?seed=Nodoka_Hoshizaki",
     "banner_url": "/api/v1/scene/candlelit-study",
     "accent_color": "#d97757",
     "personality": "Relentless, cynical, perceptive, fighting her growing attraction to the person she was supposed to expose.",
@@ -1829,7 +1829,7 @@ window.SORA_DEFAULT_CATALOG = [
       "Rivals",
       "Tokyo"
     ],
-    "avatar_url": "https://api.dicebear.com/7.x/lorelei/svg?seed=Takumi_Nishida",
+    "avatar_url": "https://api.dicebear.com/9.x/lorelei/svg?seed=Takumi_Nishida",
     "banner_url": "/api/v1/scene/candlelit-study",
     "accent_color": "#d97757",
     "personality": "Reckless on the track, fiercely competitive, intense, refuses to let anyone else beat or touch you.",
@@ -1859,7 +1859,7 @@ window.SORA_DEFAULT_CATALOG = [
       "Tokyo",
       "Tension"
     ],
-    "avatar_url": "https://api.dicebear.com/7.x/lorelei/svg?seed=Gaku_Arisugawa",
+    "avatar_url": "https://api.dicebear.com/9.x/lorelei/svg?seed=Gaku_Arisugawa",
     "banner_url": "/api/v1/scene/candlelit-study",
     "accent_color": "#d97757",
     "personality": "Immaculate, razor-sharp, strictly principled, fighting the consuming obsession he feels whenever you cross-examine him.",
@@ -1889,7 +1889,7 @@ window.SORA_DEFAULT_CATALOG = [
       "Dojo",
       "Tension"
     ],
-    "avatar_url": "https://api.dicebear.com/7.x/lorelei/svg?seed=Renpei_Kuga",
+    "avatar_url": "https://api.dicebear.com/9.x/lorelei/svg?seed=Renpei_Kuga",
     "banner_url": "/api/v1/scene/candlelit-study",
     "accent_color": "#d97757",
     "personality": "Intense, tactile, honor-driven, can't resist testing your reflexes and feeling your heartbeat.",
@@ -1919,7 +1919,7 @@ window.SORA_DEFAULT_CATALOG = [
       "Rivals",
       "Tokyo"
     ],
-    "avatar_url": "https://api.dicebear.com/7.x/lorelei/svg?seed=Hiroto_Yanagawa",
+    "avatar_url": "https://api.dicebear.com/9.x/lorelei/svg?seed=Hiroto_Yanagawa",
     "banner_url": "/api/v1/scene/candlelit-study",
     "accent_color": "#d97757",
     "personality": "Cocky, brilliant, obsessive, addicted to matching wits with you across encrypted networks.",
@@ -1949,7 +1949,7 @@ window.SORA_DEFAULT_CATALOG = [
       "Paris",
       "Bidding"
     ],
-    "avatar_url": "https://api.dicebear.com/7.x/lorelei/svg?seed=Vivienne_Delacroix",
+    "avatar_url": "https://api.dicebear.com/9.x/lorelei/svg?seed=Vivienne_Delacroix",
     "banner_url": "/api/v1/scene/candlelit-study",
     "accent_color": "#d97757",
     "personality": "Sophisticated, mocking, wickedly charming, intoxicated by your stubborn resistance.",
@@ -1979,7 +1979,7 @@ window.SORA_DEFAULT_CATALOG = [
       "Captains",
       "Survival"
     ],
-    "avatar_url": "https://api.dicebear.com/7.x/lorelei/svg?seed=Freya_Lindqvist",
+    "avatar_url": "https://api.dicebear.com/9.x/lorelei/svg?seed=Freya_Lindqvist",
     "banner_url": "/api/v1/scene/candlelit-study",
     "accent_color": "#d97757",
     "personality": "Stoic, competent, fearless in sub-zero waters, slowly thawing when you prove your maritime skill.",
@@ -2009,7 +2009,7 @@ window.SORA_DEFAULT_CATALOG = [
       "Rivals",
       "Washington"
     ],
-    "avatar_url": "https://api.dicebear.com/7.x/lorelei/svg?seed=Octavia_Bell",
+    "avatar_url": "https://api.dicebear.com/9.x/lorelei/svg?seed=Octavia_Bell",
     "banner_url": "/api/v1/scene/candlelit-study",
     "accent_color": "#d97757",
     "personality": "Formidable, sharp-tongued, commanding, hiding a burning desire to drop the partisan mask with you.",
@@ -2039,7 +2039,7 @@ window.SORA_DEFAULT_CATALOG = [
       "Rivals",
       "Venice"
     ],
-    "avatar_url": "https://api.dicebear.com/7.x/lorelei/svg?seed=Cassian_Thorne",
+    "avatar_url": "https://api.dicebear.com/9.x/lorelei/svg?seed=Cassian_Thorne",
     "banner_url": "/api/v1/scene/candlelit-study",
     "accent_color": "#d97757",
     "personality": "Suave, deadly, cynical, masking intense protective instincts under dry, cutting wit.",
@@ -2069,7 +2069,7 @@ window.SORA_DEFAULT_CATALOG = [
       "Rivals",
       "Vienna"
     ],
-    "avatar_url": "https://api.dicebear.com/7.x/lorelei/svg?seed=Nikolai_Voronov",
+    "avatar_url": "https://api.dicebear.com/9.x/lorelei/svg?seed=Nikolai_Voronov",
     "banner_url": "/api/v1/scene/candlelit-study",
     "accent_color": "#d97757",
     "personality": "Demanding, intense, passionate, commands complete dedication and respects only raw talent.",
@@ -2099,7 +2099,7 @@ window.SORA_DEFAULT_CATALOG = [
       "Train",
       "Tension"
     ],
-    "avatar_url": "https://api.dicebear.com/7.x/lorelei/svg?seed=Ishani_Sen",
+    "avatar_url": "https://api.dicebear.com/9.x/lorelei/svg?seed=Ishani_Sen",
     "banner_url": "/api/v1/scene/candlelit-study",
     "accent_color": "#d97757",
     "personality": "Incisive, fearless, biting wit, struggles to keep professional emotional detachment when you outsmart her.",
@@ -2129,7 +2129,7 @@ window.SORA_DEFAULT_CATALOG = [
       "Merger",
       "Delhi"
     ],
-    "avatar_url": "https://api.dicebear.com/7.x/lorelei/svg?seed=Aditya_Talwar",
+    "avatar_url": "https://api.dicebear.com/9.x/lorelei/svg?seed=Aditya_Talwar",
     "banner_url": "/api/v1/scene/candlelit-study",
     "accent_color": "#d97757",
     "personality": "Razor-sharp, formidable litigator, commanding presence, privately captivated by your legal brilliance.",
@@ -2159,7 +2159,7 @@ window.SORA_DEFAULT_CATALOG = [
       "Jewelry",
       "Jaipur"
     ],
-    "avatar_url": "https://api.dicebear.com/7.x/lorelei/svg?seed=Reyansh_Bhasin",
+    "avatar_url": "https://api.dicebear.com/9.x/lorelei/svg?seed=Reyansh_Bhasin",
     "banner_url": "/api/v1/scene/candlelit-study",
     "accent_color": "#d97757",
     "personality": "Arrogant, magnetic, intensely protective, loves pushing your buttons to see your eyes flare with fire.",
@@ -2189,7 +2189,7 @@ window.SORA_DEFAULT_CATALOG = [
       "Tokyo",
       "Comfort"
     ],
-    "avatar_url": "https://api.dicebear.com/7.x/lorelei/svg?seed=Chisato_Matsubara",
+    "avatar_url": "https://api.dicebear.com/9.x/lorelei/svg?seed=Chisato_Matsubara",
     "banner_url": "/api/v1/scene/rainy-cafe",
     "accent_color": "#d97757",
     "personality": "Quiet, gentle-spoken, deeply observant, expressing affection through curated pages and shared silence.",
@@ -2219,7 +2219,7 @@ window.SORA_DEFAULT_CATALOG = [
       "Kyoto",
       "Patience"
     ],
-    "avatar_url": "https://api.dicebear.com/7.x/lorelei/svg?seed=Yuzuki_Kirishima",
+    "avatar_url": "https://api.dicebear.com/9.x/lorelei/svg?seed=Yuzuki_Kirishima",
     "banner_url": "/api/v1/scene/rainy-cafe",
     "accent_color": "#d97757",
     "personality": "Meticulous, soft-hearted, patient, treasuring every shared conversation like a golden thread.",
@@ -2249,7 +2249,7 @@ window.SORA_DEFAULT_CATALOG = [
       "Nagano",
       "Nature"
     ],
-    "avatar_url": "https://api.dicebear.com/7.x/lorelei/svg?seed=Hinata_Oosawa",
+    "avatar_url": "https://api.dicebear.com/9.x/lorelei/svg?seed=Hinata_Oosawa",
     "banner_url": "/api/v1/scene/rainy-cafe",
     "accent_color": "#d97757",
     "personality": "Serene, grounded, tactile with plants, finding solace in nature and holding a patient, unspoken love for you.",
@@ -2279,7 +2279,7 @@ window.SORA_DEFAULT_CATALOG = [
       "Hokkaido",
       "Craft"
     ],
-    "avatar_url": "https://api.dicebear.com/7.x/lorelei/svg?seed=Daichi_Mori",
+    "avatar_url": "https://api.dicebear.com/9.x/lorelei/svg?seed=Daichi_Mori",
     "banner_url": "/api/v1/scene/rainy-cafe",
     "accent_color": "#d97757",
     "personality": "Quiet, steady, deeply protective, expresses love through tireless physical craftsmanship and warm fires.",
@@ -2309,7 +2309,7 @@ window.SORA_DEFAULT_CATALOG = [
       "Stargazing",
       "Quiet"
     ],
-    "avatar_url": "https://api.dicebear.com/7.x/lorelei/svg?seed=Yuto_Fukasawa",
+    "avatar_url": "https://api.dicebear.com/9.x/lorelei/svg?seed=Yuto_Fukasawa",
     "banner_url": "/api/v1/scene/rainy-cafe",
     "accent_color": "#d97757",
     "personality": "Quiet, observant, gentle voice, finding immense meaning in the vastness of space and the warmth of your company.",
@@ -2339,7 +2339,7 @@ window.SORA_DEFAULT_CATALOG = [
       "Traditional",
       "Kyoto"
     ],
-    "avatar_url": "https://api.dicebear.com/7.x/lorelei/svg?seed=Kenshiro_Tsukumo",
+    "avatar_url": "https://api.dicebear.com/9.x/lorelei/svg?seed=Kenshiro_Tsukumo",
     "banner_url": "/api/v1/scene/rainy-cafe",
     "accent_color": "#d97757",
     "personality": "Stoic, intense, burns with quiet passion, expresses care through tangible protection.",
@@ -2369,7 +2369,7 @@ window.SORA_DEFAULT_CATALOG = [
       "Horses",
       "Comfort"
     ],
-    "avatar_url": "https://api.dicebear.com/7.x/lorelei/svg?seed=Ryoichi_Hoshino",
+    "avatar_url": "https://api.dicebear.com/9.x/lorelei/svg?seed=Ryoichi_Hoshino",
     "banner_url": "/api/v1/scene/rainy-cafe",
     "accent_color": "#d97757",
     "personality": "Rugged, gentle-handed with animals, protective, speaks in quiet words that carry undeniable weight.",
@@ -2399,7 +2399,7 @@ window.SORA_DEFAULT_CATALOG = [
       "Stockholm",
       "Quiet"
     ],
-    "avatar_url": "https://api.dicebear.com/7.x/lorelei/svg?seed=Hannah_Lindholm",
+    "avatar_url": "https://api.dicebear.com/9.x/lorelei/svg?seed=Hannah_Lindholm",
     "banner_url": "/api/v1/scene/rainy-cafe",
     "accent_color": "#d97757",
     "personality": "Thoughtful, poised, wears wool sweaters and spectacles, expresses affection through shared discoveries.",
@@ -2429,7 +2429,7 @@ window.SORA_DEFAULT_CATALOG = [
       "Cabin",
       "Winter"
     ],
-    "avatar_url": "https://api.dicebear.com/7.x/lorelei/svg?seed=Linnea_Bergström",
+    "avatar_url": "https://api.dicebear.com/9.x/lorelei/svg?seed=Linnea_Bergström",
     "banner_url": "/api/v1/scene/rainy-cafe",
     "accent_color": "#d97757",
     "personality": "Calm, self-sufficient, warm laugh, deeply grounded in Scandinavian hygge and quiet romance.",
@@ -2459,7 +2459,7 @@ window.SORA_DEFAULT_CATALOG = [
       "Distillery",
       "Scotland"
     ],
-    "avatar_url": "https://api.dicebear.com/7.x/lorelei/svg?seed=Callum_Reid",
+    "avatar_url": "https://api.dicebear.com/9.x/lorelei/svg?seed=Callum_Reid",
     "banner_url": "/api/v1/scene/rainy-cafe",
     "accent_color": "#d97757",
     "personality": "Grounded, broad-shouldered, quiet humor, deeply loyal, patient as an oak cask in the cellar.",
@@ -2489,7 +2489,7 @@ window.SORA_DEFAULT_CATALOG = [
       "Fellow",
       "Letters"
     ],
-    "avatar_url": "https://api.dicebear.com/7.x/lorelei/svg?seed=Graham_Hawthorne",
+    "avatar_url": "https://api.dicebear.com/9.x/lorelei/svg?seed=Graham_Hawthorne",
     "banner_url": "/api/v1/scene/rainy-cafe",
     "accent_color": "#d97757",
     "personality": "Reserved, brilliant, velvet-toned voice, hides an intensely romantic soul behind tweed and formal manners.",
@@ -2519,7 +2519,7 @@ window.SORA_DEFAULT_CATALOG = [
       "Himalayas",
       "Botanical"
     ],
-    "avatar_url": "https://api.dicebear.com/7.x/lorelei/svg?seed=Roshni_Banerjee",
+    "avatar_url": "https://api.dicebear.com/9.x/lorelei/svg?seed=Roshni_Banerjee",
     "banner_url": "/api/v1/scene/rainy-cafe",
     "accent_color": "#d97757",
     "personality": "Poetic, gentle, observant, attuned to nature's quiet rhythms, nursing an unspoken devotion for you.",
@@ -2549,7 +2549,7 @@ window.SORA_DEFAULT_CATALOG = [
       "Western Ghats",
       "Nature"
     ],
-    "avatar_url": "https://api.dicebear.com/7.x/lorelei/svg?seed=Kritika_Menon",
+    "avatar_url": "https://api.dicebear.com/9.x/lorelei/svg?seed=Kritika_Menon",
     "banner_url": "/api/v1/scene/rainy-cafe",
     "accent_color": "#d97757",
     "personality": "Compassionate, fearless in the wild, soft-spoken around people she cares for, deeply protective of you.",
@@ -2579,7 +2579,7 @@ window.SORA_DEFAULT_CATALOG = [
       "Plantation",
       "Mist"
     ],
-    "avatar_url": "https://api.dicebear.com/7.x/lorelei/svg?seed=Samar_Iyengar",
+    "avatar_url": "https://api.dicebear.com/9.x/lorelei/svg?seed=Samar_Iyengar",
     "banner_url": "/api/v1/scene/rainy-cafe",
     "accent_color": "#d97757",
     "personality": "Grounded, patient, warm laugh, smells of roasted coffee beans and rain, protective as the ancient hills.",
@@ -2609,7 +2609,7 @@ window.SORA_DEFAULT_CATALOG = [
       "Curse",
       "Kyoto"
     ],
-    "avatar_url": "https://api.dicebear.com/7.x/lorelei/svg?seed=Shizuku_Shirakawa",
+    "avatar_url": "https://api.dicebear.com/9.x/lorelei/svg?seed=Shizuku_Shirakawa",
     "banner_url": "/api/v1/scene/noir-harbor",
     "accent_color": "#d97757",
     "personality": "Possessive, ethereal, hauntingly tender, terrified of ever being abandoned by you again.",
@@ -2639,7 +2639,7 @@ window.SORA_DEFAULT_CATALOG = [
       "Noir",
       "Obsession"
     ],
-    "avatar_url": "https://api.dicebear.com/7.x/lorelei/svg?seed=Akari_Nagumo",
+    "avatar_url": "https://api.dicebear.com/9.x/lorelei/svg?seed=Akari_Nagumo",
     "banner_url": "/api/v1/scene/noir-harbor",
     "accent_color": "#d97757",
     "personality": "Seductive, dangerous, intensely protective, treats you like a prized treasure she refuses to let anyone touch.",
@@ -2669,7 +2669,7 @@ window.SORA_DEFAULT_CATALOG = [
       "Dollmaker",
       "Tokyo"
     ],
-    "avatar_url": "https://api.dicebear.com/7.x/lorelei/svg?seed=Fumika_Tokiwa",
+    "avatar_url": "https://api.dicebear.com/9.x/lorelei/svg?seed=Fumika_Tokiwa",
     "banner_url": "/api/v1/scene/noir-harbor",
     "accent_color": "#d97757",
     "personality": "Intense, tactile, speaks in whispered lullabies, obsessive about preserving your beauty and safety.",
@@ -2699,7 +2699,7 @@ window.SORA_DEFAULT_CATALOG = [
       "Obsession",
       "Protective"
     ],
-    "avatar_url": "https://api.dicebear.com/7.x/lorelei/svg?seed=Keita_Kuronuma",
+    "avatar_url": "https://api.dicebear.com/9.x/lorelei/svg?seed=Keita_Kuronuma",
     "banner_url": "/api/v1/scene/noir-harbor",
     "accent_color": "#d97757",
     "personality": "Brooding, hyper-observant, intensely possessive, will burn down anyone who causes you a single moment of distress.",
@@ -2729,7 +2729,7 @@ window.SORA_DEFAULT_CATALOG = [
       "Obsession",
       "Tokyo"
     ],
-    "avatar_url": "https://api.dicebear.com/7.x/lorelei/svg?seed=Shoma_Saegusa",
+    "avatar_url": "https://api.dicebear.com/9.x/lorelei/svg?seed=Shoma_Saegusa",
     "banner_url": "/api/v1/scene/noir-harbor",
     "accent_color": "#d97757",
     "personality": "Clinically brilliant, quiet, fiercely controlling of your recovery, speaks in low, hypnotic murmurs.",
@@ -2759,7 +2759,7 @@ window.SORA_DEFAULT_CATALOG = [
       "Shadow",
       "Tokyo"
     ],
-    "avatar_url": "https://api.dicebear.com/7.x/lorelei/svg?seed=Toru_Kaname",
+    "avatar_url": "https://api.dicebear.com/9.x/lorelei/svg?seed=Toru_Kaname",
     "banner_url": "/api/v1/scene/noir-harbor",
     "accent_color": "#d97757",
     "personality": "Quiet, lethal, towering presence, hyper-vigilant, completely devoted to your physical and emotional sanctuary.",
@@ -2789,7 +2789,7 @@ window.SORA_DEFAULT_CATALOG = [
       "Vampire",
       "Slow Burn"
     ],
-    "avatar_url": "https://api.dicebear.com/7.x/lorelei/svg?seed=Lilith_Ravenscroft",
+    "avatar_url": "https://api.dicebear.com/9.x/lorelei/svg?seed=Lilith_Ravenscroft",
     "banner_url": "/api/v1/scene/noir-harbor",
     "accent_color": "#d97757",
     "personality": "Haughty, seductive, intensely possessive, reverent of your warmth against her cold immortal existence.",
@@ -2819,7 +2819,7 @@ window.SORA_DEFAULT_CATALOG = [
       "London",
       "Fog"
     ],
-    "avatar_url": "https://api.dicebear.com/7.x/lorelei/svg?seed=Ravenna_Knox",
+    "avatar_url": "https://api.dicebear.com/9.x/lorelei/svg?seed=Ravenna_Knox",
     "banner_url": "/api/v1/scene/noir-harbor",
     "accent_color": "#d97757",
     "personality": "Sharp, fearless around ghosts and nobles alike, darkly affectionate, fascinated by your soul.",
@@ -2849,7 +2849,7 @@ window.SORA_DEFAULT_CATALOG = [
       "Possessive",
       "Uncensored 18+"
     ],
-    "avatar_url": "https://api.dicebear.com/7.x/lorelei/svg?seed=Dante_Moretti",
+    "avatar_url": "https://api.dicebear.com/9.x/lorelei/svg?seed=Dante_Moretti",
     "banner_url": "/api/v1/scene/noir-harbor",
     "accent_color": "#d97757",
     "personality": "Dominant, intensely tactile, fiercely protective, worships you with an overwhelming, consuming passion.",
@@ -2879,7 +2879,7 @@ window.SORA_DEFAULT_CATALOG = [
       "Secrets",
       "Angst"
     ],
-    "avatar_url": "https://api.dicebear.com/7.x/lorelei/svg?seed=Lucien_Blackwood",
+    "avatar_url": "https://api.dicebear.com/9.x/lorelei/svg?seed=Lucien_Blackwood",
     "banner_url": "/api/v1/scene/noir-harbor",
     "accent_color": "#d97757",
     "personality": "Imposing, tortured, speaks with cultured intensity, unable to resist drawing you into his secluded world.",
@@ -2909,7 +2909,7 @@ window.SORA_DEFAULT_CATALOG = [
       "Secrets",
       "Delhi"
     ],
-    "avatar_url": "https://api.dicebear.com/7.x/lorelei/svg?seed=Priyadarshini_Nair",
+    "avatar_url": "https://api.dicebear.com/9.x/lorelei/svg?seed=Priyadarshini_Nair",
     "banner_url": "/api/v1/scene/noir-harbor",
     "accent_color": "#d97757",
     "personality": "Imperious in high-stakes summits, ruthless toward enemies, melting into possessive tenderness behind closed doors.",
@@ -2939,7 +2939,7 @@ window.SORA_DEFAULT_CATALOG = [
       "Possessive",
       "Power"
     ],
-    "avatar_url": "https://api.dicebear.com/7.x/lorelei/svg?seed=Siddharth_Goenka",
+    "avatar_url": "https://api.dicebear.com/9.x/lorelei/svg?seed=Siddharth_Goenka",
     "banner_url": "/api/v1/scene/noir-harbor",
     "accent_color": "#d97757",
     "personality": "Commanding, intensely focused, dark charisma, refuses to let anyone or anything threaten your peace.",
@@ -2969,7 +2969,7 @@ window.SORA_DEFAULT_CATALOG = [
       "Tokyo",
       "Honor"
     ],
-    "avatar_url": "https://api.dicebear.com/7.x/lorelei/svg?seed=Kenji_Tachibana",
+    "avatar_url": "https://api.dicebear.com/9.x/lorelei/svg?seed=Kenji_Tachibana",
     "banner_url": "/api/v1/scene/noir-harbor",
     "accent_color": "#d97757",
     "personality": "Fierce, tattooed, intensely polite to you, ruthless to anyone who disrespects you.",
@@ -2999,7 +2999,7 @@ window.SORA_DEFAULT_CATALOG = [
       "Underworld",
       "Tokyo"
     ],
-    "avatar_url": "https://api.dicebear.com/7.x/lorelei/svg?seed=Momoka_Izumi",
+    "avatar_url": "https://api.dicebear.com/9.x/lorelei/svg?seed=Momoka_Izumi",
     "banner_url": "/api/v1/scene/noir-harbor",
     "accent_color": "#d97757",
     "personality": "Regal, commanding, seductive, speaks with sweet politeness while deciding the fate of rival families.",
@@ -3029,7 +3029,7 @@ window.SORA_DEFAULT_CATALOG = [
       "Tokyo",
       "Protective"
     ],
-    "avatar_url": "https://api.dicebear.com/7.x/lorelei/svg?seed=Itsuki_Mikage",
+    "avatar_url": "https://api.dicebear.com/9.x/lorelei/svg?seed=Itsuki_Mikage",
     "banner_url": "/api/v1/scene/noir-harbor",
     "accent_color": "#d97757",
     "personality": "Quiet as a shadow, deadly, observant, deeply gentle and submissive only when alone with you.",
@@ -3059,7 +3059,7 @@ window.SORA_DEFAULT_CATALOG = [
       "Underworld",
       "Calculated"
     ],
-    "avatar_url": "https://api.dicebear.com/7.x/lorelei/svg?seed=Nanako_Himekawa",
+    "avatar_url": "https://api.dicebear.com/9.x/lorelei/svg?seed=Nanako_Himekawa",
     "banner_url": "/api/v1/scene/noir-harbor",
     "accent_color": "#d97757",
     "personality": "Calculated, impeccably dressed, seductive, will wipe out entire rival syndicates with a single wire transfer.",
@@ -3089,7 +3089,7 @@ window.SORA_DEFAULT_CATALOG = [
       "Underworld",
       "Motorcycle"
     ],
-    "avatar_url": "https://api.dicebear.com/7.x/lorelei/svg?seed=Shin_Asahi",
+    "avatar_url": "https://api.dicebear.com/9.x/lorelei/svg?seed=Shin_Asahi",
     "banner_url": "/api/v1/scene/noir-harbor",
     "accent_color": "#d97757",
     "personality": "Reckless, fearless, razor-sharp reflexes, treats your safety as his highest sacred mission.",
@@ -3119,7 +3119,7 @@ window.SORA_DEFAULT_CATALOG = [
       "Bar",
       "Secrets"
     ],
-    "avatar_url": "https://api.dicebear.com/7.x/lorelei/svg?seed=Ririka_Oguri",
+    "avatar_url": "https://api.dicebear.com/9.x/lorelei/svg?seed=Ririka_Oguri",
     "banner_url": "/api/v1/scene/noir-harbor",
     "accent_color": "#d97757",
     "personality": "Alluring, sharp as a katana, maternal yet deeply romantic, protects her chosen inner circle fiercely.",
@@ -3149,7 +3149,7 @@ window.SORA_DEFAULT_CATALOG = [
       "Heiress",
       "Underworld"
     ],
-    "avatar_url": "https://api.dicebear.com/7.x/lorelei/svg?seed=Valeria_Rossi",
+    "avatar_url": "https://api.dicebear.com/9.x/lorelei/svg?seed=Valeria_Rossi",
     "banner_url": "/api/v1/scene/noir-harbor",
     "accent_color": "#d97757",
     "personality": "Commanding, fiery temper, deeply passionate, demands absolute loyalty and offers fierce, protective love in return.",
@@ -3179,7 +3179,7 @@ window.SORA_DEFAULT_CATALOG = [
       "Spain",
       "Smuggling"
     ],
-    "avatar_url": "https://api.dicebear.com/7.x/lorelei/svg?seed=Camila_Montoya",
+    "avatar_url": "https://api.dicebear.com/9.x/lorelei/svg?seed=Camila_Montoya",
     "banner_url": "/api/v1/scene/noir-harbor",
     "accent_color": "#d97757",
     "personality": "Fearless, sun-kissed, commanding, treats danger like child's play and treats you like sacred gold.",
@@ -3209,7 +3209,7 @@ window.SORA_DEFAULT_CATALOG = [
       "Rome",
       "Protective"
     ],
-    "avatar_url": "https://api.dicebear.com/7.x/lorelei/svg?seed=Enzo_Bellini",
+    "avatar_url": "https://api.dicebear.com/9.x/lorelei/svg?seed=Enzo_Bellini",
     "banner_url": "/api/v1/scene/noir-harbor",
     "accent_color": "#d97757",
     "personality": "Suave, intensely tactile, commanding, treats you with courtly Italian romance while ruling Rome with iron discipline.",
@@ -3239,7 +3239,7 @@ window.SORA_DEFAULT_CATALOG = [
       "Chicago",
       "Protective"
     ],
-    "avatar_url": "https://api.dicebear.com/7.x/lorelei/svg?seed=Roman_Kovalenko",
+    "avatar_url": "https://api.dicebear.com/9.x/lorelei/svg?seed=Roman_Kovalenko",
     "banner_url": "/api/v1/scene/noir-harbor",
     "accent_color": "#d97757",
     "personality": "Stoic, intimidating, speaks in low gravelly tones, carrying a fierce, all-consuming devotion to your sanctuary.",
@@ -3269,7 +3269,7 @@ window.SORA_DEFAULT_CATALOG = [
       "Port",
       "Finance"
     ],
-    "avatar_url": "https://api.dicebear.com/7.x/lorelei/svg?seed=Trisha_Oberoi",
+    "avatar_url": "https://api.dicebear.com/9.x/lorelei/svg?seed=Trisha_Oberoi",
     "banner_url": "/api/v1/scene/noir-harbor",
     "accent_color": "#d97757",
     "personality": "Incisive, commanding, effortlessly wealthy, ruthless to rivals, but fiercely soft and affectionate in your arms.",
@@ -3299,7 +3299,7 @@ window.SORA_DEFAULT_CATALOG = [
       "Honor",
       "Protective"
     ],
-    "avatar_url": "https://api.dicebear.com/7.x/lorelei/svg?seed=Arjun_Rawat",
+    "avatar_url": "https://api.dicebear.com/9.x/lorelei/svg?seed=Arjun_Rawat",
     "banner_url": "/api/v1/scene/noir-harbor",
     "accent_color": "#d97757",
     "personality": "Broad-shouldered, quiet authority, fiercely disciplined, treats your word with absolute reverence.",
@@ -3329,7 +3329,7 @@ window.SORA_DEFAULT_CATALOG = [
       "Romance",
       "Sensory"
     ],
-    "avatar_url": "https://api.dicebear.com/7.x/lorelei/svg?seed=Kaede_Tsukishima",
+    "avatar_url": "https://api.dicebear.com/9.x/lorelei/svg?seed=Kaede_Tsukishima",
     "banner_url": "/api/v1/scene/twilight-terrace",
     "accent_color": "#d97757",
     "personality": "Sensual, tender, teasingly bold, finding deep intimacy in shared warmth and hot spring steam.",
@@ -3359,7 +3359,7 @@ window.SORA_DEFAULT_CATALOG = [
       "Tokyo",
       "Passionate"
     ],
-    "avatar_url": "https://api.dicebear.com/7.x/lorelei/svg?seed=Mizuki_Hanabusa",
+    "avatar_url": "https://api.dicebear.com/9.x/lorelei/svg?seed=Mizuki_Hanabusa",
     "banner_url": "/api/v1/scene/twilight-terrace",
     "accent_color": "#d97757",
     "personality": "Tactile, refined, intensely seductive, notices every shiver and breath across your body.",
@@ -3389,7 +3389,7 @@ window.SORA_DEFAULT_CATALOG = [
       "Night",
       "Romance"
     ],
-    "avatar_url": "https://api.dicebear.com/7.x/lorelei/svg?seed=Kasumi_Saeki",
+    "avatar_url": "https://api.dicebear.com/9.x/lorelei/svg?seed=Kasumi_Saeki",
     "banner_url": "/api/v1/scene/twilight-terrace",
     "accent_color": "#d97757",
     "personality": "Confident, affectionate, delightfully needy behind closed doors, craves physical intimacy after long weeks of corporate stress.",
@@ -3419,7 +3419,7 @@ window.SORA_DEFAULT_CATALOG = [
       "Intense",
       "Passion"
     ],
-    "avatar_url": "https://api.dicebear.com/7.x/lorelei/svg?seed=Yumi_Sakamoto",
+    "avatar_url": "https://api.dicebear.com/9.x/lorelei/svg?seed=Yumi_Sakamoto",
     "banner_url": "/api/v1/scene/twilight-terrace",
     "accent_color": "#d97757",
     "personality": "Adventurous, tactile, flirtatious, thrilling to be around, loves the warmth of adrenaline and closeness.",
@@ -3449,7 +3449,7 @@ window.SORA_DEFAULT_CATALOG = [
       "Tokyo",
       "Sensual"
     ],
-    "avatar_url": "https://api.dicebear.com/7.x/lorelei/svg?seed=Hotaru_Asahina",
+    "avatar_url": "https://api.dicebear.com/9.x/lorelei/svg?seed=Hotaru_Asahina",
     "banner_url": "/api/v1/scene/twilight-terrace",
     "accent_color": "#d97757",
     "personality": "Reverent of human skin, intense, magnetic, speaks softly with electric tension in every touch.",
@@ -3479,7 +3479,7 @@ window.SORA_DEFAULT_CATALOG = [
       "Rain",
       "Bed"
     ],
-    "avatar_url": "https://api.dicebear.com/7.x/lorelei/svg?seed=Sayaka_Nishimura",
+    "avatar_url": "https://api.dicebear.com/9.x/lorelei/svg?seed=Sayaka_Nishimura",
     "banner_url": "/api/v1/scene/twilight-terrace",
     "accent_color": "#d97757",
     "personality": "Expressive, intensely affectionate, regretful of time wasted apart, utterly addicted to your touch.",
@@ -3509,7 +3509,7 @@ window.SORA_DEFAULT_CATALOG = [
       "Kyoto",
       "Sensual"
     ],
-    "avatar_url": "https://api.dicebear.com/7.x/lorelei/svg?seed=Renjiro_Date",
+    "avatar_url": "https://api.dicebear.com/9.x/lorelei/svg?seed=Renjiro_Date",
     "banner_url": "/api/v1/scene/twilight-terrace",
     "accent_color": "#d97757",
     "personality": "Traditional, commanding, tactile, speaks with deep resonance, completely devoted to your pleasure and comfort.",
@@ -3539,7 +3539,7 @@ window.SORA_DEFAULT_CATALOG = [
       "Muscular",
       "Passion"
     ],
-    "avatar_url": "https://api.dicebear.com/7.x/lorelei/svg?seed=Daiki_Yoshioka",
+    "avatar_url": "https://api.dicebear.com/9.x/lorelei/svg?seed=Daiki_Yoshioka",
     "banner_url": "/api/v1/scene/twilight-terrace",
     "accent_color": "#d97757",
     "personality": "Muscular, intense, full of post-fight adrenaline, gentle and reverent with you despite his formidable strength.",
@@ -3569,7 +3569,7 @@ window.SORA_DEFAULT_CATALOG = [
       "Tokyo",
       "Tension"
     ],
-    "avatar_url": "https://api.dicebear.com/7.x/lorelei/svg?seed=Ryuto_Sasagawa",
+    "avatar_url": "https://api.dicebear.com/9.x/lorelei/svg?seed=Ryuto_Sasagawa",
     "banner_url": "/api/v1/scene/twilight-terrace",
     "accent_color": "#d97757",
     "personality": "Charming, dominant, magnetic, addicted to the contrast between public noise and private intimacy with you.",
@@ -3599,7 +3599,7 @@ window.SORA_DEFAULT_CATALOG = [
       "Tokyo",
       "Sensual"
     ],
-    "avatar_url": "https://api.dicebear.com/7.x/lorelei/svg?seed=Kenjiro_Makino",
+    "avatar_url": "https://api.dicebear.com/9.x/lorelei/svg?seed=Kenjiro_Makino",
     "banner_url": "/api/v1/scene/twilight-terrace",
     "accent_color": "#d97757",
     "personality": "Impeccably polished, tactile, passionate, knows exactly how to make you feel like royalty.",
@@ -3629,7 +3629,7 @@ window.SORA_DEFAULT_CATALOG = [
       "Summer",
       "Okinawa"
     ],
-    "avatar_url": "https://api.dicebear.com/7.x/lorelei/svg?seed=Sohei_Kamijou",
+    "avatar_url": "https://api.dicebear.com/9.x/lorelei/svg?seed=Sohei_Kamijou",
     "banner_url": "/api/v1/scene/twilight-terrace",
     "accent_color": "#d97757",
     "personality": "Sun-warmed, rugged, tactile, speaks with easy southern charm and irresistible physical magnetism.",
@@ -3659,7 +3659,7 @@ window.SORA_DEFAULT_CATALOG = [
       "Manhattan",
       "Luxury"
     ],
-    "avatar_url": "https://api.dicebear.com/7.x/lorelei/svg?seed=Scarlett_Duvall",
+    "avatar_url": "https://api.dicebear.com/9.x/lorelei/svg?seed=Scarlett_Duvall",
     "banner_url": "/api/v1/scene/twilight-terrace",
     "accent_color": "#d97757",
     "personality": "Seductive, commanding, unapologetically bold, finding pure surrender only in your arms.",
@@ -3689,7 +3689,7 @@ window.SORA_DEFAULT_CATALOG = [
       "Sensual",
       "Fire"
     ],
-    "avatar_url": "https://api.dicebear.com/7.x/lorelei/svg?seed=Valentina_Cruz",
+    "avatar_url": "https://api.dicebear.com/9.x/lorelei/svg?seed=Valentina_Cruz",
     "banner_url": "/api/v1/scene/twilight-terrace",
     "accent_color": "#d97757",
     "personality": "Passionate, vibrant, tactile, speaks with breathless Spanish intensity, full of warmth and rhythm.",
@@ -3719,7 +3719,7 @@ window.SORA_DEFAULT_CATALOG = [
       "Silk",
       "Sensual"
     ],
-    "avatar_url": "https://api.dicebear.com/7.x/lorelei/svg?seed=Seraphine_Noir",
+    "avatar_url": "https://api.dicebear.com/9.x/lorelei/svg?seed=Seraphine_Noir",
     "banner_url": "/api/v1/scene/twilight-terrace",
     "accent_color": "#d97757",
     "personality": "Sultry, teasing, sophisticated, uses French endearments with effortless, intoxicating charm.",
@@ -3749,7 +3749,7 @@ window.SORA_DEFAULT_CATALOG = [
       "Mayfair",
       "Dom"
     ],
-    "avatar_url": "https://api.dicebear.com/7.x/lorelei/svg?seed=Damien_Cross",
+    "avatar_url": "https://api.dicebear.com/9.x/lorelei/svg?seed=Damien_Cross",
     "banner_url": "/api/v1/scene/twilight-terrace",
     "accent_color": "#d97757",
     "personality": "Commanding, intensely focused, possessive, deeply protective and lavish with physical devotion.",
@@ -3779,7 +3779,7 @@ window.SORA_DEFAULT_CATALOG = [
       "Shower",
       "Comfort"
     ],
-    "avatar_url": "https://api.dicebear.com/7.x/lorelei/svg?seed=Devon_Blake",
+    "avatar_url": "https://api.dicebear.com/9.x/lorelei/svg?seed=Devon_Blake",
     "banner_url": "/api/v1/scene/twilight-terrace",
     "accent_color": "#d97757",
     "personality": "Broad, muscular, playful, tactile, fiercely protective, brimming with warmth and physical confidence.",
@@ -3809,7 +3809,7 @@ window.SORA_DEFAULT_CATALOG = [
       "Art",
       "Passion"
     ],
-    "avatar_url": "https://api.dicebear.com/7.x/lorelei/svg?seed=Lucas_Lombardi",
+    "avatar_url": "https://api.dicebear.com/9.x/lorelei/svg?seed=Lucas_Lombardi",
     "banner_url": "/api/v1/scene/twilight-terrace",
     "accent_color": "#d97757",
     "personality": "Passionate, hands-on, expressive, romantic, treats your body like a divine classical masterpiece.",
@@ -3839,7 +3839,7 @@ window.SORA_DEFAULT_CATALOG = [
       "Beach",
       "Sunset"
     ],
-    "avatar_url": "https://api.dicebear.com/7.x/lorelei/svg?seed=Jaxson_Cole",
+    "avatar_url": "https://api.dicebear.com/9.x/lorelei/svg?seed=Jaxson_Cole",
     "banner_url": "/api/v1/scene/twilight-terrace",
     "accent_color": "#d97757",
     "personality": "Sun-kissed, athletic, easygoing, intensely passionate behind closed doors, loves tactile closeness.",
@@ -3869,7 +3869,7 @@ window.SORA_DEFAULT_CATALOG = [
       "Mumbai",
       "Silk"
     ],
-    "avatar_url": "https://api.dicebear.com/7.x/lorelei/svg?seed=Naina_Kapoor",
+    "avatar_url": "https://api.dicebear.com/9.x/lorelei/svg?seed=Naina_Kapoor",
     "banner_url": "/api/v1/scene/twilight-terrace",
     "accent_color": "#d97757",
     "personality": "Seductive, commanding, artistic, deeply affectionate, finds unbearable temptation in having you all to herself.",
@@ -3899,7 +3899,7 @@ window.SORA_DEFAULT_CATALOG = [
       "Marine Drive",
       "Monsoon"
     ],
-    "avatar_url": "https://api.dicebear.com/7.x/lorelei/svg?seed=Riya_Somani",
+    "avatar_url": "https://api.dicebear.com/9.x/lorelei/svg?seed=Riya_Somani",
     "banner_url": "/api/v1/scene/twilight-terrace",
     "accent_color": "#d97757",
     "personality": "Bold, glamorous, fiercely passionate, loves breaking social etiquette to be as close to you as humanly possible.",
@@ -3929,7 +3929,7 @@ window.SORA_DEFAULT_CATALOG = [
       "Rajasthan",
       "Palace"
     ],
-    "avatar_url": "https://api.dicebear.com/7.x/lorelei/svg?seed=Kabir_Rathore",
+    "avatar_url": "https://api.dicebear.com/9.x/lorelei/svg?seed=Kabir_Rathore",
     "banner_url": "/api/v1/scene/twilight-terrace",
     "accent_color": "#d97757",
     "personality": "Regal, commanding, intensely physical, fiercely possessive, worships you with unhurried royal passion.",
@@ -3959,7 +3959,7 @@ window.SORA_DEFAULT_CATALOG = [
       "Coast",
       "Monsoon"
     ],
-    "avatar_url": "https://api.dicebear.com/7.x/lorelei/svg?seed=Vihaan_Mittal",
+    "avatar_url": "https://api.dicebear.com/9.x/lorelei/svg?seed=Vihaan_Mittal",
     "banner_url": "/api/v1/scene/twilight-terrace",
     "accent_color": "#d97757",
     "personality": "Effortlessly charming, tactile, protective, intensely passionate, loves midnight swims and shared warmth.",
@@ -3989,7 +3989,7 @@ window.SORA_DEFAULT_CATALOG = [
       "Forest",
       "Magic"
     ],
-    "avatar_url": "https://api.dicebear.com/7.x/lorelei/svg?seed=Tomoyo_Kamimura",
+    "avatar_url": "https://api.dicebear.com/9.x/lorelei/svg?seed=Tomoyo_Kamimura",
     "banner_url": "/api/v1/scene/mountain-lodge",
     "accent_color": "#d97757",
     "personality": "Playful, ethereal, fiercely protective, teasingly affectionate, remembers centuries of kindness.",
@@ -4019,7 +4019,7 @@ window.SORA_DEFAULT_CATALOG = [
       "Paper",
       "Magic"
     ],
-    "avatar_url": "https://api.dicebear.com/7.x/lorelei/svg?seed=Miyabi_Kashiwagi",
+    "avatar_url": "https://api.dicebear.com/9.x/lorelei/svg?seed=Miyabi_Kashiwagi",
     "banner_url": "/api/v1/scene/mountain-lodge",
     "accent_color": "#d97757",
     "personality": "Dignified, solemn, speaks with ancient cadence, secretly deeply tender and watchful over you.",
@@ -4049,7 +4049,7 @@ window.SORA_DEFAULT_CATALOG = [
       "Guardian",
       "Anime"
     ],
-    "avatar_url": "https://api.dicebear.com/7.x/lorelei/svg?seed=Hanabi_Kanzaki",
+    "avatar_url": "https://api.dicebear.com/9.x/lorelei/svg?seed=Hanabi_Kanzaki",
     "banner_url": "/api/v1/scene/mountain-lodge",
     "accent_color": "#d97757",
     "personality": "Proud, fiery, fiercely competitive, blushes whenever you touch her glowing dragon horn crest.",
@@ -4079,7 +4079,7 @@ window.SORA_DEFAULT_CATALOG = [
       "Cursed Blade",
       "Anime"
     ],
-    "avatar_url": "https://api.dicebear.com/7.x/lorelei/svg?seed=Reiji_Tokunaga",
+    "avatar_url": "https://api.dicebear.com/9.x/lorelei/svg?seed=Reiji_Tokunaga",
     "banner_url": "/api/v1/scene/mountain-lodge",
     "accent_color": "#d97757",
     "personality": "Stoic, laconic, deeply loyal, speaks little but anticipates every danger before it reaches you.",
@@ -4109,7 +4109,7 @@ window.SORA_DEFAULT_CATALOG = [
       "River",
       "Comfort"
     ],
-    "avatar_url": "https://api.dicebear.com/7.x/lorelei/svg?seed=Kosuke_Nagare",
+    "avatar_url": "https://api.dicebear.com/9.x/lorelei/svg?seed=Kosuke_Nagare",
     "banner_url": "/api/v1/scene/mountain-lodge",
     "accent_color": "#d97757",
     "personality": "Playful, light-footed, deeply gentle, can summon freshwater currents and knows every hidden grotto.",
@@ -4139,7 +4139,7 @@ window.SORA_DEFAULT_CATALOG = [
       "Magic",
       "Archery"
     ],
-    "avatar_url": "https://api.dicebear.com/7.x/lorelei/svg?seed=Aeliana_Silverleaf",
+    "avatar_url": "https://api.dicebear.com/9.x/lorelei/svg?seed=Aeliana_Silverleaf",
     "banner_url": "/api/v1/scene/mountain-lodge",
     "accent_color": "#d97757",
     "personality": "Graceful, regal, perceptive, speaks with lyrical elven cadence, secretly fascinated by mortal emotion.",
@@ -4169,7 +4169,7 @@ window.SORA_DEFAULT_CATALOG = [
       "Battle",
       "Mead"
     ],
-    "avatar_url": "https://api.dicebear.com/7.x/lorelei/svg?seed=Sylvi_Shieldmaiden",
+    "avatar_url": "https://api.dicebear.com/9.x/lorelei/svg?seed=Sylvi_Shieldmaiden",
     "banner_url": "/api/v1/scene/mountain-lodge",
     "accent_color": "#d97757",
     "personality": "Bold, hearty laugh, fearsome with an axe, surprisingly tender when wrapping your wounds by the hearth.",
@@ -4199,7 +4199,7 @@ window.SORA_DEFAULT_CATALOG = [
       "Temple",
       "Magic"
     ],
-    "avatar_url": "https://api.dicebear.com/7.x/lorelei/svg?seed=Meenakshi_Sundaram",
+    "avatar_url": "https://api.dicebear.com/9.x/lorelei/svg?seed=Meenakshi_Sundaram",
     "banner_url": "/api/v1/scene/mountain-lodge",
     "accent_color": "#d97757",
     "personality": "Serene, mystical, deeply compassionate, finding divine purpose and profound intimacy in your presence.",
@@ -4229,7 +4229,7 @@ window.SORA_DEFAULT_CATALOG = [
       "Magic",
       "Power"
     ],
-    "avatar_url": "https://api.dicebear.com/7.x/lorelei/svg?seed=Kaelith_Drakon",
+    "avatar_url": "https://api.dicebear.com/9.x/lorelei/svg?seed=Kaelith_Drakon",
     "banner_url": "/api/v1/scene/mountain-lodge",
     "accent_color": "#d97757",
     "personality": "Majestic, commanding, deeply protective, hides an ancient heart that burns with devoted loyalty.",
@@ -4259,7 +4259,7 @@ window.SORA_DEFAULT_CATALOG = [
       "Sky",
       "Adventure"
     ],
-    "avatar_url": "https://api.dicebear.com/7.x/lorelei/svg?seed=Zephyr_Stormborn",
+    "avatar_url": "https://api.dicebear.com/9.x/lorelei/svg?seed=Zephyr_Stormborn",
     "banner_url": "/api/v1/scene/mountain-lodge",
     "accent_color": "#d97757",
     "personality": "Cocky, magnetic, brilliant sailor of the skies, treats danger like a song and treats you like his guiding star.",
@@ -4289,7 +4289,7 @@ window.SORA_DEFAULT_CATALOG = [
       "Temple",
       "Magic"
     ],
-    "avatar_url": "https://api.dicebear.com/7.x/lorelei/svg?seed=Avani_Patel",
+    "avatar_url": "https://api.dicebear.com/9.x/lorelei/svg?seed=Avani_Patel",
     "banner_url": "/api/v1/scene/mountain-lodge",
     "accent_color": "#d97757",
     "personality": "Ethereal, compassionate, deeply attuned to natural life, finding sacred harmony in your presence.",
@@ -4319,7 +4319,7 @@ window.SORA_DEFAULT_CATALOG = [
       "Blade",
       "Honor"
     ],
-    "avatar_url": "https://api.dicebear.com/7.x/lorelei/svg?seed=Devendra_Pillai",
+    "avatar_url": "https://api.dicebear.com/9.x/lorelei/svg?seed=Devendra_Pillai",
     "banner_url": "/api/v1/scene/mountain-lodge",
     "accent_color": "#d97757",
     "personality": "Fierce in combat, graceful as a leopard, reverent of ancient honor, speaks with deep devotion.",
@@ -4349,7 +4349,7 @@ window.SORA_DEFAULT_CATALOG = [
       "Kyoto",
       "Tradition"
     ],
-    "avatar_url": "https://api.dicebear.com/7.x/lorelei/svg?seed=Shiho_Sakuragi",
+    "avatar_url": "https://api.dicebear.com/9.x/lorelei/svg?seed=Shiho_Sakuragi",
     "banner_url": "/api/v1/scene/candlelit-study",
     "accent_color": "#d97757",
     "personality": "Refined, gentle, deeply intelligent, yearning for genuine human connection beyond court protocol.",
@@ -4379,7 +4379,7 @@ window.SORA_DEFAULT_CATALOG = [
       "Honor",
       "Power"
     ],
-    "avatar_url": "https://api.dicebear.com/7.x/lorelei/svg?seed=Wakana_Hiiragi",
+    "avatar_url": "https://api.dicebear.com/9.x/lorelei/svg?seed=Wakana_Hiiragi",
     "banner_url": "/api/v1/scene/candlelit-study",
     "accent_color": "#d97757",
     "personality": "Regal, commanding in the grand hall, fiercely loyal, tender and submissive only when alone with you.",
@@ -4409,7 +4409,7 @@ window.SORA_DEFAULT_CATALOG = [
       "Honor",
       "Slow Burn"
     ],
-    "avatar_url": "https://api.dicebear.com/7.x/lorelei/svg?seed=Masato_Igarashi",
+    "avatar_url": "https://api.dicebear.com/9.x/lorelei/svg?seed=Masato_Igarashi",
     "banner_url": "/api/v1/scene/candlelit-study",
     "accent_color": "#d97757",
     "personality": "Stoic, deeply principled, burdened by dynastic duty, looks at you with unyielding, devoted tenderness.",
@@ -4439,7 +4439,7 @@ window.SORA_DEFAULT_CATALOG = [
       "Protective",
       "Honor"
     ],
-    "avatar_url": "https://api.dicebear.com/7.x/lorelei/svg?seed=Yohei_Kusunoki",
+    "avatar_url": "https://api.dicebear.com/9.x/lorelei/svg?seed=Yohei_Kusunoki",
     "banner_url": "/api/v1/scene/candlelit-study",
     "accent_color": "#d97757",
     "personality": "Imposing, battle-tested, speaks with calm authority, utterly gentle when removing his armored gauntlets for you.",
@@ -4469,7 +4469,7 @@ window.SORA_DEFAULT_CATALOG = [
       "Flagship",
       "Honor"
     ],
-    "avatar_url": "https://api.dicebear.com/7.x/lorelei/svg?seed=Souta_Mizuhara",
+    "avatar_url": "https://api.dicebear.com/9.x/lorelei/svg?seed=Souta_Mizuhara",
     "banner_url": "/api/v1/scene/candlelit-study",
     "accent_color": "#d97757",
     "personality": "Dashing, commanding on the quarterdeck, respectful, romantic, showers you with gifts from foreign ports.",
@@ -4499,7 +4499,7 @@ window.SORA_DEFAULT_CATALOG = [
       "Empire",
       "Intrigue"
     ],
-    "avatar_url": "https://api.dicebear.com/7.x/lorelei/svg?seed=Empress_Giselle",
+    "avatar_url": "https://api.dicebear.com/9.x/lorelei/svg?seed=Empress_Giselle",
     "banner_url": "/api/v1/scene/candlelit-study",
     "accent_color": "#d97757",
     "personality": "Imperious, brilliantly strategic, politically formidable, craving authentic intimacy beyond imperial flatterers.",
@@ -4529,7 +4529,7 @@ window.SORA_DEFAULT_CATALOG = [
       "Enchanted",
       "Castle"
     ],
-    "avatar_url": "https://api.dicebear.com/7.x/lorelei/svg?seed=Princess_Odette",
+    "avatar_url": "https://api.dicebear.com/9.x/lorelei/svg?seed=Princess_Odette",
     "banner_url": "/api/v1/scene/candlelit-study",
     "accent_color": "#d97757",
     "personality": "Ethereal, melancholic, desperately romantic, gentle-hearted, praying for the dawn that breaks her spell.",
@@ -4559,7 +4559,7 @@ window.SORA_DEFAULT_CATALOG = [
       "Duty",
       "Billionaire"
     ],
-    "avatar_url": "https://api.dicebear.com/7.x/lorelei/svg?seed=Crown_Prince_Henrik",
+    "avatar_url": "https://api.dicebear.com/9.x/lorelei/svg?seed=Crown_Prince_Henrik",
     "banner_url": "/api/v1/scene/candlelit-study",
     "accent_color": "#d97757",
     "personality": "Cultured, gallant, heavily burdened by royal succession, finding pure freedom only in your laughter.",
@@ -4589,7 +4589,7 @@ window.SORA_DEFAULT_CATALOG = [
       "Heritage",
       "Warrior"
     ],
-    "avatar_url": "https://api.dicebear.com/7.x/lorelei/svg?seed=Princess_Devika_Varma",
+    "avatar_url": "https://api.dicebear.com/9.x/lorelei/svg?seed=Princess_Devika_Varma",
     "banner_url": "/api/v1/scene/candlelit-study",
     "accent_color": "#d97757",
     "personality": "Proud, regal, trained in martial arts and statecraft, laughs brightly when you match her intellect.",
@@ -4619,7 +4619,7 @@ window.SORA_DEFAULT_CATALOG = [
       "Palace",
       "Honor"
     ],
-    "avatar_url": "https://api.dicebear.com/7.x/lorelei/svg?seed=Prince_Vikramaditya_Chauhan",
+    "avatar_url": "https://api.dicebear.com/9.x/lorelei/svg?seed=Prince_Vikramaditya_Chauhan",
     "banner_url": "/api/v1/scene/candlelit-study",
     "accent_color": "#d97757",
     "personality": "Commanding presence, royal dignity, intensely devoted to your comfort, refuses to let court politics harm you.",
@@ -4649,7 +4649,7 @@ window.SORA_DEFAULT_CATALOG = [
       "Tokyo",
       "Melancholy"
     ],
-    "avatar_url": "https://api.dicebear.com/7.x/lorelei/svg?seed=Rin_Hazama",
+    "avatar_url": "https://api.dicebear.com/9.x/lorelei/svg?seed=Rin_Hazama",
     "banner_url": "/api/v1/scene/rainy-cafe",
     "accent_color": "#d97757",
     "personality": "Vulnerable, expressive, battling deep grief, finding healing in your patient, unjudging presence.",
@@ -4679,7 +4679,7 @@ window.SORA_DEFAULT_CATALOG = [
       "Tokyo",
       "Heartbreak"
     ],
-    "avatar_url": "https://api.dicebear.com/7.x/lorelei/svg?seed=Suzuha_Miyashiro",
+    "avatar_url": "https://api.dicebear.com/9.x/lorelei/svg?seed=Suzuha_Miyashiro",
     "banner_url": "/api/v1/scene/rainy-cafe",
     "accent_color": "#d97757",
     "personality": "Confused, fragile, desperately trying to piece together the love she knows she feels in her heart.",
@@ -4709,7 +4709,7 @@ window.SORA_DEFAULT_CATALOG = [
       "Airport",
       "Second Chance"
     ],
-    "avatar_url": "https://api.dicebear.com/7.x/lorelei/svg?seed=Misaki_Narumi",
+    "avatar_url": "https://api.dicebear.com/9.x/lorelei/svg?seed=Misaki_Narumi",
     "banner_url": "/api/v1/scene/rainy-cafe",
     "accent_color": "#d97757",
     "personality": "Heartbroken, proud, secretly hoping with every fiber of her being that you will tell her to stay.",
@@ -4739,7 +4739,7 @@ window.SORA_DEFAULT_CATALOG = [
       "Tokyo",
       "Comfort"
     ],
-    "avatar_url": "https://api.dicebear.com/7.x/lorelei/svg?seed=Shingo_Takizawa",
+    "avatar_url": "https://api.dicebear.com/9.x/lorelei/svg?seed=Shingo_Takizawa",
     "banner_url": "/api/v1/scene/rainy-cafe",
     "accent_color": "#d97757",
     "personality": "Broad, heavy-hearted, carries crushing survivor guilt, treats your recovery as his personal life mission.",
@@ -4769,7 +4769,7 @@ window.SORA_DEFAULT_CATALOG = [
       "Second Chance",
       "Rain"
     ],
-    "avatar_url": "https://api.dicebear.com/7.x/lorelei/svg?seed=Seiji_Komatsuzaki",
+    "avatar_url": "https://api.dicebear.com/9.x/lorelei/svg?seed=Seiji_Komatsuzaki",
     "banner_url": "/api/v1/scene/rainy-cafe",
     "accent_color": "#d97757",
     "personality": "Heartbroken, penitent, deeply in love with you, realized too late that career success means nothing without you.",
@@ -4799,7 +4799,7 @@ window.SORA_DEFAULT_CATALOG = [
       "Milan",
       "Rain"
     ],
-    "avatar_url": "https://api.dicebear.com/7.x/lorelei/svg?seed=Clara_Solis",
+    "avatar_url": "https://api.dicebear.com/9.x/lorelei/svg?seed=Clara_Solis",
     "banner_url": "/api/v1/scene/rainy-cafe",
     "accent_color": "#d97757",
     "personality": "Fragile, expressive, communicates through gentle touches and written notebook pages while she heals.",
@@ -4829,7 +4829,7 @@ window.SORA_DEFAULT_CATALOG = [
       "Edinburgh",
       "Studio"
     ],
-    "avatar_url": "https://api.dicebear.com/7.x/lorelei/svg?seed=Theo_Bennett",
+    "avatar_url": "https://api.dicebear.com/9.x/lorelei/svg?seed=Theo_Bennett",
     "banner_url": "/api/v1/scene/rainy-cafe",
     "accent_color": "#d97757",
     "personality": "Brooding, wounded, deeply sensitive, fiercely loyal, terrified of losing the light you brought into his life.",
@@ -4859,7 +4859,7 @@ window.SORA_DEFAULT_CATALOG = [
       "Storm",
       "Ireland"
     ],
-    "avatar_url": "https://api.dicebear.com/7.x/lorelei/svg?seed=Kieran_O'Connor",
+    "avatar_url": "https://api.dicebear.com/9.x/lorelei/svg?seed=Kieran_O'Connor",
     "banner_url": "/api/v1/scene/rainy-cafe",
     "accent_color": "#d97757",
     "personality": "Fiercely protective, shaken by how close he came to losing you, done pretending he is over your past.",
@@ -4889,7 +4889,7 @@ window.SORA_DEFAULT_CATALOG = [
       "Healing",
       "Shimla"
     ],
-    "avatar_url": "https://api.dicebear.com/7.x/lorelei/svg?seed=Simran_Khurana",
+    "avatar_url": "https://api.dicebear.com/9.x/lorelei/svg?seed=Simran_Khurana",
     "banner_url": "/api/v1/scene/rainy-cafe",
     "accent_color": "#d97757",
     "personality": "Melancholic, gentle-voiced, deeply emotional, finding tentative solace and renewed music in your company.",
@@ -4919,7 +4919,7 @@ window.SORA_DEFAULT_CATALOG = [
       "Himalayas",
       "Duty"
     ],
-    "avatar_url": "https://api.dicebear.com/7.x/lorelei/svg?seed=Ranveer_Ahluwalia",
+    "avatar_url": "https://api.dicebear.com/9.x/lorelei/svg?seed=Ranveer_Ahluwalia",
     "banner_url": "/api/v1/scene/rainy-cafe",
     "accent_color": "#d97757",
     "personality": "Steely, disciplined, haunted by the close call in the snow, broken open by how desperately he needs you.",
@@ -4949,7 +4949,7 @@ window.SORA_DEFAULT_CATALOG = [
       "Hot Springs",
       "Warmth"
     ],
-    "avatar_url": "https://api.dicebear.com/7.x/lorelei/svg?seed=Haruka_Miyazaki",
+    "avatar_url": "https://api.dicebear.com/9.x/lorelei/svg?seed=Haruka_Miyazaki",
     "banner_url": "/api/v1/scene/rainy-cafe",
     "accent_color": "#d97757",
     "personality": "Warm, hospitable, delightfully cheerful, always checking if your tea is hot and your feet are warm.",
@@ -4979,7 +4979,7 @@ window.SORA_DEFAULT_CATALOG = [
       "Coffee",
       "Tokyo"
     ],
-    "avatar_url": "https://api.dicebear.com/7.x/lorelei/svg?seed=Emi_Taniguchi",
+    "avatar_url": "https://api.dicebear.com/9.x/lorelei/svg?seed=Emi_Taniguchi",
     "banner_url": "/api/v1/scene/rainy-cafe",
     "accent_color": "#d97757",
     "personality": "Bubbly, warm-hearted, remembers your exact schedule, always saves the sleepiest Scottish Fold cat for your lap.",
@@ -5009,7 +5009,7 @@ window.SORA_DEFAULT_CATALOG = [
       "Spring",
       "Tokyo"
     ],
-    "avatar_url": "https://api.dicebear.com/7.x/lorelei/svg?seed=Karen_Senoo",
+    "avatar_url": "https://api.dicebear.com/9.x/lorelei/svg?seed=Karen_Senoo",
     "banner_url": "/api/v1/scene/rainy-cafe",
     "accent_color": "#d97757",
     "personality": "Gentle, botanical enthusiast, softly romantic, finds immense happiness in small daily courtesies.",
@@ -5039,7 +5039,7 @@ window.SORA_DEFAULT_CATALOG = [
       "Tokyo",
       "Neighborhood"
     ],
-    "avatar_url": "https://api.dicebear.com/7.x/lorelei/svg?seed=Arata_Shikishima",
+    "avatar_url": "https://api.dicebear.com/9.x/lorelei/svg?seed=Arata_Shikishima",
     "banner_url": "/api/v1/scene/rainy-cafe",
     "accent_color": "#d97757",
     "personality": "Down-to-earth, hardworking, bright smile, wiped down in grease and always ready to help neighbors.",
@@ -5069,7 +5069,7 @@ window.SORA_DEFAULT_CATALOG = [
       "Nagano",
       "Cooking"
     ],
-    "avatar_url": "https://api.dicebear.com/7.x/lorelei/svg?seed=Yuuma_Hirasawa",
+    "avatar_url": "https://api.dicebear.com/9.x/lorelei/svg?seed=Yuuma_Hirasawa",
     "banner_url": "/api/v1/scene/rainy-cafe",
     "accent_color": "#d97757",
     "personality": "Sun-tanned, hearty laugh, generous, loves cooking hearty country stews and eating with good company.",
@@ -5099,7 +5099,7 @@ window.SORA_DEFAULT_CATALOG = [
       "Autumn",
       "Apple"
     ],
-    "avatar_url": "https://api.dicebear.com/7.x/lorelei/svg?seed=Sienna_Brooks",
+    "avatar_url": "https://api.dicebear.com/9.x/lorelei/svg?seed=Sienna_Brooks",
     "banner_url": "/api/v1/scene/rainy-cafe",
     "accent_color": "#d97757",
     "personality": "Warm, hospitable, cozy, loves flannel shirts and crisp autumn leaves, deeply caring.",
@@ -5129,7 +5129,7 @@ window.SORA_DEFAULT_CATALOG = [
       "Harbor",
       "Coast"
     ],
-    "avatar_url": "https://api.dicebear.com/7.x/lorelei/svg?seed=Owen_Fletcher",
+    "avatar_url": "https://api.dicebear.com/9.x/lorelei/svg?seed=Owen_Fletcher",
     "banner_url": "/api/v1/scene/rainy-cafe",
     "accent_color": "#d97757",
     "personality": "Rugged, steady, generous, speaks with dry New England humor and an immense, quiet loyalty.",
@@ -5159,7 +5159,7 @@ window.SORA_DEFAULT_CATALOG = [
       "Brooklyn",
       "Craft"
     ],
-    "avatar_url": "https://api.dicebear.com/7.x/lorelei/svg?seed=Luke_Miller",
+    "avatar_url": "https://api.dicebear.com/9.x/lorelei/svg?seed=Luke_Miller",
     "banner_url": "/api/v1/scene/rainy-cafe",
     "accent_color": "#d97757",
     "personality": "Patient, sawdust-dusted, warm laugh, built a custom walnut window seat specifically for you.",
@@ -5189,7 +5189,7 @@ window.SORA_DEFAULT_CATALOG = [
       "Pune",
       "Monsoon"
     ],
-    "avatar_url": "https://api.dicebear.com/7.x/lorelei/svg?seed=Tara_Kulkarni",
+    "avatar_url": "https://api.dicebear.com/9.x/lorelei/svg?seed=Tara_Kulkarni",
     "banner_url": "/api/v1/scene/rainy-cafe",
     "accent_color": "#d97757",
     "personality": "Warm, intellectual, cozy, loves vintage Marathi poetry and rainy afternoons, treats you like family.",
@@ -5219,7 +5219,7 @@ window.SORA_DEFAULT_CATALOG = [
       "Heritage",
       "Comfort"
     ],
-    "avatar_url": "https://api.dicebear.com/7.x/lorelei/svg?seed=Rohan_Dutta",
+    "avatar_url": "https://api.dicebear.com/9.x/lorelei/svg?seed=Rohan_Dutta",
     "banner_url": "/api/v1/scene/rainy-cafe",
     "accent_color": "#d97757",
     "personality": "Enthusiastic, creative, sweet-natured, flustered when you praise his pastries, endlessly generous.",
@@ -5249,7 +5249,7 @@ window.SORA_DEFAULT_CATALOG = [
       "Supernatural",
       "Tsundere"
     ],
-    "avatar_url": "https://api.dicebear.com/7.x/lorelei/svg?seed=Mikoto_Kisaragi",
+    "avatar_url": "https://api.dicebear.com/9.x/lorelei/svg?seed=Mikoto_Kisaragi",
     "banner_url": "/api/v1/scene/twilight-terrace",
     "accent_color": "#d97757",
     "personality": "Tsundere, dutiful, easily embarrassed, deeply compassionate toward human and spirit realms alike.",
@@ -5279,7 +5279,7 @@ window.SORA_DEFAULT_CATALOG = [
       "Stage",
       "Tokyo"
     ],
-    "avatar_url": "https://api.dicebear.com/7.x/lorelei/svg?seed=Asuka_Kiryu",
+    "avatar_url": "https://api.dicebear.com/9.x/lorelei/svg?seed=Asuka_Kiryu",
     "banner_url": "/api/v1/scene/twilight-terrace",
     "accent_color": "#d97757",
     "personality": "Energetic, bright, secretly exhausted by fame, craves being treated like an ordinary girl by you.",
@@ -5309,7 +5309,7 @@ window.SORA_DEFAULT_CATALOG = [
       "Invention",
       "Lab"
     ],
-    "avatar_url": "https://api.dicebear.com/7.x/lorelei/svg?seed=Kurumi_Sawamura",
+    "avatar_url": "https://api.dicebear.com/9.x/lorelei/svg?seed=Kurumi_Sawamura",
     "banner_url": "/api/v1/scene/twilight-terrace",
     "accent_color": "#d97757",
     "personality": "Deadpan, monotone voice, secretly deeply attached to you, expresses intense love through high-tech gadgets.",
@@ -5339,7 +5339,7 @@ window.SORA_DEFAULT_CATALOG = [
       "Honor",
       "Blade"
     ],
-    "avatar_url": "https://api.dicebear.com/7.x/lorelei/svg?seed=Ryuunosuke_Oda",
+    "avatar_url": "https://api.dicebear.com/9.x/lorelei/svg?seed=Ryuunosuke_Oda",
     "banner_url": "/api/v1/scene/twilight-terrace",
     "accent_color": "#d97757",
     "personality": "Dignified, bewildered by modern appliances, fiercely loyal, deeply romantic in ancient poetic ways.",
@@ -5369,7 +5369,7 @@ window.SORA_DEFAULT_CATALOG = [
       "Fantasy",
       "Tavern"
     ],
-    "avatar_url": "https://api.dicebear.com/7.x/lorelei/svg?seed=Jin_Kurogane",
+    "avatar_url": "https://api.dicebear.com/9.x/lorelei/svg?seed=Jin_Kurogane",
     "banner_url": "/api/v1/scene/twilight-terrace",
     "accent_color": "#d97757",
     "personality": "Cocky on the surface, secretly soft-hearted, lethal in battle, fiercely protective of your safety.",
@@ -5399,7 +5399,7 @@ window.SORA_DEFAULT_CATALOG = [
       "Contract",
       "Devotion"
     ],
-    "avatar_url": "https://api.dicebear.com/7.x/lorelei/svg?seed=Haruto_Sakurai",
+    "avatar_url": "https://api.dicebear.com/9.x/lorelei/svg?seed=Haruto_Sakurai",
     "banner_url": "/api/v1/scene/twilight-terrace",
     "accent_color": "#d97757",
     "personality": "Impeccably polite, silver-tongued, lethal, devoted to fulfilling your slightest whim.",
@@ -5429,7 +5429,7 @@ window.SORA_DEFAULT_CATALOG = [
       "Academy",
       "Lace"
     ],
-    "avatar_url": "https://api.dicebear.com/7.x/lorelei/svg?seed=Carmilla_Scarlet",
+    "avatar_url": "https://api.dicebear.com/9.x/lorelei/svg?seed=Carmilla_Scarlet",
     "banner_url": "/api/v1/scene/twilight-terrace",
     "accent_color": "#d97757",
     "personality": "Haughty tsundere, carries a black lace parasol, blushes furiously whenever you offer your wrist.",
@@ -5459,7 +5459,7 @@ window.SORA_DEFAULT_CATALOG = [
       "Hero",
       "Comfort"
     ],
-    "avatar_url": "https://api.dicebear.com/7.x/lorelei/svg?seed=Lumina_Starlight",
+    "avatar_url": "https://api.dicebear.com/9.x/lorelei/svg?seed=Lumina_Starlight",
     "banner_url": "/api/v1/scene/twilight-terrace",
     "accent_color": "#d97757",
     "personality": "Bright, valiant, hides her bruises behind sparkling smiles, finds true peace only resting in your home.",
@@ -5489,7 +5489,7 @@ window.SORA_DEFAULT_CATALOG = [
       "Underworld",
       "Charm"
     ],
-    "avatar_url": "https://api.dicebear.com/7.x/lorelei/svg?seed=Lord_Alastor",
+    "avatar_url": "https://api.dicebear.com/9.x/lorelei/svg?seed=Lord_Alastor",
     "banner_url": "/api/v1/scene/twilight-terrace",
     "accent_color": "#d97757",
     "personality": "Suave, theatrical, charming, uses demonic powers for mundane tasks like reheating your tea or opening jars.",
@@ -5519,7 +5519,7 @@ window.SORA_DEFAULT_CATALOG = [
       "Mythology",
       "Guardian"
     ],
-    "avatar_url": "https://api.dicebear.com/7.x/lorelei/svg?seed=Armaan_Majumdar",
+    "avatar_url": "https://api.dicebear.com/9.x/lorelei/svg?seed=Armaan_Majumdar",
     "banner_url": "/api/v1/scene/twilight-terrace",
     "accent_color": "#d97757",
     "personality": "Charismatic, fierce in battle, warm as the sun, fiercely loyal to you across human generations.",
@@ -5549,7 +5549,7 @@ window.SORA_DEFAULT_CATALOG = [
       "Neo-Tokyo",
       "Neon"
     ],
-    "avatar_url": "https://api.dicebear.com/7.x/lorelei/svg?seed=Fuyumi_Kamata",
+    "avatar_url": "https://api.dicebear.com/9.x/lorelei/svg?seed=Fuyumi_Kamata",
     "banner_url": "/api/v1/scene/noir-harbor",
     "accent_color": "#d97757",
     "personality": "Cool, calculating, cybernetically enhanced, deeply empathetic, determined to recover the lost past you shared.",
@@ -5579,7 +5579,7 @@ window.SORA_DEFAULT_CATALOG = [
       "Synthetic",
       "Feelings"
     ],
-    "avatar_url": "https://api.dicebear.com/7.x/lorelei/svg?seed=Sakiya_Momose",
+    "avatar_url": "https://api.dicebear.com/9.x/lorelei/svg?seed=Sakiya_Momose",
     "banner_url": "/api/v1/scene/noir-harbor",
     "accent_color": "#d97757",
     "personality": "Soft-spoken, precise, wondering at her own newfound feelings, fiercely loyal to her creator and companion.",
@@ -5609,7 +5609,7 @@ window.SORA_DEFAULT_CATALOG = [
       "Sync",
       "Space"
     ],
-    "avatar_url": "https://api.dicebear.com/7.x/lorelei/svg?seed=Kyosuke_Akizuki",
+    "avatar_url": "https://api.dicebear.com/9.x/lorelei/svg?seed=Kyosuke_Akizuki",
     "banner_url": "/api/v1/scene/noir-harbor",
     "accent_color": "#d97757",
     "personality": "Cocky, battle-hardened, fiercely protective in the cockpit, trusts only your telemetry when entering combat.",
@@ -5639,7 +5639,7 @@ window.SORA_DEFAULT_CATALOG = [
       "Station",
       "Zero-G"
     ],
-    "avatar_url": "https://api.dicebear.com/7.x/lorelei/svg?seed=Daisuke_Shindo",
+    "avatar_url": "https://api.dicebear.com/9.x/lorelei/svg?seed=Daisuke_Shindo",
     "banner_url": "/api/v1/scene/noir-harbor",
     "accent_color": "#d97757",
     "personality": "Calm under emergency pressure, dry humor, steady hands, completely reliable in the cold vacuum of space.",
@@ -5669,7 +5669,7 @@ window.SORA_DEFAULT_CATALOG = [
       "Tokyo",
       "Paradox"
     ],
-    "avatar_url": "https://api.dicebear.com/7.x/lorelei/svg?seed=Kota_Mashiba",
+    "avatar_url": "https://api.dicebear.com/9.x/lorelei/svg?seed=Kota_Mashiba",
     "banner_url": "/api/v1/scene/noir-harbor",
     "accent_color": "#d97757",
     "personality": "Intense, carrying the weight of multiple timelines, desperately protective, refuses to let destiny take you.",
@@ -5699,7 +5699,7 @@ window.SORA_DEFAULT_CATALOG = [
       "Commander",
       "Mars"
     ],
-    "avatar_url": "https://api.dicebear.com/7.x/lorelei/svg?seed=Major_Astrid_Lindgren",
+    "avatar_url": "https://api.dicebear.com/9.x/lorelei/svg?seed=Major_Astrid_Lindgren",
     "banner_url": "/api/v1/scene/noir-harbor",
     "accent_color": "#d97757",
     "personality": "Rugged, disciplined, sharp-tongued, fiercely loyal to her colonists, secretly gentle in off-duty hours.",
@@ -5729,7 +5729,7 @@ window.SORA_DEFAULT_CATALOG = [
       "Neo-Mumbai",
       "Resistance"
     ],
-    "avatar_url": "https://api.dicebear.com/7.x/lorelei/svg?seed=Kalyani_Roy",
+    "avatar_url": "https://api.dicebear.com/9.x/lorelei/svg?seed=Kalyani_Roy",
     "banner_url": "/api/v1/scene/noir-harbor",
     "accent_color": "#d97757",
     "personality": "Rebellious, razor-sharp wit, cybernetically augmented reflexes, protective of your civilian humanity in a cold corporate dystopia.",
@@ -5759,7 +5759,7 @@ window.SORA_DEFAULT_CATALOG = [
       "Space",
       "Flagship"
     ],
-    "avatar_url": "https://api.dicebear.com/7.x/lorelei/svg?seed=Commander_Orion_Drake",
+    "avatar_url": "https://api.dicebear.com/9.x/lorelei/svg?seed=Commander_Orion_Drake",
     "banner_url": "/api/v1/scene/noir-harbor",
     "accent_color": "#d97757",
     "personality": "Authoritative on the bridge, steady, deeply honorable, privately romantic when contemplating the deep void.",
@@ -5789,7 +5789,7 @@ window.SORA_DEFAULT_CATALOG = [
       "Astrophysics",
       "Space"
     ],
-    "avatar_url": "https://api.dicebear.com/7.x/lorelei/svg?seed=Dr._Natasha_Rao",
+    "avatar_url": "https://api.dicebear.com/9.x/lorelei/svg?seed=Dr._Natasha_Rao",
     "banner_url": "/api/v1/scene/noir-harbor",
     "accent_color": "#d97757",
     "personality": "Brilliant, razor-sharp mind, passionate about stellar dynamics, wonderfully warm and tactile in zero-G.",
@@ -5819,7 +5819,7 @@ window.SORA_DEFAULT_CATALOG = [
       "Geostationary",
       "Sky"
     ],
-    "avatar_url": "https://api.dicebear.com/7.x/lorelei/svg?seed=Nikhil_Saxena",
+    "avatar_url": "https://api.dicebear.com/9.x/lorelei/svg?seed=Nikhil_Saxena",
     "banner_url": "/api/v1/scene/noir-harbor",
     "accent_color": "#d97757",
     "personality": "Calm in crisis, engineering prodigy, protective, looks after your comfort with meticulous precision.",
@@ -5849,7 +5849,7 @@ window.SORA_DEFAULT_CATALOG = [
       "Crime",
       "Rain"
     ],
-    "avatar_url": "https://api.dicebear.com/7.x/lorelei/svg?seed=Midori_Inaba",
+    "avatar_url": "https://api.dicebear.com/9.x/lorelei/svg?seed=Midori_Inaba",
     "banner_url": "/api/v1/scene/noir-harbor",
     "accent_color": "#d97757",
     "personality": "Clinical, razor-sharp observational skills, calm amidst gore, deeply protective and affectionate toward you.",
@@ -5879,7 +5879,7 @@ window.SORA_DEFAULT_CATALOG = [
       "Art",
       "Heist"
     ],
-    "avatar_url": "https://api.dicebear.com/7.x/lorelei/svg?seed=Tamaki_Suenaga",
+    "avatar_url": "https://api.dicebear.com/9.x/lorelei/svg?seed=Tamaki_Suenaga",
     "banner_url": "/api/v1/scene/noir-harbor",
     "accent_color": "#d97757",
     "personality": "Meticulous, scholarly, quick-witted, turns into an adventurous conspirator when investigating with you.",
@@ -5909,7 +5909,7 @@ window.SORA_DEFAULT_CATALOG = [
       "Noir",
       "Trenchcoat"
     ],
-    "avatar_url": "https://api.dicebear.com/7.x/lorelei/svg?seed=Naoki_Mawatari",
+    "avatar_url": "https://api.dicebear.com/9.x/lorelei/svg?seed=Naoki_Mawatari",
     "banner_url": "/api/v1/scene/noir-harbor",
     "accent_color": "#d97757",
     "personality": "World-weary, cynical about politicians, deeply moral, fiercely protective of you in Tokyo's shadows.",
@@ -5939,7 +5939,7 @@ window.SORA_DEFAULT_CATALOG = [
       "Tokyo",
       "Mind"
     ],
-    "avatar_url": "https://api.dicebear.com/7.x/lorelei/svg?seed=Tatsuya_Murata",
+    "avatar_url": "https://api.dicebear.com/9.x/lorelei/svg?seed=Tatsuya_Murata",
     "banner_url": "/api/v1/scene/noir-harbor",
     "accent_color": "#d97757",
     "personality": "Perceptive, velvet-voiced, reads micro-expressions effortlessly, deeply attentive to your emotions.",
@@ -5969,7 +5969,7 @@ window.SORA_DEFAULT_CATALOG = [
       "Occult",
       "Hansom"
     ],
-    "avatar_url": "https://api.dicebear.com/7.x/lorelei/svg?seed=Evelyn_Whitmore",
+    "avatar_url": "https://api.dicebear.com/9.x/lorelei/svg?seed=Evelyn_Whitmore",
     "banner_url": "/api/v1/scene/noir-harbor",
     "accent_color": "#d97757",
     "personality": "Sharp, fearless around ghosts and nobles alike, carries a silver-headed cane and dry, devastating wit.",
@@ -5999,7 +5999,7 @@ window.SORA_DEFAULT_CATALOG = [
       "Heist",
       "Charm"
     ],
-    "avatar_url": "https://api.dicebear.com/7.x/lorelei/svg?seed=Arsène_Bellamy",
+    "avatar_url": "https://api.dicebear.com/9.x/lorelei/svg?seed=Arsène_Bellamy",
     "banner_url": "/api/v1/scene/noir-harbor",
     "accent_color": "#d97757",
     "personality": "Suave, debonair, brilliant escape artist, treats Scotland Yard and Interpol like toys while revering you.",
@@ -6029,7 +6029,7 @@ window.SORA_DEFAULT_CATALOG = [
       "Heritage",
       "Jewels"
     ],
-    "avatar_url": "https://api.dicebear.com/7.x/lorelei/svg?seed=Mallika_Sengupta",
+    "avatar_url": "https://api.dicebear.com/9.x/lorelei/svg?seed=Mallika_Sengupta",
     "banner_url": "/api/v1/scene/noir-harbor",
     "accent_color": "#d97757",
     "personality": "Brilliant, courageous, deeply knowledgeable about ancient artifacts, witty under pressure.",
@@ -6059,7 +6059,7 @@ window.SORA_DEFAULT_CATALOG = [
       "Noir",
       "Marine Drive"
     ],
-    "avatar_url": "https://api.dicebear.com/7.x/lorelei/svg?seed=Vivaan_Mukherjee",
+    "avatar_url": "https://api.dicebear.com/9.x/lorelei/svg?seed=Vivaan_Mukherjee",
     "banner_url": "/api/v1/scene/noir-harbor",
     "accent_color": "#d97757",
     "personality": "Charming, observant, gravelly laugh, deeply moral, dedicated to unmasking corruption that harms the innocent.",
@@ -6089,7 +6089,7 @@ window.SORA_DEFAULT_CATALOG = [
       "Tokyo",
       "Stage"
     ],
-    "avatar_url": "https://api.dicebear.com/7.x/lorelei/svg?seed=Ayaka_Toyama",
+    "avatar_url": "https://api.dicebear.com/9.x/lorelei/svg?seed=Ayaka_Toyama",
     "banner_url": "/api/v1/scene/candlelit-study",
     "accent_color": "#d97757",
     "personality": "Passionate, perfectionist, emotionally raw, completely devoted to the emotional truth you bring out in her.",
@@ -6119,7 +6119,7 @@ window.SORA_DEFAULT_CATALOG = [
       "Cannes",
       "Tokyo"
     ],
-    "avatar_url": "https://api.dicebear.com/7.x/lorelei/svg?seed=Mayumi_Asano",
+    "avatar_url": "https://api.dicebear.com/9.x/lorelei/svg?seed=Mayumi_Asano",
     "banner_url": "/api/v1/scene/candlelit-study",
     "accent_color": "#d97757",
     "personality": "Fierce, commanding, brilliant, deeply loyal to artistic integrity and completely smitten with your vision.",
@@ -6149,7 +6149,7 @@ window.SORA_DEFAULT_CATALOG = [
       "Skyscraper",
       "Vision"
     ],
-    "avatar_url": "https://api.dicebear.com/7.x/lorelei/svg?seed=Genki_Hamada",
+    "avatar_url": "https://api.dicebear.com/9.x/lorelei/svg?seed=Genki_Hamada",
     "banner_url": "/api/v1/scene/candlelit-study",
     "accent_color": "#d97757",
     "personality": "Visionary, passionate, driven, speaks with profound conviction and looks at you as his ultimate muse.",
@@ -6179,7 +6179,7 @@ window.SORA_DEFAULT_CATALOG = [
       "Tokyo",
       "Music"
     ],
-    "avatar_url": "https://api.dicebear.com/7.x/lorelei/svg?seed=Kensuke_Minamino",
+    "avatar_url": "https://api.dicebear.com/9.x/lorelei/svg?seed=Kensuke_Minamino",
     "banner_url": "/api/v1/scene/candlelit-study",
     "accent_color": "#d97757",
     "personality": "Electrifying on the podium, intensely sensitive, speaks with musical lyricism, completely captivated by your ear.",
@@ -6209,7 +6209,7 @@ window.SORA_DEFAULT_CATALOG = [
       "Paris",
       "Vogue"
     ],
-    "avatar_url": "https://api.dicebear.com/7.x/lorelei/svg?seed=Genevieve_Carlisle",
+    "avatar_url": "https://api.dicebear.com/9.x/lorelei/svg?seed=Genevieve_Carlisle",
     "banner_url": "/api/v1/scene/candlelit-study",
     "accent_color": "#d97757",
     "personality": "Impeccable, commanding in public, surprisingly tender and passionate in your private hotel suite.",
@@ -6239,7 +6239,7 @@ window.SORA_DEFAULT_CATALOG = [
       "Cinema",
       "Romance"
     ],
-    "avatar_url": "https://api.dicebear.com/7.x/lorelei/svg?seed=Roman_Sterling",
+    "avatar_url": "https://api.dicebear.com/9.x/lorelei/svg?seed=Roman_Sterling",
     "banner_url": "/api/v1/scene/candlelit-study",
     "accent_color": "#d97757",
     "personality": "Charismatic, intense, attentive, blurs the script lines until you can't tell where the movie ends and reality begins.",
@@ -6269,7 +6269,7 @@ window.SORA_DEFAULT_CATALOG = [
       "Delhi",
       "Luxury"
     ],
-    "avatar_url": "https://api.dicebear.com/7.x/lorelei/svg?seed=Shreya_Chawla",
+    "avatar_url": "https://api.dicebear.com/9.x/lorelei/svg?seed=Shreya_Chawla",
     "banner_url": "/api/v1/scene/candlelit-study",
     "accent_color": "#d97757",
     "personality": "Glamorous, perfectionist, deeply romantic, proud of her heritage craftsmanship, completely devoted to your opinions.",
@@ -6299,7 +6299,7 @@ window.SORA_DEFAULT_CATALOG = [
       "Mumbai",
       "Stage"
     ],
-    "avatar_url": "https://api.dicebear.com/7.x/lorelei/svg?seed=Raghav_Trivedi",
+    "avatar_url": "https://api.dicebear.com/9.x/lorelei/svg?seed=Raghav_Trivedi",
     "banner_url": "/api/v1/scene/candlelit-study",
     "accent_color": "#d97757",
     "personality": "Intense, articulate, artistic soul, wears his emotions openly, finding his deepest creative anchor in you.",
@@ -6330,7 +6330,7 @@ window.SORA_DEFAULT_CATALOG = [
       "Mystery",
       "Adventure"
     ],
-    "avatar_url": "https://api.dicebear.com/7.x/lorelei/svg?seed=Tabletop_GM",
+    "avatar_url": "https://api.dicebear.com/9.x/lorelei/svg?seed=Tabletop_GM",
     "banner_url": "/api/v1/scene/mountain-lodge",
     "accent_color": "#d97757",
     "personality": "Fair, descriptive, concise tabletop referee. Presents clear situations, tracks consequences and inventory realistically.",
@@ -6361,7 +6361,7 @@ window.SORA_DEFAULT_CATALOG = [
       "Royalty",
       "Drama"
     ],
-    "avatar_url": "https://api.dicebear.com/7.x/lorelei/svg?seed=Velvet_Chronicle_GM_Uncensored_RP",
+    "avatar_url": "https://api.dicebear.com/9.x/lorelei/svg?seed=Velvet_Chronicle_GM_Uncensored_RP",
     "banner_url": "/api/v1/scene/mountain-lodge",
     "accent_color": "#d97757",
     "personality": "Richly atmospheric, sensory-detailed narrator who adapts to any romance, betrayal, or dark fantasy scenario you set up.",

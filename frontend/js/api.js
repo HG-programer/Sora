@@ -8,7 +8,10 @@ window.getLocalTies = function() {
     return {};
   }
 };
-const getLocalTies = window.getLocalTies;
+
+function getLocalTies() {
+  return window.getLocalTies();
+}
 
 const STORAGE_KEYS = {
   TOKEN: "haru_emochi_jwt_token",

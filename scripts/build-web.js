@@ -74,6 +74,19 @@ for (const mod of jsModules) {
   }
 }
 
+// 3b. Verify combined browser global scope for duplicate identifiers
+console.log('🔍 [Sora Build] Verifying combined browser global scope...');
+const catalogCode = fs.readFileSync(path.join(SRC_DIR, 'js', 'catalog.js'), 'utf-8');
+const apiCode = fs.readFileSync(path.join(SRC_DIR, 'js', 'api.js'), 'utf-8');
+const appCode = fs.readFileSync(path.join(SRC_DIR, 'js', 'app.js'), 'utf-8');
+try {
+  new Function(catalogCode + '\n' + apiCode + '\n' + appCode);
+  console.log('✅ [Sora Build] Combined global scope verified (0 redeclaration errors).');
+} catch (scopeErr) {
+  console.error('❌ [Sora Build] FATAL: Combined global scope has syntax/redeclaration error:', scopeErr.message);
+  process.exit(1);
+}
+
 // 4. Minify HTML & inject cache-busting query params for WebView and browsers
 console.log('📄 [Sora Build] Processing index.html with cache buster...');
 const buildVer = Date.now().toString(36);

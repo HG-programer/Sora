@@ -3880,7 +3880,6 @@ body:not(.chat-mode-open) #chat-drawer,
   background: #111116 !important;
   border-top: 1px solid rgba(255, 255, 255, 0.08) !important;
   gap: 6px !important;
-  max-height: 108px !important;
   position: relative !important;
   z-index: 20 !important;
   box-sizing: border-box !important;
@@ -3901,9 +3900,9 @@ body:not(.chat-mode-open) #chat-drawer,
   -webkit-overflow-scrolling: touch !important;
   gap: 6px !important;
   width: 100% !important;
-  height: 32px !important;
-  min-height: 32px !important;
-  max-height: 32px !important;
+  height: 34px !important;
+  min-height: 34px !important;
+  max-height: 34px !important;
   margin: 0 !important;
   padding: 0 2px !important;
   scrollbar-width: none !important;
